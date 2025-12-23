@@ -1,0 +1,65 @@
+// ============================================================================
+// EXAMPLE: How to Use Usage Limits in Your Controllers
+// ============================================================================
+
+// 1. Import the decorator and guard
+import { UsageLimit } from '../usage/usage.decorator';
+import { UsageLimitGuard } from '../usage/usage.guard';
+import { UsageService } from '../usage/usage.service';
+
+// 2. In your controller/method, add the decorator and guard:
+
+@Controller('memories')
+export class MemoriesController {
+  constructor(
+    private usageService: UsageService,
+    // ... other services
+  ) {}
+
+  @Post()
+  @UseGuards(JwtAuthGuard, UsageLimitGuard) // Add UsageLimitGuard
+  @UsageLimit('memories') // Specify resource type
+  async createMemory(
+    @CurrentUser('id') userId: string,
+    @Body() createMemoryDto: CreateMemoryDto,
+  ) {
+    // Create the memory
+    const memory = await this.memoriesService.create(userId, createMemoryDto);
+
+    // IMPORTANT: Increment usage counter after successful creation
+    await this.usageService.incrementUsage(userId, 'memories');
+
+    return memory;
+  }
+
+  @Get('search')
+  @UseGuards(JwtAuthGuard, UsageLimitGuard)
+  @UsageLimit('searches') // Different resource type
+  async search(
+    @CurrentUser('id') userId: string,
+    @Query('q') query: string,
+  ) {
+    const results = await this.memoriesService.search(userId, query);
+    
+    // Increment search counter
+    await this.usageService.incrementUsage(userId, 'searches');
+    
+    return results;
+  }
+}
+
+// ============================================================================
+// What happens when limit is exceeded?
+// ============================================================================
+// The guard throws an HttpException with status 429 (Too Many Requests)
+// Response body:
+// {
+//   "error": "LIMIT_EXCEEDED",
+//   "message": "You've reached your memories limit",
+//   "resource": "memories",
+//   "limit": 10,
+//   "resetAt": "2024-12-23T00:00:00.000Z",
+//   "upgradeUrl": "/settings/upgrade"
+// }
+//
+// Frontend should catch this and show appropriate upgrade prompt

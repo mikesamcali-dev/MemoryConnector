@@ -1,0 +1,207 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserTier {
+  free
+  premium
+}
+
+enum MemoryType {
+  note
+  person
+  event
+  place
+  task
+}
+
+enum MemoryState {
+  SAVED
+  DRAFT
+  DELETED
+}
+
+enum EnrichmentStatus {
+  pending
+  processing
+  completed
+  failed
+  queued_budget
+}
+
+enum ReminderStatus {
+  pending
+  sent
+  cancelled
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  tier         String   @default("free")
+  roles        String[] @default(["user"])  // Add this
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  memories         Memory[]
+  sessions         Session[]
+  reminders        Reminder[]
+  usage            UserUsage?
+  idempotencyKeys  IdempotencyKey[]
+  aiCostTracking   AiCostTracking[]
+  
+  @@map("users")
+}
+
+model UserUsage {
+  userId            String   @id @map("user_id") @db.Uuid
+  memoriesToday     Int      @default(0) @map("memories_today")
+  memoriesThisMonth Int      @default(0) @map("memories_this_month")
+  imagesThisMonth   Int      @default(0) @map("images_this_month")
+  voiceThisMonth    Int      @default(0) @map("voice_this_month")
+  searchesToday     Int      @default(0) @map("searches_today")
+  storageBytes      BigInt   @default(0) @map("storage_bytes")
+  lastDailyReset    DateTime @default(now()) @map("last_daily_reset")
+  lastMonthlyReset  DateTime @default(now()) @map("last_monthly_reset")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_usage")
+}
+
+model TierLimit {
+  tier             String @id
+  memoriesPerDay   Int    @map("memories_per_day")
+  memoriesPerMonth Int    @map("memories_per_month")
+  imagesPerMonth   Int    @map("images_per_month")
+  voicePerMonth    Int    @map("voice_per_month")
+  searchesPerDay   Int    @map("searches_per_day")
+  storageBytes     BigInt @map("storage_bytes")
+  apiRatePerMin    Int    @map("api_rate_per_min")
+
+  @@map("tier_limits")
+}
+
+model Memory {
+  id                 String           @id @default(uuid()) @db.Uuid
+  userId             String           @map("user_id") @db.Uuid
+  type               MemoryType?
+  textContent        String?          @map("text_content") @db.Text
+  imageUrl           String?          @map("image_url")
+  state              MemoryState      @default(SAVED)
+  contentHash        String?          @map("content_hash") @db.VarChar(32)
+  enrichmentStatus   EnrichmentStatus @default(pending) @map("enrichment_status")
+  enrichmentQueuedAt DateTime?        @map("enrichment_queued_at")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reminders       Reminder[]
+  embeddings      Embedding[]
+  idempotencyKeys IdempotencyKey[]
+  aiCostTracking  AiCostTracking[]
+
+  @@index([userId, state])
+  @@index([userId, contentHash, createdAt])
+  @@map("memories")
+}
+
+// Note: Embedding table will be partitioned via SQL migration
+// Prisma doesn't fully support partitioned tables, so we define the base structure
+model Embedding {
+  id           String   @id @default(uuid()) @db.Uuid
+  memoryId     String   @map("memory_id") @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  // vector column will be added via SQL migration (pgvector)
+  modelVersion String   @default("text-embedding-ada-002") @map("model_version")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([memoryId])
+  @@map("embeddings")
+}
+
+model Reminder {
+  id          String         @id @default(uuid()) @db.Uuid
+  userId      String         @map("user_id") @db.Uuid
+  memoryId    String         @map("memory_id") @db.Uuid
+  scheduledAt DateTime       @map("scheduled_at")
+  sentAt      DateTime?      @map("sent_at")
+  status      ReminderStatus @default(pending)
+  readAt      DateTime?      @map("read_at")
+  dismissedAt DateTime?      @map("dismissed_at")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, readAt])
+  @@index([userId, status, readAt, dismissedAt])
+  @@map("reminders")
+}
+
+model Session {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  refreshTokenHash String   @map("refresh_token_hash")
+  expiresAt        DateTime @map("expires_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model IdempotencyKey {
+  idempotencyKey String   @id @map("idempotency_key") @db.VarChar(100)
+  userId         String   @map("user_id") @db.Uuid
+  endpoint       String   @db.VarChar(100)
+  requestHash    String?  @map("request_hash") @db.VarChar(64)
+  responseStatus Int?     @map("response_status")
+  responseBody   Json?    @map("response_body")
+  createdAt      DateTime @default(now()) @map("created_at")
+  expiresAt      DateTime @map("expires_at")
+
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memory   Memory? @relation(fields: [memoryId], references: [id])
+  memoryId String? @map("memory_id") @db.Uuid
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("idempotency_keys")
+}
+
+model AiCostTracking {
+  id         Int      @id @default(autoincrement())
+  date       DateTime @default(now()) @db.Date
+  userId     String   @map("user_id") @db.Uuid
+  operation  String   @db.VarChar(50)
+  tokensUsed Int      @map("tokens_used")
+  costCents  Decimal  @map("cost_cents") @db.Decimal(10, 4)
+  model      String   @db.VarChar(100)
+  memoryId   String?  @map("memory_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memory Memory? @relation(fields: [memoryId], references: [id])
+
+  @@index([date])
+  @@index([userId, date])
+  @@map("ai_cost_tracking")
+}

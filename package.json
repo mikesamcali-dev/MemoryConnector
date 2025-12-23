@@ -1,0 +1,41 @@
+{
+  "name": "memory-connector",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Memory Connector - MVP Implementation",
+  "scripts": {
+    "dev": "pnpm --filter './apps/*' dev --parallel",
+    "build": "pnpm --filter './apps/*' build",
+    "lint": "pnpm --filter './apps/*' lint && pnpm --filter './packages/*' lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "test": "pnpm --filter './apps/*' test",
+    "test:e2e": "pnpm --filter './apps/web' test:e2e",
+    "typecheck": "pnpm --filter './apps/*' typecheck",
+    "db:up": "docker compose -f infra/compose/docker-compose.yml up -d",
+    "db:down": "docker compose -f infra/compose/docker-compose.yml down",
+    "db:migrate": "pnpm --filter './apps/api' db:migrate",
+    "db:seed": "pnpm --filter './apps/api' db:seed",
+    "compose:up": "docker compose -f infra/compose/docker-compose.dev.yml up",
+    "compose:down": "docker compose -f infra/compose/docker-compose.dev.yml down",
+    "check:windows": "powershell -ExecutionPolicy Bypass -File scripts/check-windows-setup.ps1",
+    "reset:windows": "powershell -ExecutionPolicy Bypass -File scripts/reset-windows-env.ps1"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-unused-imports": "^3.0.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}
+

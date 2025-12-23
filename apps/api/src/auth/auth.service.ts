@@ -1,0 +1,108 @@
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import * as argon2 from 'argon2';
+import { UsersService } from '../users/users.service';
+import { SessionsService } from './sessions/sessions.service';
+import { PrismaService } from '../prisma/prisma.service';
+
+@Injectable()
+export class AuthService {
+  constructor(
+    private usersService: UsersService,
+    private jwtService: JwtService,
+    private sessionsService: SessionsService,
+    private prisma: PrismaService,
+    private config: ConfigService
+  ) {}
+
+  async validateUser(email: string, password: string): Promise<any> {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const isValid = await argon2.verify(user.passwordHash, password);
+    if (!isValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const { passwordHash, ...result } = user;
+    return result;
+  }
+
+  async login(user: any) {
+    const payload = { email: user.email, sub: user.id, roles: user.roles };
+    const accessToken = this.jwtService.sign(payload);
+
+    // Create refresh token
+    const refreshToken = await this.sessionsService.createSession(user.id);
+
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        tier: user.tier,
+        roles: user.roles,
+      },
+    };
+  }
+
+  async signup(email: string, password: string) {
+    // Check if user exists
+    const existing = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existing) {
+      throw new UnauthorizedException('User already exists');
+    }
+
+    // Hash password
+    const passwordHash = await argon2.hash(password);
+
+    // Create user
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        tier: 'free',
+        roles: ['user'],
+      },
+    });
+
+    // Create user usage record
+    await this.prisma.userUsage.create({
+      data: {
+        userId: user.id,
+      },
+    });
+
+    // Auto-login
+    return this.login(user);
+  }
+
+  async refreshToken(refreshToken: string) {
+    const session = await this.sessionsService.validateAndRefresh(refreshToken);
+    if (!session) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const user = await this.usersService.findById(session.userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const payload = { email: user.email, sub: user.id, roles: user.roles };
+    const accessToken = this.jwtService.sign(payload);
+
+    return { accessToken };
+  }
+
+  async logout(refreshToken: string) {
+    await this.sessionsService.revokeSession(refreshToken);
+  }
+}
+

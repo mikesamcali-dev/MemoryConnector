@@ -1,0 +1,9 @@
+import { NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import { Observable } from 'rxjs';
+import { IdempotencyService } from '../idempotency.service';
+export declare class IdempotencyInterceptor implements NestInterceptor {
+    private idempotencyService;
+    constructor(idempotencyService: IdempotencyService);
+    intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>>;
+}
+//# sourceMappingURL=idempotency.interceptor.d.ts.map
