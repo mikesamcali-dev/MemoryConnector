@@ -1,5 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Hybrid Memory Types Schema
+// Implements storage strategy pattern with generic and structured types
 
 generator client {
   provider = "prisma-client-js"
@@ -10,23 +10,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ============================================================================
+// ENUMS
+// ============================================================================
+
 enum UserTier {
   free
   premium
-}
-
-enum MemoryType {
-  note
-  person
-  event
-  place
-  task
 }
 
 enum MemoryState {
   SAVED
   DRAFT
   DELETED
+}
+
+enum StorageStrategy {
+  generic     // Data stored in memories.data as JSONB
+  structured  // Data stored in dedicated table
+
+  @@map("storagestrategy")
 }
 
 enum EnrichmentStatus {
@@ -41,25 +44,68 @@ enum ReminderStatus {
   pending
   sent
   cancelled
+  slide  // Reminder has been added to a slide deck
 }
+
+enum LinkType {
+  locatedAt    // Memory is located at another memory (location)
+  summaryOf    // Memory summarizes another memory
+  hasMedia     // Memory has media attachment (another memory)
+  related      // Generic relationship
+  mentions     // Memory mentions a person/entity
+
+  @@map("linktype")
+}
+
+enum TranscriptStatus {
+  none
+  partial
+  full
+  failed
+}
+
+enum TranscriptSource {
+  captions
+  auto
+  asr
+  manual
+  unknown
+}
+
+enum IngestionStatus {
+  queued
+  ingested
+  retry
+  failed
+  blocked
+}
+
+// ============================================================================
+// USER & AUTH
+// ============================================================================
 
 model User {
   id           String   @id @default(uuid()) @db.Uuid
   email        String   @unique
   passwordHash String   @map("password_hash")
   tier         String   @default("free")
-  roles        String[] @default(["user"])  // Add this
+  roles        String[] @default(["user"])
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
-  
+
   // Relations
-  memories         Memory[]
-  sessions         Session[]
-  reminders        Reminder[]
-  usage            UserUsage?
-  idempotencyKeys  IdempotencyKey[]
-  aiCostTracking   AiCostTracking[]
-  
+  memories            Memory[]
+  sessions            Session[]
+  reminders           Reminder[]
+  usage               UserUsage?
+  reminderPreferences UserReminderPreferences?
+  idempotencyKeys     IdempotencyKey[]
+  aiCostTracking      AiCostTracking[]
+  excludedWords       ExcludedWord[]
+  images              Image[]
+  urlPages            UrlPage[]
+  slideDecks          SlideDeck[]
+
   @@map("users")
 }
 
@@ -79,6 +125,26 @@ model UserUsage {
   @@map("user_usage")
 }
 
+model UserReminderPreferences {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+
+  // Reminder intervals in minutes
+  firstReminderMinutes  Int @default(3) @map("first_reminder_minutes")
+  secondReminderMinutes Int @default(4320) @map("second_reminder_minutes")  // 3 days
+  thirdReminderMinutes  Int @default(30240) @map("third_reminder_minutes")  // 3 weeks
+
+  // Enable/disable reminders
+  remindersEnabled Boolean @default(true) @map("reminders_enabled")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_reminder_preferences")
+}
+
 model TierLimit {
   tier             String @id
   memoriesPerDay   Int    @map("memories_per_day")
@@ -92,38 +158,572 @@ model TierLimit {
   @@map("tier_limits")
 }
 
-model Memory {
-  id                 String           @id @default(uuid()) @db.Uuid
-  userId             String           @map("user_id") @db.Uuid
-  type               MemoryType?
-  textContent        String?          @map("text_content") @db.Text
-  imageUrl           String?          @map("image_url")
-  state              MemoryState      @default(SAVED)
-  contentHash        String?          @map("content_hash") @db.VarChar(32)
-  enrichmentStatus   EnrichmentStatus @default(pending) @map("enrichment_status")
-  enrichmentQueuedAt DateTime?        @map("enrichment_queued_at")
-  createdAt          DateTime         @default(now()) @map("created_at")
-  updatedAt          DateTime         @updatedAt @map("updated_at")
+// ============================================================================
+// MEMORY TYPE REGISTRY (Admin-controlled)
+// ============================================================================
+
+model MemoryType {
+  id              String          @id @default(uuid()) @db.Uuid
+  code            String          @unique // e.g., "event", "location", "note"
+  label           String          // Human-readable name
+  description     String?
+  icon            String?         @default("📝")
+  color           String?         @default("#6B7280")
+  storageStrategy StorageStrategy @default(generic) @map("storage_strategy")
+  tableName       String?         @map("table_name") // e.g., "events", "locations", null for generic
+  enabled         Boolean         @default(true)
+  sortOrder       Int             @default(0) @map("sort_order")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
 
   // Relations
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reminders       Reminder[]
-  embeddings      Embedding[]
-  idempotencyKeys IdempotencyKey[]
-  aiCostTracking  AiCostTracking[]
+  assignments MemoryTypeAssignment[]
+
+  @@map("memory_types")
+}
+
+// ============================================================================
+// MEMORY (Root Entity)
+// ============================================================================
+
+model Memory {
+  id               String           @id @default(uuid()) @db.Uuid
+  userId           String           @map("user_id") @db.Uuid
+  title            String?          @db.VarChar(500)
+  body             String?          @db.Text
+  occurredAt       DateTime?        @map("occurred_at") // When the memory happened
+  startAt          DateTime?        @map("start_at")    // For events
+  endAt            DateTime?        @map("end_at")      // For events
+  data             Json?            // Generic metadata for non-structured types
+  latitude         Float?
+  longitude        Float?
+  imageUrl         String?          @map("image_url")
+  state            MemoryState      @default(SAVED)
+  contentHash      String?          @map("content_hash") @db.VarChar(32)
+  enrichmentStatus EnrichmentStatus @default(pending) @map("enrichment_status")
+  enrichmentQueuedAt DateTime?      @map("enrichment_queued_at")
+  locationId       String?          @map("location_id") @db.Uuid
+  personId         String?          @map("person_id") @db.Uuid
+  youtubeVideoId   String?          @map("youtube_video_id") @db.Uuid
+  tiktokVideoId    String?          @map("tiktok_video_id") @db.Uuid
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  user                User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  typeAssignments     MemoryTypeAssignment[]
+  reminders           Reminder[]
+  embeddings          Embedding[]
+  idempotencyKeys     IdempotencyKey[]
+  aiCostTracking      AiCostTracking[]
+
+  // Structured type relations (1:1)
+  event               Event?
+
+  // Shared entity relations
+  location            Location?                @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  person              Person?                  @relation(fields: [personId], references: [id], onDelete: SetNull)
+  youtubeVideo        YouTubeVideo?            @relation(fields: [youtubeVideoId], references: [id], onDelete: SetNull)
+  tiktokVideo         TikTokVideo?             @relation(fields: [tiktokVideoId], references: [id], onDelete: SetNull)
+
+  // Link relations
+  linksFrom           MemoryLink[]             @relation("LinkSource")
+  linksTo             MemoryLink[]             @relation("LinkTarget")
+  wordLinks           MemoryWordLink[]
+  imageLinks          MemoryImageLink[]
+  urlPageLinks        MemoryUrlPageLink[]
+  slides              Slide[]
 
   @@index([userId, state])
   @@index([userId, contentHash, createdAt])
+  @@index([occurredAt])
+  @@index([locationId])
+  @@index([personId])
+  @@index([youtubeVideoId])
+  @@index([tiktokVideoId])
   @@map("memories")
 }
 
-// Note: Embedding table will be partitioned via SQL migration
-// Prisma doesn't fully support partitioned tables, so we define the base structure
+// ============================================================================
+// MEMORY TYPE ASSIGNMENT (Many-to-Many)
+// ============================================================================
+
+model MemoryTypeAssignment {
+  memoryId     String   @map("memory_id") @db.Uuid
+  memoryTypeId String   @map("memory_type_id") @db.Uuid
+  confidence   Float?   @default(1.0) // AI confidence score
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  memory     Memory     @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  memoryType MemoryType @relation(fields: [memoryTypeId], references: [id], onDelete: Cascade)
+
+  @@id([memoryId, memoryTypeId])
+  @@index([memoryTypeId])
+  @@map("memory_type_assignments")
+}
+
+// ============================================================================
+// STRUCTURED MEMORY TYPES (Dedicated Tables)
+// ============================================================================
+
+// Events - structured type
+model Event {
+  memoryId       String    @id @map("memory_id") @db.Uuid
+  startAt        DateTime? @map("start_at")
+  endAt          DateTime? @map("end_at")
+  timezone       String?   @db.VarChar(50)
+  recurrenceRule String?   @map("recurrence_rule") @db.Text
+  description    String?   @db.Text
+  tags           String[]  @default([])
+  lastEnrichedAt DateTime? @map("last_enriched_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@map("events")
+}
+
+// Locations - now a shared/reusable entity
+model Location {
+  id             String    @id @default(uuid()) @db.Uuid
+  name           String    @db.VarChar(200)
+  address        String?   @db.Text
+  city           String?   @db.VarChar(100)
+  state          String?   @db.VarChar(100)
+  zip            String?   @db.VarChar(20)
+  country        String?   @db.VarChar(100)
+  latitude       Float?
+  longitude      Float?
+  locationType   String?   @map("location_type") @db.VarChar(50)
+  placeType      String?   @map("place_type") @db.VarChar(50)
+  lastEnrichedAt DateTime? @map("last_enriched_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  memories Memory[]
+
+  @@map("locations")
+}
+
+// People - now a shared/reusable entity
+model Person {
+  id             String    @id @default(uuid()) @db.Uuid
+  displayName    String    @map("display_name") @db.VarChar(200)
+  email          String?   @db.VarChar(255)
+  phone          String?   @db.VarChar(50)
+  bio            String?   @db.Text
+  lastEnrichedAt DateTime? @map("last_enriched_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  memories              Memory[]
+  relationshipsFrom     PersonRelationship[] @relation("RelationshipSource")
+  relationshipsTo       PersonRelationship[] @relation("RelationshipTarget")
+  imageLinks            ImagePersonLink[]
+
+  @@map("people")
+}
+
+// Person Relationships
+model PersonRelationship {
+  id               String   @id @default(uuid()) @db.Uuid
+  sourcePersonId   String   @map("source_person_id") @db.Uuid
+  targetPersonId   String   @map("target_person_id") @db.Uuid
+  relationshipType String   @map("relationship_type") @db.VarChar(100)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  sourcePerson Person @relation("RelationshipSource", fields: [sourcePersonId], references: [id], onDelete: Cascade)
+  targetPerson Person @relation("RelationshipTarget", fields: [targetPersonId], references: [id], onDelete: Cascade)
+
+  @@unique([sourcePersonId, targetPersonId])
+  @@index([sourcePersonId])
+  @@index([targetPersonId])
+  @@map("person_relationships")
+}
+
+// Words - now a shared/reusable entity (like Location and Person)
+model Word {
+  id             String    @id @default(uuid()) @db.Uuid
+  word           String    @unique @db.VarChar(100)
+  description    String?   @db.Text
+  phonetic       String?   @db.VarChar(100)
+  partOfSpeech   String?   @map("part_of_speech") @db.VarChar(50)
+  etymology      String?   @db.Text
+  examples       Json?     // Array of example sentences
+  synonyms       Json?     // Array of synonyms
+  antonyms       Json?     // Array of antonyms
+  difficulty     String?   @db.VarChar(20)
+  lastEnrichedAt DateTime? @map("last_enriched_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  memoryLinks MemoryWordLink[]
+
+  @@index([word])
+  @@map("words")
+}
+
+// Images - standalone entity for photos/images with face detection
+model Image {
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @map("user_id") @db.Uuid
+  storageUrl        String    @map("storage_url") @db.Text
+  storageKey        String    @map("storage_key") @db.Text
+  thumbnailUrl256   String?   @map("thumbnail_url_256") @db.Text
+  thumbnailUrl1024  String?   @map("thumbnail_url_1024") @db.Text
+  contentType       String    @map("content_type") @db.VarChar(50)
+  sizeBytes         Int       @map("size_bytes")
+  sha256            String    @db.VarChar(64)
+  phash             String?   @db.VarChar(64)
+  width             Int?
+  height            Int?
+  exifData          Json?     @map("exif_data")
+  capturedAt        DateTime? @map("captured_at")
+  latitude          Float?
+  longitude         Float?
+  locationAccuracy  Float?    @map("location_accuracy")
+  locationSource    String?   @map("location_source") @db.VarChar(20)
+  consentBiometrics Boolean   @default(false) @map("consent_biometrics")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  faces        ImageFace[]
+  memoryLinks  MemoryImageLink[]
+  personLinks  ImagePersonLink[]
+
+  @@unique([userId, sha256])
+  @@index([userId])
+  @@index([sha256])
+  @@index([phash])
+  @@map("images")
+}
+
+// Image Faces - detected faces in images
+model ImageFace {
+  id               String   @id @default(uuid()) @db.Uuid
+  imageId          String   @map("image_id") @db.Uuid
+  bboxX            Int      @map("bbox_x")
+  bboxY            Int      @map("bbox_y")
+  bboxWidth        Int      @map("bbox_width")
+  bboxHeight       Int      @map("bbox_height")
+  blurScore        Float?   @map("blur_score")
+  occlusionScore   Float?   @map("occlusion_score")
+  poseYaw          Float?   @map("pose_yaw")
+  posePitch        Float?   @map("pose_pitch")
+  poseRoll         Float?   @map("pose_roll")
+  embedding        Json?    // Face embedding vector (only if consent given)
+  embeddingModel   String?  @map("embedding_model") @db.VarChar(50)
+  faceCropUrl      String?  @map("face_crop_url") @db.Text
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  image       Image             @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  personLinks ImagePersonLink[]
+
+  @@index([imageId])
+  @@map("image_faces")
+}
+
+// Image Person Links - links detected faces to people
+model ImagePersonLink {
+  id            String   @id @default(uuid()) @db.Uuid
+  imageId       String   @map("image_id") @db.Uuid
+  personId      String   @map("person_id") @db.Uuid
+  faceId        String?  @map("face_id") @db.Uuid
+  confidence    Float?   // Match confidence score
+  linkMethod    String   @map("link_method") @db.VarChar(20) // auto|confirmed|manual
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  image  Image      @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  person Person     @relation(fields: [personId], references: [id], onDelete: Cascade)
+  face   ImageFace? @relation(fields: [faceId], references: [id], onDelete: SetNull)
+
+  @@unique([imageId, personId, faceId])
+  @@index([imageId])
+  @@index([personId])
+  @@index([faceId])
+  @@map("image_person_links")
+}
+
+// Memory-Image Links (Many-to-Many)
+model MemoryImageLink {
+  id        String   @id @default(uuid()) @db.Uuid
+  memoryId  String   @map("memory_id") @db.Uuid
+  imageId   String   @map("image_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  image  Image  @relation(fields: [imageId], references: [id], onDelete: Cascade)
+
+  @@unique([memoryId, imageId])
+  @@index([memoryId])
+  @@index([imageId])
+  @@map("memory_image_links")
+}
+
+// ============================================================================
+// URL PAGES - Standalone Entity
+// ============================================================================
+
+model UrlPage {
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  url             String    @db.Text
+  urlHash         String    @map("url_hash") @db.VarChar(64) // SHA256 hash for deduplication
+  title           String?   @db.Text
+  description     String?   @db.Text
+  summary         String?   @db.Text
+  content         String?   @db.Text // Extracted page content
+  author          String?   @db.VarChar(255)
+  publishedAt     DateTime? @map("published_at")
+  siteName        String?   @map("site_name") @db.VarChar(255)
+  imageUrl        String?   @map("image_url") @db.Text
+  tags            Json?     // Array of extracted tags
+  metadata        Json?     // Additional AI-extracted metadata
+  fetchedAt       DateTime  @default(now()) @map("fetched_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memoryLinks MemoryUrlPageLink[]
+
+  @@unique([userId, urlHash])
+  @@index([userId])
+  @@index([urlHash])
+  @@index([url])
+  @@map("url_pages")
+}
+
+model MemoryUrlPageLink {
+  id         String   @id @default(uuid()) @db.Uuid
+  memoryId   String   @map("memory_id") @db.Uuid
+  urlPageId  String   @map("url_page_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  memory  Memory  @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  urlPage UrlPage @relation(fields: [urlPageId], references: [id], onDelete: Cascade)
+
+  @@unique([memoryId, urlPageId])
+  @@index([memoryId])
+  @@index([urlPageId])
+  @@map("memory_url_page_links")
+}
+
+// Excluded Words - words to ignore in spell-check
+model ExcludedWord {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  word      String   @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, word])
+  @@index([userId])
+  @@map("excluded_words")
+}
+
+// ============================================================================
+// YOUTUBE VIDEOS - Shared/Reusable Entity
+// ============================================================================
+
+model YouTubeVideo {
+  id                 String            @id @default(uuid()) @db.Uuid
+
+  // Platform & YouTube identifiers
+  platform           String            @default("youtube") @db.VarChar(16)
+  youtubeVideoId     String            @map("youtube_video_id") @db.VarChar(16)
+  canonicalUrl       String            @map("canonical_url") @db.VarChar(2048)
+
+  // Video metadata
+  title              String            @db.VarChar(512)
+  description        String?           @db.Text
+  thumbnailUrl       String?           @map("thumbnail_url") @db.VarChar(2048)
+
+  // Creator info
+  creatorDisplayName String            @map("creator_display_name") @db.VarChar(256)
+  channelId          String?           @map("channel_id") @db.VarChar(64)
+
+  // Video details
+  publishedAt        DateTime          @map("published_at")
+  durationSeconds    Int               @map("duration_seconds")
+  languageCode       String            @map("language_code") @db.VarChar(12)
+
+  // Compliance & content details
+  license            String?           @db.VarChar(64)
+  madeForKids        Boolean?          @map("made_for_kids")
+  captionAvailable   Boolean?          @map("caption_available")
+
+  // Transcript data
+  transcriptStatus   TranscriptStatus  @map("transcript_status")
+  transcriptSource   TranscriptSource  @map("transcript_source")
+  transcriptText     String?           @map("transcript_text") @db.Text
+  transcriptSegments Json?             @map("transcript_segments") // Array of {chunk_id, start_seconds, end_seconds, text}
+
+  // Enrichment
+  summary            String?           @db.Text
+  topics             Json?             // Array of LLM-derived topics
+  chapters           Json?             // Array of {start_seconds, label, description}
+
+  // Metrics (snapshots)
+  viewCount          BigInt?           @map("view_count")
+  likeCount          BigInt?           @map("like_count")
+  favoriteCount      BigInt?           @map("favorite_count")
+  commentCount       BigInt?           @map("comment_count")
+  categoryId         String?           @map("category_id") @db.VarChar(32)
+  capturedAt         DateTime?         @map("captured_at") // When statistics were captured
+
+  // Additional metadata
+  tags               Json?             // Array of tags
+  externalLinks      Json?             @map("external_links") // Links found in description
+  contentHash        String?           @map("content_hash") @db.VarChar(64)
+
+  // Ingestion tracking
+  ingestionStatus    IngestionStatus   @map("ingestion_status")
+  ingestionAttempts  Int               @default(0) @map("ingestion_attempts")
+  lastIngestionError String?           @map("last_ingestion_error") @db.Text
+  ingestedAt         DateTime?         @map("ingested_at")
+  lastEnrichedAt     DateTime?         @map("last_enriched_at")
+
+  // Timestamps
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  memories           Memory[]
+
+  @@unique([platform, youtubeVideoId])
+  @@unique([canonicalUrl])
+  @@index([channelId])
+  @@index([publishedAt(sort: Desc)])
+  @@index([ingestedAt(sort: Desc)])
+  @@index([languageCode])
+  @@index([ingestionStatus])
+  @@index([contentHash])
+  @@map("youtube_videos")
+}
+
+// ============================================================================
+// TIKTOK VIDEOS - Shared/Reusable Entity
+// ============================================================================
+
+model TikTokVideo {
+  id                 String            @id @default(uuid()) @db.Uuid
+
+  // Platform & TikTok identifiers
+  platform           String            @default("tiktok") @db.VarChar(16)
+  tiktokVideoId      String            @map("tiktok_video_id") @db.VarChar(64)
+  canonicalUrl       String            @map("canonical_url") @db.VarChar(2048)
+
+  // Video metadata
+  title              String            @db.VarChar(512)
+  description        String?           @db.Text
+  thumbnailUrl       String?           @map("thumbnail_url") @db.VarChar(2048)
+
+  // Creator info
+  creatorDisplayName String            @map("creator_display_name") @db.VarChar(256)
+  creatorUsername    String?           @map("creator_username") @db.VarChar(128)
+  creatorId          String?           @map("creator_id") @db.VarChar(64)
+
+  // Video details
+  publishedAt        DateTime?         @map("published_at")
+  durationSeconds    Int?              @map("duration_seconds")
+
+  // Enrichment
+  summary            String?           @db.Text
+  transcript         String?           @db.Text // Whisper transcription of video audio
+  extractedData      Json?             @map("extracted_data") // Structured data from Whisper analysis
+  topics             Json?             // Array of LLM-derived topics
+  musicInfo          Json?             @map("music_info") // {title, author, url}
+
+  // Metrics (snapshots)
+  viewCount          BigInt?           @map("view_count")
+  likeCount          BigInt?           @map("like_count")
+  shareCount         BigInt?           @map("share_count")
+  commentCount       BigInt?           @map("comment_count")
+  capturedAt         DateTime?         @map("captured_at") // When statistics were captured
+
+  // Additional metadata
+  hashtags           Json?             // Array of hashtags
+  mentions           Json?             // Array of mentioned users
+  externalLinks      Json?             @map("external_links") // Links found in description
+  contentHash        String?           @map("content_hash") @db.VarChar(64)
+
+  // Ingestion tracking
+  ingestionStatus    IngestionStatus   @map("ingestion_status")
+  ingestionAttempts  Int               @default(0) @map("ingestion_attempts")
+  lastIngestionError String?           @map("last_ingestion_error") @db.Text
+  ingestedAt         DateTime?         @map("ingested_at")
+  lastEnrichedAt     DateTime?         @map("last_enriched_at")
+
+  // Timestamps
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  memories           Memory[]
+
+  @@unique([platform, tiktokVideoId])
+  @@unique([canonicalUrl])
+  @@index([creatorId])
+  @@index([creatorUsername])
+  @@index([publishedAt(sort: Desc)])
+  @@index([ingestedAt(sort: Desc)])
+  @@index([ingestionStatus])
+  @@index([contentHash])
+  @@map("tiktok_videos")
+}
+
+// ============================================================================
+// MEMORY LINKS (Relationships)
+// ============================================================================
+
+model MemoryLink {
+  id          String    @id @default(uuid()) @db.Uuid
+  sourceId    String    @map("source_id") @db.Uuid
+  targetId    String    @map("target_id") @db.Uuid
+  linkType    LinkType  @map("link_type")
+  metadata    Json?     // Additional link metadata
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  source Memory @relation("LinkSource", fields: [sourceId], references: [id], onDelete: Cascade)
+  target Memory @relation("LinkTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, targetId, linkType])
+  @@index([sourceId])
+  @@index([targetId])
+  @@index([linkType])
+  @@map("memory_links")
+}
+
+// Memory-Word Links (Many-to-Many)
+model MemoryWordLink {
+  id        String   @id @default(uuid()) @db.Uuid
+  memoryId  String   @map("memory_id") @db.Uuid
+  wordId    String   @map("word_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  word   Word   @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@unique([memoryId, wordId])
+  @@index([memoryId])
+  @@index([wordId])
+  @@map("memory_word_links")
+}
+
+// ============================================================================
+// SUPPORTING TABLES
+// ============================================================================
+
 model Embedding {
   id           String   @id @default(uuid()) @db.Uuid
   memoryId     String   @map("memory_id") @db.Uuid
   userId       String   @map("user_id") @db.Uuid
-  // vector column will be added via SQL migration (pgvector)
   modelVersion String   @default("text-embedding-ada-002") @map("model_version")
   createdAt    DateTime @default(now()) @map("created_at")
 
@@ -148,6 +748,7 @@ model Reminder {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  slide  Slide?
 
   @@index([userId, status, readAt])
   @@index([userId, status, readAt, dismissedAt])
@@ -204,4 +805,114 @@ model AiCostTracking {
   @@index([date])
   @@index([userId, date])
   @@map("ai_cost_tracking")
+}
+
+// ============================================================================
+// AUDIT TRAIL
+// ============================================================================
+
+model AuditTrail {
+  id                 String    @id @default(uuid()) @db.Uuid
+  tenantId           String?   @map("tenant_id") @db.Uuid
+
+  // Who: Actor identity
+  userId             String?   @map("user_id") @db.Uuid
+  actorType          String    @default("USER") @map("actor_type") @db.VarChar(20)
+  actorEmail         String?   @map("actor_email") @db.VarChar(255)
+  impersonatorId     String?   @map("impersonator_id") @db.Uuid
+
+  // What: Event classification
+  eventType          String    @map("event_type") @db.VarChar(50)
+  action             String    @db.VarChar(20)
+  entityName         String?   @map("entity_name") @db.VarChar(100)
+  entityId           String?   @map("entity_id") @db.Uuid
+
+  // When: Timing
+  createdAt          DateTime  @default(now()) @map("created_at")
+  durationMs         Int?      @map("duration_ms")
+
+  // Where: Request origin
+  ipAddress          String?   @map("ip_address") @db.VarChar(45)
+  userAgent          String?   @map("user_agent") @db.Text
+  deviceId           String?   @map("device_id") @db.VarChar(100)
+  geoCountry         String?   @map("geo_country") @db.VarChar(2)
+  geoCity            String?   @map("geo_city") @db.VarChar(100)
+
+  // Context: Request tracking
+  requestId          String?   @map("request_id") @db.VarChar(100)
+  sessionId          String?   @map("session_id") @db.VarChar(100)
+  correlationId      String?   @map("correlation_id") @db.VarChar(100)
+  traceId            String?   @map("trace_id") @db.VarChar(100)
+  method             String?   @db.VarChar(10)
+  url                String?   @db.VarChar(500)
+
+  // Result: Outcome
+  success            Boolean   @default(true)
+  statusCode         Int?      @map("status_code")
+  errorCode          String?   @map("error_code") @db.VarChar(50)
+  errorMessage       String?   @map("error_message") @db.Text
+  exceptionType      String?   @map("exception_type") @db.VarChar(255)
+
+  // Data: State changes and payloads
+  beforeJson         Json?     @map("before_json")
+  afterJson          Json?     @map("after_json")
+  diffJson           Json?     @map("diff_json")
+  requestJson        Json?     @map("request_json")
+  responseJson       Json?     @map("response_json")
+
+  // Metadata
+  loggingLevel       String    @default("STANDARD") @map("logging_level") @db.VarChar(20)
+  redactedFields     String[]  @map("redacted_fields")
+  truncatedFields    String[]  @map("truncated_fields")
+  dataHash           String?   @map("data_hash") @db.VarChar(64)
+
+  // Additional context
+  tags               Json?
+  notes              String?   @db.Text
+  msg                String?   @db.Text
+
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@index([entityName, entityId])
+  @@index([requestId])
+  @@index([eventType])
+  @@index([success, createdAt(sort: Desc)])
+  @@index([actorType, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("audit_trail")
+}
+
+// ============================================================================
+// SLIDE DECKS & SLIDES
+// ============================================================================
+
+model SlideDeck {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  title       String?  @db.VarChar(200)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slides Slide[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("slide_decks")
+}
+
+model Slide {
+  id          String   @id @default(uuid()) @db.Uuid
+  slideDeckId String   @map("slide_deck_id") @db.Uuid
+  reminderId  String   @unique @map("reminder_id") @db.Uuid
+  memoryId    String   @map("memory_id") @db.Uuid
+  sortOrder   Int      @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  slideDeck SlideDeck @relation(fields: [slideDeckId], references: [id], onDelete: Cascade)
+  reminder  Reminder  @relation(fields: [reminderId], references: [id], onDelete: Cascade)
+  memory    Memory    @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@index([slideDeckId, sortOrder])
+  @@index([memoryId])
+  @@map("slides")
 }

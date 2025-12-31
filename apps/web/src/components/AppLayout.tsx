@@ -1,0 +1,121 @@
+import { ReactNode } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Brain, Plus, Search, Bell, Settings, LogOut, ShieldCheck, MapPin, User, Network, Video, Film, Image, Link as LinkIcon, Presentation } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+
+interface AppLayoutProps {
+  children: ReactNode;
+}
+
+export function AppLayout({ children }: AppLayoutProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
+  const baseNavItems = [
+    { path: '/app/capture', icon: Plus, label: 'Capture' },
+    { path: '/app/search', icon: Search, label: 'Search' },
+    { path: '/app/slidedecks', icon: Presentation, label: 'Slide Decks' },
+    { path: '/app/locations', icon: MapPin, label: 'Locations' },
+    { path: '/app/people', icon: User, label: 'People' },
+    { path: '/app/images', icon: Image, label: 'Images' },
+    { path: '/app/urls', icon: LinkIcon, label: 'URLs' },
+    { path: '/app/youtube-videos', icon: Video, label: 'YouTube' },
+    { path: '/app/tiktok-videos', icon: Film, label: 'TikTok' },
+    { path: '/app/relationships', icon: Network, label: 'Network' },
+    { path: '/app/reminders', icon: Bell, label: 'Reminders' },
+    { path: '/app/settings', icon: Settings, label: 'Settings' },
+  ];
+
+  // Add admin link if user is admin
+  const navItems = user?.roles.includes('admin')
+    ? [...baseNavItems, { path: '/app/admin', icon: ShieldCheck, label: 'Admin' }]
+    : baseNavItems;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Top Navigation Bar */}
+      <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo */}
+            <Link to="/app/capture" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <Brain className="h-8 w-8 text-blue-600" />
+              <span className="text-xl font-bold text-gray-900 hidden sm:inline">Memory Connector</span>
+            </Link>
+
+            {/* Main Navigation */}
+            <div className="flex items-center gap-1">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.path);
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`
+                      flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all
+                      ${active
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      }
+                    `}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span className="hidden md:inline">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* User Menu */}
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2 text-sm text-gray-600">
+                <span className="font-medium">{user?.email}</span>
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs font-medium uppercase">
+                  {user?.tier || 'free'}
+                </span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                title="Logout"
+              >
+                <LogOut className="h-5 w-5" />
+                <span className="hidden sm:inline font-medium">Logout</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Page Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {children}
+      </main>
+
+      {/* Footer */}
+      <footer className="mt-auto border-t border-gray-200 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex justify-between items-center text-sm text-gray-500">
+            <p>© 2025 Memory Connector</p>
+            <div className="flex gap-4">
+              <a href="#" className="hover:text-gray-900 transition-colors">Privacy</a>
+              <a href="#" className="hover:text-gray-900 transition-colors">Terms</a>
+              <a href="#" className="hover:text-gray-900 transition-colors">Help</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}

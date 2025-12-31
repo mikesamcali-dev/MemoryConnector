@@ -8,7 +8,22 @@ import { UsersModule } from './users/users.module';
 import { MemoriesModule } from './memories/memories.module';
 import { SearchModule } from './search/search.module';
 import { RemindersModule } from './reminders/reminders.module';
+import { SlideDecksModule } from './slidedecks/slidedecks.module';
+import { WordsModule } from './words/words.module';
+import { EventsModule } from './events/events.module';
+import { LocationsModule } from './locations/locations.module';
+import { PeopleModule } from './people/people.module';
+import { UserPreferencesModule } from './user-preferences/user-preferences.module';
+import { YouTubeVideosModule } from './youtube-videos/youtube-videos.module';
+import { TikTokVideosModule } from './tiktok-videos/tiktok-videos.module';
+import { ImagesModule } from './images/images.module';
+import { UrlPagesModule } from './url-pages/url-pages.module';
+// Temporarily disabled - these modules need to be updated for hybrid schema
+// import { MemoryRelationshipsModule } from './memory-relationships/memory-relationships.module';
+// import { MemoryEntitiesModule } from './memory-entities/memory-entities.module';
+import { SpellCheckModule } from './spell-check/spell-check.module';
 import { AdminModule } from './admin/admin.module';
+import { AuditTrailModule } from './audit-trail/audit-trail.module';
 import { HealthModule } from './health/health.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { IdempotencyModule } from './idempotency/idempotency.module';
@@ -23,6 +38,7 @@ import { TierBasedThrottlerGuard } from './common/guards/tier-based-throttler.gu
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { IdempotencyInterceptor } from './idempotency/interceptors/idempotency.interceptor';
+import { AuditLoggingInterceptor } from './audit-trail/interceptors/audit-logging.interceptor';
 
 @Module({
   imports: [
@@ -50,7 +66,21 @@ import { IdempotencyInterceptor } from './idempotency/interceptors/idempotency.i
     MemoriesModule,
     SearchModule,
     RemindersModule,
+    SlideDecksModule,
+    WordsModule,
+    EventsModule,
+    LocationsModule,
+    PeopleModule,
+    UserPreferencesModule,
+    YouTubeVideosModule,
+    TikTokVideosModule,
+    ImagesModule,
+    UrlPagesModule,
+    // MemoryRelationshipsModule, // Disabled - needs update for hybrid schema
+    // MemoryEntitiesModule, // Disabled - needs update for hybrid schema
+    SpellCheckModule,
     AdminModule,
+    AuditTrailModule,
     HealthModule,
     MetricsModule,
     IdempotencyModule,
@@ -71,6 +101,10 @@ import { IdempotencyInterceptor } from './idempotency/interceptors/idempotency.i
     {
       provide: APP_INTERCEPTOR,
       useClass: IdempotencyInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AuditLoggingInterceptor,
     },
   ],
 })
