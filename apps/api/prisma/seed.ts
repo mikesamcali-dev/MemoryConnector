@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, StorageStrategy } from '@prisma/client';
 import * as argon2 from 'argon2';
 
 const prisma = new PrismaClient();
@@ -67,47 +67,320 @@ async function main() {
     },
   });
 
-  // Create a few test memories
-  const memories = await Promise.all([
-    prisma.memory.create({
-      data: {
-        userId: testUser.id,
-        type: 'note',
-        textContent: 'This is my first memory. I want to remember this moment.',
-        state: 'SAVED',
-      },
-    }),
-    prisma.memory.create({
-      data: {
-        userId: testUser.id,
-        type: 'person',
-        textContent: 'Met John at the coffee shop. He mentioned he is working on a new project.',
-        state: 'SAVED',
-      },
-    }),
-    prisma.memory.create({
-      data: {
-        userId: testUser.id,
-        type: 'event',
-        textContent: 'Team meeting scheduled for next Monday at 2 PM.',
-        state: 'SAVED',
-      },
-    }),
-  ]);
+  // Seed memory types with hybrid storage strategies
+  const memoryTypes = [
+    {
+      code: 'event',
+      label: 'Event',
+      description: 'Important events and occasions',
+      icon: '📅',
+      color: '#3B82F6',
+      storageStrategy: StorageStrategy.structured,
+      tableName: 'events',
+      enabled: true,
+      sortOrder: 1,
+    },
+    {
+      code: 'person',
+      label: 'Person',
+      description: 'People you meet and know',
+      icon: '👤',
+      color: '#8B5CF6',
+      storageStrategy: StorageStrategy.structured,
+      tableName: 'people',
+      enabled: true,
+      sortOrder: 2,
+    },
+    {
+      code: 'word',
+      label: 'Word',
+      description: 'Important words and vocabulary',
+      icon: '📝',
+      color: '#10B981',
+      storageStrategy: StorageStrategy.structured,
+      tableName: 'words',
+      enabled: true,
+      sortOrder: 3,
+    },
+    {
+      code: 'location',
+      label: 'Location',
+      description: 'Places you visit',
+      icon: '📍',
+      color: '#EF4444',
+      storageStrategy: StorageStrategy.structured,
+      tableName: 'locations',
+      enabled: true,
+      sortOrder: 4,
+    },
+    {
+      code: 'note',
+      label: 'Note',
+      description: 'General notes and thoughts',
+      icon: '📝',
+      color: '#6B7280',
+      storageStrategy: StorageStrategy.generic,
+      tableName: null,
+      enabled: true,
+      sortOrder: 5,
+    },
+    {
+      code: 'idea',
+      label: 'Idea',
+      description: 'Creative ideas and inspirations',
+      icon: '💡',
+      color: '#F59E0B',
+      storageStrategy: StorageStrategy.generic,
+      tableName: null,
+      enabled: true,
+      sortOrder: 6,
+    },
+    {
+      code: 'quote',
+      label: 'Quote',
+      description: 'Memorable quotes and phrases',
+      icon: '💬',
+      color: '#EC4899',
+      storageStrategy: StorageStrategy.generic,
+      tableName: null,
+      enabled: true,
+      sortOrder: 7,
+    },
+  ];
+
+  const createdTypes: Record<string, any> = {};
+  for (const type of memoryTypes) {
+    const memoryType = await prisma.memoryType.upsert({
+      where: { code: type.code },
+      update: {},
+      create: type,
+    });
+    createdTypes[type.code] = memoryType;
+  }
+
+  console.log(`Created ${memoryTypes.length} memory types`);
+
+  // Create test memories with new structure
+
+  // Example 1: Generic note memory
+  const noteMemory = await prisma.memory.create({
+    data: {
+      userId: testUser.id,
+      title: 'First Memory',
+      body: 'This is my first memory. I want to remember this moment.',
+      occurredAt: new Date(),
+      state: 'SAVED',
+    },
+  });
+
+  // Link it to "note" type
+  await prisma.memoryTypeAssignment.create({
+    data: {
+      memoryId: noteMemory.id,
+      memoryTypeId: createdTypes['note'].id,
+      confidence: 1.0,
+    },
+  });
+
+  // Example 2: Event memory with structured data
+  const eventMemory = await prisma.memory.create({
+    data: {
+      userId: testUser.id,
+      title: 'Team Meeting',
+      body: 'Quarterly planning meeting with the entire team',
+      occurredAt: new Date(),
+      startAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+      endAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000), // +2 hours
+      state: 'SAVED',
+    },
+  });
+
+  // Create structured event data
+  await prisma.event.create({
+    data: {
+      memoryId: eventMemory.id,
+      startAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      endAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
+      timezone: 'America/Los_Angeles',
+      description: 'Q1 planning and team alignment',
+      tags: ['work', 'planning', 'quarterly'],
+    },
+  });
+
+  // Link to event type
+  await prisma.memoryTypeAssignment.create({
+    data: {
+      memoryId: eventMemory.id,
+      memoryTypeId: createdTypes['event'].id,
+      confidence: 1.0,
+    },
+  });
+
+  // Example 3: Location memory with structured data
+  const locationMemory = await prisma.memory.create({
+    data: {
+      userId: testUser.id,
+      title: 'Downtown Coffee Shop',
+      body: 'Cozy coffee shop with great espresso and friendly staff',
+      latitude: 37.7749,
+      longitude: -122.4194,
+      occurredAt: new Date(),
+      state: 'SAVED',
+    },
+  });
+
+  // Create shared location entity
+  const downtownCoffeeShop = await prisma.location.create({
+    data: {
+      name: 'Downtown Coffee Shop',
+      address: '123 Market Street',
+      city: 'San Francisco',
+      state: 'CA',
+      country: 'USA',
+      latitude: 37.7749,
+      longitude: -122.4194,
+      placeType: 'cafe',
+    },
+  });
+
+  // Link memory to location
+  await prisma.memory.update({
+    where: { id: locationMemory.id },
+    data: { locationId: downtownCoffeeShop.id },
+  });
+
+  // Link to location type
+  await prisma.memoryTypeAssignment.create({
+    data: {
+      memoryId: locationMemory.id,
+      memoryTypeId: createdTypes['location'].id,
+      confidence: 1.0,
+    },
+  });
+
+  // Example 4: Word memory with structured data
+  const wordMemory = await prisma.memory.create({
+    data: {
+      userId: testUser.id,
+      title: 'Serendipity',
+      body: 'A happy accident or pleasant surprise',
+      occurredAt: new Date(),
+      state: 'SAVED',
+    },
+  });
+
+  // Create structured word data
+  await prisma.word.create({
+    data: {
+      memoryId: wordMemory.id,
+      word: 'serendipity',
+      description: 'The occurrence of events by chance in a happy or beneficial way',
+      phonetic: '/ˌser.ənˈdɪp.ə.ti/',
+      partOfSpeech: 'noun',
+      etymology: 'Coined by Horace Walpole in 1754',
+      examples: JSON.parse('["Finding my old friend at the airport was pure serendipity", "The discovery was a fortunate serendipity"]'),
+      synonyms: JSON.parse('["chance", "fortune", "luck", "happenstance"]'),
+      antonyms: JSON.parse('["misfortune", "bad luck"]'),
+      difficulty: 'medium',
+    },
+  });
+
+  // Link to word type
+  await prisma.memoryTypeAssignment.create({
+    data: {
+      memoryId: wordMemory.id,
+      memoryTypeId: createdTypes['word'].id,
+      confidence: 1.0,
+    },
+  });
+
+  // Example 5: Person memory with structured data
+  const personMemory = await prisma.memory.create({
+    data: {
+      userId: testUser.id,
+      title: 'John Smith',
+      body: 'Met John at the coffee shop. He mentioned he is working on a new project related to AI.',
+      occurredAt: new Date(),
+      state: 'SAVED',
+    },
+  });
+
+  // Create structured person data (standalone entity)
+  const person = await prisma.person.create({
+    data: {
+      displayName: 'John Smith',
+      email: 'john.smith@example.com',
+      phone: '+1-555-0123',
+      bio: 'Software engineer working on AI projects',
+    },
+  });
+
+  // Link person to memory
+  await prisma.memory.update({
+    where: { id: personMemory.id },
+    data: { personId: person.id },
+  });
+
+  // Link to person type
+  await prisma.memoryTypeAssignment.create({
+    data: {
+      memoryId: personMemory.id,
+      memoryTypeId: createdTypes['person'].id,
+      confidence: 1.0,
+    },
+  });
+
+  // Example 6: Generic idea memory
+  const ideaMemory = await prisma.memory.create({
+    data: {
+      userId: testUser.id,
+      title: 'App Idea: Habit Tracker',
+      body: 'Build a simple habit tracking app that uses AI to provide personalized insights',
+      occurredAt: new Date(),
+      data: JSON.parse('{"category": "productivity", "tags": ["app", "AI", "habits"], "priority": "high"}'),
+      state: 'SAVED',
+    },
+  });
+
+  // Link to idea type
+  await prisma.memoryTypeAssignment.create({
+    data: {
+      memoryId: ideaMemory.id,
+      memoryTypeId: createdTypes['idea'].id,
+      confidence: 1.0,
+    },
+  });
+
+  // Create a memory link (event happens at location)
+  await prisma.memoryLink.create({
+    data: {
+      sourceId: eventMemory.id,
+      targetId: locationMemory.id,
+      linkType: 'locatedAt',
+      metadata: JSON.parse('{"notes": "Meeting will be held at the coffee shop"}'),
+    },
+  });
 
   // Create a test reminder
   await prisma.reminder.create({
     data: {
       userId: testUser.id,
-      memoryId: memories[0].id,
-      scheduledAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+      memoryId: eventMemory.id,
+      scheduledAt: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000), // 6 days from now
       status: 'pending',
     },
   });
 
   console.log('Seeding completed!');
   console.log(`Test user: test@example.com / password123`);
-  console.log(`Created ${memories.length} test memories`);
+  console.log('Created 6 test memories with various types:');
+  console.log('  - 1 generic note');
+  console.log('  - 1 structured event');
+  console.log('  - 1 structured location');
+  console.log('  - 1 structured word');
+  console.log('  - 1 structured person');
+  console.log('  - 1 generic idea');
+  console.log('  - 1 memory link (event at location)');
 }
 
 main()
@@ -118,4 +391,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-

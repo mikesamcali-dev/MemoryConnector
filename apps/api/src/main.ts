@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
 import { PrismaService } from './prisma/prisma.service';
 
@@ -13,6 +14,10 @@ async function bootstrap() {
   // Shutdown is handled automatically by NestJS
   // const prismaService = app.get(PrismaService);
   // await prismaService.enableShutdownHooks(app);
+
+  // Increase request body size limit for image uploads (50MB)
+  app.use(json({ limit: '50mb' }));
+  app.use(urlencoded({ limit: '50mb', extended: true }));
 
   // Security headers
   app.use(helmet());

@@ -158,6 +158,71 @@ export class UsageService {
     }
   }
 
+  async decrementUsage(
+    userId: string,
+    resource: 'memories' | 'images' | 'voice' | 'searches',
+    createdAt: Date,
+    amount: number = 1
+  ): Promise<void> {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const memoryDate = new Date(createdAt);
+    const memoryDay = new Date(memoryDate.getFullYear(), memoryDate.getMonth(), memoryDate.getDate());
+    const memoryMonth = new Date(memoryDate.getFullYear(), memoryDate.getMonth(), 1);
+
+    if (resource === 'memories') {
+      const updateData: any = {};
+
+      // Only decrement daily counter if memory was created today
+      if (memoryDay.getTime() === today.getTime()) {
+        updateData.memoriesToday = { decrement: amount };
+      }
+
+      // Only decrement monthly counter if memory was created this month
+      if (memoryMonth.getTime() === thisMonth.getTime()) {
+        updateData.memoriesThisMonth = { decrement: amount };
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        await this.prisma.userUsage.update({
+          where: { userId },
+          data: updateData,
+        });
+      }
+    } else if (resource === 'images') {
+      // Only decrement if image was uploaded this month
+      if (memoryMonth.getTime() === thisMonth.getTime()) {
+        await this.prisma.userUsage.update({
+          where: { userId },
+          data: {
+            imagesThisMonth: { decrement: amount },
+          },
+        });
+      }
+    } else if (resource === 'voice') {
+      // Only decrement if voice was recorded this month
+      if (memoryMonth.getTime() === thisMonth.getTime()) {
+        await this.prisma.userUsage.update({
+          where: { userId },
+          data: {
+            voiceThisMonth: { decrement: amount },
+          },
+        });
+      }
+    } else if (resource === 'searches') {
+      // Only decrement if search was today
+      if (memoryDay.getTime() === today.getTime()) {
+        await this.prisma.userUsage.update({
+          where: { userId },
+          data: {
+            searchesToday: { decrement: amount },
+          },
+        });
+      }
+    }
+  }
+
   private getTomorrowReset(): Date {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);

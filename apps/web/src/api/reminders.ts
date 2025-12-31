@@ -38,8 +38,23 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
   return response;
 }
 
+export interface Reminder {
+  reminderId: string;
+  memoryId: string;
+  memoryPreview: string;
+  memoryType?: any;
+  hasImage: boolean;
+  scheduledAt: string;
+  isOverdue?: boolean;
+}
+
 export async function getRemindersInbox() {
   const response = await fetchWithAuth('/reminders/inbox');
+  return response.json();
+}
+
+export async function getUpcomingReminders(): Promise<Reminder[]> {
+  const response = await fetchWithAuth('/reminders/upcoming');
   return response.json();
 }
 
@@ -53,6 +68,26 @@ export async function markReminderAsRead(reminderId: string) {
 export async function dismissReminder(reminderId: string) {
   const response = await fetchWithAuth(`/reminders/${reminderId}/dismiss`, {
     method: 'POST',
+  });
+  return response.json();
+}
+
+export async function getRemindersForMemory(memoryId: string): Promise<Reminder[]> {
+  const response = await fetchWithAuth(`/reminders/memory/${memoryId}`);
+  return response.json();
+}
+
+export async function updateReminderSchedule(reminderId: string, scheduledAt: string) {
+  const response = await fetchWithAuth(`/reminders/${reminderId}/schedule`, {
+    method: 'PUT',
+    body: JSON.stringify({ scheduledAt }),
+  });
+  return response.json();
+}
+
+export async function deleteReminder(reminderId: string) {
+  const response = await fetchWithAuth(`/reminders/${reminderId}`, {
+    method: 'DELETE',
   });
   return response.json();
 }

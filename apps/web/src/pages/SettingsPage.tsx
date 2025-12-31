@@ -1,29 +1,495 @@
 import { useAuth } from '../contexts/AuthContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getUsageStats } from '../api/usage';
+import { getMemories, deleteMemory } from '../api/memories';
+import { getReminderPreferences, updateReminderPreferences, minutesToDisplay, parseToMinutes } from '../api/userPreferences';
+import { Link, useNavigate } from 'react-router-dom';
+import { Trash2, Edit, TrendingUp, Calendar, Bell } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 export function SettingsPage() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  // Reminder preferences state
+  const [editingReminders, setEditingReminders] = useState(false);
+  const [firstValue, setFirstValue] = useState(3);
+  const [firstUnit, setFirstUnit] = useState<'minutes' | 'hours' | 'days' | 'weeks'>('minutes');
+  const [secondValue, setSecondValue] = useState(3);
+  const [secondUnit, setSecondUnit] = useState<'minutes' | 'hours' | 'days' | 'weeks'>('days');
+  const [thirdValue, setThirdValue] = useState(3);
+  const [thirdUnit, setThirdUnit] = useState<'minutes' | 'hours' | 'days' | 'weeks'>('weeks');
+  const [remindersEnabled, setRemindersEnabled] = useState(true);
+
+  // Fetch usage stats
+  const { data: usageStats, isLoading: loadingStats } = useQuery({
+    queryKey: ['usage-stats'],
+    queryFn: getUsageStats,
+  });
+
+  // Fetch memories
+  const { data: memories, isLoading: loadingMemories } = useQuery({
+    queryKey: ['user-memories'],
+    queryFn: () => getMemories(0, 50),
+  });
+
+  // Fetch reminder preferences
+  const { data: preferences } = useQuery({
+    queryKey: ['reminder-preferences'],
+    queryFn: getReminderPreferences,
+  });
+
+  // Update preferences when loaded
+  useEffect(() => {
+    if (preferences) {
+      setRemindersEnabled(preferences.remindersEnabled);
+      // Parse intervals to friendly units
+      // First reminder (default 3 minutes)
+      if (preferences.firstReminderMinutes < 60) {
+        setFirstValue(preferences.firstReminderMinutes);
+        setFirstUnit('minutes');
+      } else if (preferences.firstReminderMinutes < 1440) {
+        setFirstValue(Math.floor(preferences.firstReminderMinutes / 60));
+        setFirstUnit('hours');
+      } else if (preferences.firstReminderMinutes < 10080) {
+        setFirstValue(Math.floor(preferences.firstReminderMinutes / 1440));
+        setFirstUnit('days');
+      } else {
+        setFirstValue(Math.floor(preferences.firstReminderMinutes / 10080));
+        setFirstUnit('weeks');
+      }
+      // Second reminder (default 3 days)
+      if (preferences.secondReminderMinutes < 60) {
+        setSecondValue(preferences.secondReminderMinutes);
+        setSecondUnit('minutes');
+      } else if (preferences.secondReminderMinutes < 1440) {
+        setSecondValue(Math.floor(preferences.secondReminderMinutes / 60));
+        setSecondUnit('hours');
+      } else if (preferences.secondReminderMinutes < 10080) {
+        setSecondValue(Math.floor(preferences.secondReminderMinutes / 1440));
+        setSecondUnit('days');
+      } else {
+        setSecondValue(Math.floor(preferences.secondReminderMinutes / 10080));
+        setSecondUnit('weeks');
+      }
+      // Third reminder (default 3 weeks)
+      if (preferences.thirdReminderMinutes < 60) {
+        setThirdValue(preferences.thirdReminderMinutes);
+        setThirdUnit('minutes');
+      } else if (preferences.thirdReminderMinutes < 1440) {
+        setThirdValue(Math.floor(preferences.thirdReminderMinutes / 60));
+        setThirdUnit('hours');
+      } else if (preferences.thirdReminderMinutes < 10080) {
+        setThirdValue(Math.floor(preferences.thirdReminderMinutes / 1440));
+        setThirdUnit('days');
+      } else {
+        setThirdValue(Math.floor(preferences.thirdReminderMinutes / 10080));
+        setThirdUnit('weeks');
+      }
+    }
+  }, [preferences]);
+
+  // Update preferences mutation
+  const updatePrefsMutation = useMutation({
+    mutationFn: updateReminderPreferences,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reminder-preferences'] });
+      setEditingReminders(false);
+    },
+  });
+
+  const handleSaveReminders = () => {
+    updatePrefsMutation.mutate({
+      firstReminderMinutes: parseToMinutes(firstValue, firstUnit),
+      secondReminderMinutes: parseToMinutes(secondValue, secondUnit),
+      thirdReminderMinutes: parseToMinutes(thirdValue, thirdUnit),
+      remindersEnabled,
+    });
+  };
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteMemory(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-memories'] });
+      queryClient.invalidateQueries({ queryKey: ['usage-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['memories'] });
+      setDeleteConfirmId(null);
+    },
+  });
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Settings</h1>
+    <div className="max-w-6xl mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-8">Settings</h1>
 
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-lg font-semibold mb-2">Account</h2>
-          <p className="text-sm text-gray-600">Email: {user?.email}</p>
-          <p className="text-sm text-gray-600">Tier: {user?.tier}</p>
-        </div>
-
-        <div>
+      <div className="grid md:grid-cols-2 gap-6 mb-8">
+        {/* Account Info */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-xl font-semibold mb-4">Account</h2>
+          <div className="space-y-2">
+            <p className="text-sm text-gray-600">
+              <span className="font-medium">Email:</span> {user?.email}
+            </p>
+            <p className="text-sm text-gray-600">
+              <span className="font-medium">Tier:</span>{' '}
+              <span className="capitalize inline-flex items-center gap-2">
+                {user?.tier}
+                {user?.tier === 'free' && (
+                  <Link
+                    to="/app/upgrade"
+                    className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                  >
+                    Upgrade
+                  </Link>
+                )}
+              </span>
+            </p>
+          </div>
           <button
             onClick={logout}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="mt-6 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
           >
             Logout
           </button>
         </div>
+
+        {/* Usage Stats */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-blue-600" />
+            Usage Statistics
+          </h2>
+          {loadingStats ? (
+            <p className="text-sm text-gray-600">Loading...</p>
+          ) : usageStats ? (
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm font-medium text-gray-700">Memories Today</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-gray-900">
+                    {usageStats.memories_today}
+                  </span>
+                  <span className="text-sm text-gray-600">
+                    / {usageStats.memories_per_day === -1 ? '∞' : usageStats.memories_per_day}
+                  </span>
+                </div>
+                <div className="mt-1 bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-blue-600 h-2 rounded-full"
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        (usageStats.memories_today / (usageStats.memories_per_day || 1)) * 100
+                      )}%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-gray-700">Memories This Month</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-gray-900">
+                    {usageStats.memories_this_month}
+                  </span>
+                  <span className="text-sm text-gray-600">
+                    / {usageStats.memories_per_month === -1 ? '∞' : usageStats.memories_per_month}
+                  </span>
+                </div>
+                <div className="mt-1 bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-purple-600 h-2 rounded-full"
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        (usageStats.memories_this_month / (usageStats.memories_per_month || 1)) * 100
+                      )}%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-gray-200">
+                <p className="text-sm font-medium text-gray-700">Searches Today</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-lg font-semibold text-gray-900">
+                    {usageStats.searches_today}
+                  </span>
+                  <span className="text-xs text-gray-600">
+                    / {usageStats.searches_per_day === -1 ? '∞' : usageStats.searches_per_day}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-red-600">Failed to load usage stats</p>
+          )}
+        </div>
       </div>
+
+      {/* Reminder Settings */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <Bell className="h-5 w-5 text-blue-600" />
+            Reminder Settings
+          </h2>
+          {!editingReminders && (
+            <button
+              onClick={() => setEditingReminders(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Edit
+            </button>
+          )}
+        </div>
+
+        {!editingReminders ? (
+          // View Mode
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-700">Reminders enabled</span>
+              <span className="font-medium">{preferences?.remindersEnabled ? 'Yes' : 'No'}</span>
+            </div>
+            {preferences?.remindersEnabled && (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-700">First reminder</span>
+                  <span className="font-medium">{minutesToDisplay(preferences?.firstReminderMinutes)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-700">Second reminder</span>
+                  <span className="font-medium">{minutesToDisplay(preferences?.secondReminderMinutes)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-700">Third reminder</span>
+                  <span className="font-medium">{minutesToDisplay(preferences?.thirdReminderMinutes)}</span>
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          // Edit Mode
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="remindersEnabled"
+                checked={remindersEnabled}
+                onChange={(e) => setRemindersEnabled(e.target.checked)}
+                className="h-4 w-4"
+              />
+              <label htmlFor="remindersEnabled" className="text-gray-700">
+                Enable automatic reminders for all memories
+              </label>
+            </div>
+
+            {remindersEnabled && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">First reminder</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      value={firstValue}
+                      onChange={(e) => setFirstValue(parseInt(e.target.value) || 1)}
+                      className="w-24 px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                    <select
+                      value={firstUnit}
+                      onChange={(e) => setFirstUnit(e.target.value as any)}
+                      className="px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="minutes">Minutes</option>
+                      <option value="hours">Hours</option>
+                      <option value="days">Days</option>
+                      <option value="weeks">Weeks</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Second reminder</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      value={secondValue}
+                      onChange={(e) => setSecondValue(parseInt(e.target.value) || 1)}
+                      className="w-24 px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                    <select
+                      value={secondUnit}
+                      onChange={(e) => setSecondUnit(e.target.value as any)}
+                      className="px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="minutes">Minutes</option>
+                      <option value="hours">Hours</option>
+                      <option value="days">Days</option>
+                      <option value="weeks">Weeks</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Third reminder</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      value={thirdValue}
+                      onChange={(e) => setThirdValue(parseInt(e.target.value) || 1)}
+                      className="w-24 px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                    <select
+                      value={thirdUnit}
+                      onChange={(e) => setThirdUnit(e.target.value as any)}
+                      className="px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="minutes">Minutes</option>
+                      <option value="hours">Hours</option>
+                      <option value="days">Days</option>
+                      <option value="weeks">Weeks</option>
+                    </select>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={handleSaveReminders}
+                disabled={updatePrefsMutation.isPending}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              >
+                {updatePrefsMutation.isPending ? 'Saving...' : 'Save'}
+              </button>
+              <button
+                onClick={() => setEditingReminders(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Recent Memories */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-blue-600" />
+            Your Memories ({memories?.length || 0})
+          </h2>
+          <Link
+            to="/app/capture"
+            className="text-sm bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700"
+          >
+            Add New
+          </Link>
+        </div>
+
+        {loadingMemories ? (
+          <p className="text-sm text-gray-600">Loading memories...</p>
+        ) : memories && memories.length > 0 ? (
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {memories.map((memory) => (
+              <div
+                key={memory.id}
+                className="flex items-start justify-between gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-gray-900 line-clamp-2">
+                    {memory.textContent || '(No text)'}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">{formatDate(memory.createdAt)}</p>
+                  {memory.type && (
+                    <span
+                      className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full mt-1"
+                      style={{
+                        backgroundColor: memory.type.color + '20',
+                        color: memory.type.color,
+                      }}
+                    >
+                      <span>{memory.type.icon}</span>
+                      <span>{memory.type.name}</span>
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => navigate(`/app/memories/${memory.id}`)}
+                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                    title="View/Edit"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setDeleteConfirmId(memory.id)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                    title="Delete"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-gray-600 mb-4">No memories yet</p>
+            <Link
+              to="/app/capture"
+              className="inline-block bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            >
+              Create Your First Memory
+            </Link>
+          </div>
+        )}
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Delete Memory?</h2>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete this memory? This will free up a slot in your daily limit.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteConfirmId(null)}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                disabled={deleteMutation.isPending}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => deleteMutation.mutate(deleteConfirmId)}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-

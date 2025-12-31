@@ -61,9 +61,33 @@ export class EnrichmentQueueService {
       priority: 'normal',
     };
 
-    await this.redis.lpush(this.QUEUE_KEY, JSON.stringify(job));
+    try {
+      await this.redis.lpush(this.QUEUE_KEY, JSON.stringify(job));
 
-    return { queued: false };
+      // Update memory state to track when it was queued
+      await this.prisma.memory.update({
+        where: { id: memoryId },
+        data: {
+          enrichmentStatus: 'pending',
+          enrichmentQueuedAt: new Date(),
+        },
+      });
+
+      logger.info({ memoryId, userId }, 'Enrichment queued successfully');
+      return { queued: true };
+    } catch (error) {
+      logger.error({ error, memoryId, userId }, 'Failed to queue enrichment');
+
+      // Update memory to failed status
+      await this.prisma.memory.update({
+        where: { id: memoryId },
+        data: {
+          enrichmentStatus: 'failed',
+        },
+      });
+
+      return { queued: false, reason: 'Redis connection failed' };
+    }
   }
 
   async processEnrichmentJob(job: EnrichmentJob): Promise<void> {

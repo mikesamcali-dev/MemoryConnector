@@ -4,6 +4,8 @@ import { CircuitBreakerService } from '../ai-circuit-breaker/circuit-breaker.ser
 import { AI_COST_CONFIG } from '../config/ai-cost.config';
 import { EnrichmentQueueService } from './enrichment-queue.service';
 import { EmbeddingsService } from '../embeddings/embeddings.service';
+import { LLMExtractionService } from './llm-extraction.service';
+import { EntityProcessorService } from './entity-processor.service';
 import OpenAI from 'openai';
 import { ConfigService } from '@nestjs/config';
 import { logger } from '../common/logger';
@@ -17,6 +19,8 @@ export class EnrichmentService {
     private circuitBreaker: CircuitBreakerService,
     private queueService: EnrichmentQueueService,
     private embeddingsService: EmbeddingsService,
+    private llmExtraction: LLMExtractionService,
+    private entityProcessor: EntityProcessorService,
     private config: ConfigService
   ) {
     const apiKey = this.config.get<string>('OPENAI_API_KEY');
@@ -30,7 +34,8 @@ export class EnrichmentService {
       where: { id: memoryId },
     });
 
-    if (!memory || !memory.textContent) {
+    const content = memory?.body || memory?.title;
+    if (!memory || !content) {
       return;
     }
 
@@ -48,24 +53,35 @@ export class EnrichmentService {
         data: { enrichmentStatus: 'processing' },
       });
 
-      // Classify memory type
-      const classification = await this.classifyMemory(memory.textContent, userId);
-      
-      // Generate embedding
-      const embedding = await this.generateEmbedding(memory.textContent, userId, memoryId);
+      // **NEW: LLM Entity Extraction**
+      logger.info({ memoryId }, 'Starting LLM entity extraction');
+      const extraction = await this.llmExtraction.extractEntities(content);
 
-      // Update memory
+      // **NEW: Process extracted entities**
+      await this.entityProcessor.processExtractionResult(memoryId, userId, extraction);
+
+      // Store embedding
+      await this.embeddingsService.generateAndStoreEmbedding(memoryId, userId, content);
+
+      // Update memory status
       await this.prisma.memory.update({
         where: { id: memoryId },
         data: {
-          type: classification.type as any,
           enrichmentStatus: 'completed',
         },
       });
 
-      // Store embedding
-      await this.embeddingsService.generateAndStoreEmbedding(memoryId, userId, memory.textContent);
-
+      logger.info(
+        {
+          memoryId,
+          entitiesExtracted: {
+            persons: extraction.persons.length,
+            events: extraction.events.length,
+            locations: extraction.locations.length,
+          },
+        },
+        'Enrichment completed with entity extraction'
+      );
     } catch (error) {
       logger.error({ error, memoryId }, 'Enrichment failed');
       await this.prisma.memory.update({

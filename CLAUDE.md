@@ -144,20 +144,36 @@ pnpm reset:windows      # Clean environment and reset
 ## Module Structure
 
 ### Backend (apps/api/src)
+
+**Note:** There are TWO module directories in the codebase:
+- `apps/api/src/modules/` - Newer structured modules (usage, etc.)
+- `apps/api/src/<module-name>/` - Original flat structure
+
+When working with modules, be aware of this dual structure and ensure imports reference the correct path.
+
+**Core Modules:**
 - **auth:** JWT authentication with refresh tokens (15min access, 30d refresh)
 - **users:** User management with RBAC
-- **memories:** CRUD with state machine (SAVED → ENRICHING → ENRICHED)
+- **memories:** CRUD with state machine (SAVED → ENRICHING → ENRICHED), supports hybrid memory types
 - **search:** Semantic + keyword search with fallback
 - **reminders:** Reminder inbox with read/dismiss states
 - **usage:** Tier-based limits with daily/monthly tracking
 - **idempotency:** Request replay protection with Redis + PostgreSQL
 - **duplicate-detection:** Content-based deduplication
 - **embeddings:** Vector generation and partitioned storage (16 partitions)
-- **enrichment:** AI-powered classification (category, tags, sentiment)
+- **enrichment:** AI-powered classification (category, tags, sentiment), background worker with 5s polling
 - **ai-circuit-breaker:** Cost guardrails and budget tracking
 - **metrics:** Prometheus endpoint (placeholder)
 - **health:** Health check endpoint
-- **admin:** Admin-only operations
+- **admin:** Admin-only operations, memory type management
+
+**Hybrid Memory Types Modules:**
+- **events:** Structured storage for events with start/end times
+- **locations:** Structured storage for locations with coordinates
+- **people:** Structured storage for people and relationships
+- **words:** Structured storage for vocabulary words
+- **spell-check:** Dictionary-based spell checking
+- **user-preferences:** User-specific settings (e.g., reminder preferences)
 
 ### Frontend (apps/web/src)
 - **pages:** Login, Signup, Capture, Search, Reminders, Settings
@@ -176,12 +192,25 @@ pnpm reset:windows      # Clean environment and reset
 - Logout revokes refresh tokens in database
 
 ### Database Schema
+
+**Hybrid Memory Types Architecture:**
+The system implements a hybrid storage pattern where memories can use either:
+- **Generic storage**: Data in `memories.data` (JSONB) - flexible, no migrations needed
+- **Structured storage**: Dedicated tables (`events`, `locations`, `people`, `words`) - optimized queries
+
+**Key Tables:**
 - **users:** Includes tier (free/premium) and roles
-- **memories:** Has `content_hash` for deduplication, `state` for enrichment tracking
-- **embeddings:** Partitioned by user_id hash (16 partitions) with HNSW indexes
+- **memories:** Root entity for all memories. Has `content_hash` for deduplication, `state` for enrichment tracking, optional 1:1 relations to structured types
+- **memory_types:** Admin-controlled registry defining available memory types and their storage strategy
+- **memory_type_assignments:** Many-to-many linking memories to types (allows multi-typing)
+- **memory_links:** Generic relationship system (LinkType: locatedAt, summaryOf, hasMedia, related, mentions)
+- **embeddings_partition_X:** 16 partitioned tables (X=0-15) with HNSW indexes for vector search
+- **events/locations/people/words:** Structured storage tables (1:1 with memories via `memory_id`)
 - **user_usage:** Tracks daily/monthly counters per user per operation type
 - **tier_limits:** Configurable limits per tier and operation
 - **idempotency_keys:** Request cache with 24h cleanup job
+
+**Important:** When querying raw SQL with Prisma (`$queryRaw`), PostgreSQL returns numeric columns as JavaScript `BigInt` which cannot be serialized to JSON. Always convert with `Number()` before returning from API endpoints.
 
 ### Security
 - Helmet.js security headers
@@ -207,9 +236,19 @@ pnpm reset:windows      # Clean environment and reset
 
 ### Modifying Database Schema
 1. Edit `apps/api/prisma/schema.prisma`
-2. Run `pnpm db:generate` (generates Prisma client)
-3. Run `pnpm db:migrate` (creates migration)
+2. Run `cd apps\api && pnpm db:generate` (generates Prisma client)
+3. Run `pnpm db:migrate` from root (creates migration)
 4. Update seed script if needed (`apps/api/prisma/seed.ts`)
+5. **Important:** If adding new modules that use PrismaService, ensure the module imports `PrismaModule` in its `@Module()` decorator
+
+### Adding a New Structured Memory Type
+1. Add enum value to `MemoryType` in schema.prisma if needed
+2. Create dedicated table (e.g., `model Event`) with `memoryId` foreign key to `memories.id`
+3. Add 1:1 relation in `Memory` model (e.g., `event Event?`)
+4. Generate migration: `cd apps\api && pnpm db:generate && pnpm db:migrate`
+5. Create NestJS module in `apps/api/src/<type-name>/` with controller, service, DTOs
+6. Register in `memory_types` table via admin endpoint or seed script
+7. Update frontend to handle the new type in capture/display flows
 
 ### Adding Frontend Features
 1. Create page in `apps/web/src/pages/`
@@ -270,4 +309,16 @@ docker exec -it memory-connector-postgres psql -U postgres -d memory_connector -
 docker exec -it memory-connector-postgres psql -U postgres -d memory_connector -c "CREATE EXTENSION IF NOT EXISTS vector;"
 ```
 
-For detailed debugging, see `Docs/DEBUGGING_AND_TESTING_WINDOWS.md`.
+### BigInt Serialization Errors
+If you see "Do not know how to serialize a BigInt" errors:
+- PostgreSQL returns numeric columns as BigInt objects via `$queryRaw`
+- Convert to numbers before returning: `Number(data.fieldName)`
+- Affects fields like counts, IDs, and storage bytes
+
+## Additional Documentation
+
+For more details, see:
+- `Docs/HYBRID_MEMORY_TYPES.md` - Hybrid storage architecture details
+- `Docs/DEBUGGING_AND_TESTING_WINDOWS.md` - Windows-specific debugging
+- `Docs/FINAL_MVP_STATUS.md` - Complete feature status and architecture
+- `Docs/GODADDY_DEPLOYMENT_GUIDE.md` - Production deployment guide

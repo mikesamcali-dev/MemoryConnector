@@ -17,6 +17,8 @@ export function LoginPage() {
 
     try {
       await login(email, password);
+      // Navigate to capture page after successful login
+      navigate('/app/capture');
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {

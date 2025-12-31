@@ -190,7 +190,7 @@ export class UsageService {
     await this.resetCounters(userId);
 
     const result = await this.prisma.$queryRaw<any[]>`
-      SELECT 
+      SELECT
         u.tier,
         uu.*,
         tl.memories_per_day,
@@ -209,7 +209,24 @@ export class UsageService {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
-    return result[0];
+    const data = result[0];
+
+    // Convert BigInt values to numbers for JSON serialization
+    return {
+      tier: data.tier,
+      memories_today: Number(data.memories_today),
+      memories_this_month: Number(data.memories_this_month),
+      images_this_month: Number(data.images_this_month),
+      voice_this_month: Number(data.voice_this_month),
+      searches_today: Number(data.searches_today),
+      storage_bytes: Number(data.storage_bytes),
+      memories_per_day: Number(data.memories_per_day),
+      memories_per_month: Number(data.memories_per_month),
+      images_per_month: Number(data.images_per_month),
+      voice_per_month: Number(data.voice_per_month),
+      searches_per_day: Number(data.searches_per_day),
+      storage_limit: Number(data.storage_limit),
+    };
   }
 
   private getTomorrowReset(): Date {

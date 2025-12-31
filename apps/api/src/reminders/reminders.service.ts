@@ -30,9 +30,19 @@ export class RemindersService {
         memory: {
           select: {
             id: true,
-            textContent: true,
-            type: true,
+            title: true,
+            body: true,
             imageUrl: true,
+            typeAssignments: {
+              include: {
+                memoryType: {
+                  select: {
+                    code: true,
+                    label: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -47,8 +57,8 @@ export class RemindersService {
       reminders: reminders.map((r) => ({
         reminderId: r.id,
         memoryId: r.memoryId,
-        memoryPreview: this.truncateText(r.memory.textContent, 60),
-        memoryType: r.memory.type,
+        memoryPreview: this.truncateText(r.memory.title || r.memory.body || '', 60),
+        memoryTypes: r.memory.typeAssignments.map((a) => a.memoryType.label),
         hasImage: !!r.memory.imageUrl,
         scheduledAt: r.scheduledAt,
         sentAt: r.sentAt,
@@ -94,6 +104,123 @@ export class RemindersService {
     await this.prisma.reminder.update({
       where: { id: reminderId },
       data: { dismissedAt: new Date() },
+    });
+
+    return { success: true };
+  }
+
+  async getUpcoming(userId: string, limit: number = 5) {
+    const now = new Date();
+
+    // Get pending and upcoming reminders (within the next 7 days or overdue)
+    const reminders = await this.prisma.reminder.findMany({
+      where: {
+        userId,
+        status: 'pending',
+        dismissedAt: null,
+        memory: {
+          state: {
+            not: 'DELETED',
+          },
+        },
+      },
+      include: {
+        memory: {
+          select: {
+            id: true,
+            title: true,
+            body: true,
+            imageUrl: true,
+            state: true,
+            typeAssignments: {
+              include: {
+                memoryType: {
+                  select: {
+                    code: true,
+                    label: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        scheduledAt: 'asc',
+      },
+      take: limit,
+    });
+
+    console.log(`Found ${reminders.length} upcoming reminders for user ${userId}`);
+
+    return reminders.map((r) => ({
+      reminderId: r.id,
+      memoryId: r.memoryId,
+      memoryPreview: this.truncateText(r.memory.title || r.memory.body || '', 100),
+      memoryTypes: r.memory.typeAssignments.map((a) => a.memoryType.label),
+      hasImage: !!r.memory.imageUrl,
+      scheduledAt: r.scheduledAt,
+      isOverdue: r.scheduledAt < now,
+    }));
+  }
+
+  async getForMemory(userId: string, memoryId: string) {
+    // Verify the memory belongs to the user
+    const memory = await this.prisma.memory.findFirst({
+      where: { id: memoryId, userId },
+    });
+
+    if (!memory) {
+      throw new HttpException('Memory not found', HttpStatus.NOT_FOUND);
+    }
+
+    // Get all reminders for this memory
+    const reminders = await this.prisma.reminder.findMany({
+      where: {
+        memoryId,
+        userId,
+        dismissedAt: null,
+      },
+      orderBy: {
+        scheduledAt: 'asc',
+      },
+    });
+
+    return reminders;
+  }
+
+  async updateScheduledTime(userId: string, reminderId: string, newScheduledAt: Date) {
+    const reminder = await this.prisma.reminder.findFirst({
+      where: {
+        id: reminderId,
+        userId,
+      },
+    });
+
+    if (!reminder) {
+      throw new HttpException('Reminder not found', HttpStatus.NOT_FOUND);
+    }
+
+    return this.prisma.reminder.update({
+      where: { id: reminderId },
+      data: { scheduledAt: newScheduledAt },
+    });
+  }
+
+  async deleteReminder(userId: string, reminderId: string) {
+    const reminder = await this.prisma.reminder.findFirst({
+      where: {
+        id: reminderId,
+        userId,
+      },
+    });
+
+    if (!reminder) {
+      throw new HttpException('Reminder not found', HttpStatus.NOT_FOUND);
+    }
+
+    await this.prisma.reminder.delete({
+      where: { id: reminderId },
     });
 
     return { success: true };

@@ -1,0 +1,388 @@
+// Hybrid Memory Types Schema
+// Implements storage strategy pattern with generic and structured types
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum UserTier {
+  free
+  premium
+}
+
+enum MemoryState {
+  SAVED
+  DRAFT
+  DELETED
+}
+
+enum StorageStrategy {
+  generic     // Data stored in memories.data as JSONB
+  structured  // Data stored in dedicated table
+}
+
+enum EnrichmentStatus {
+  pending
+  processing
+  completed
+  failed
+  queued_budget
+}
+
+enum ReminderStatus {
+  pending
+  sent
+  cancelled
+}
+
+enum LinkType {
+  locatedAt    // Memory is located at another memory (location)
+  summaryOf    // Memory summarizes another memory
+  hasMedia     // Memory has media attachment (another memory)
+  related      // Generic relationship
+  mentions     // Memory mentions a person/entity
+}
+
+// ============================================================================
+// USER & AUTH
+// ============================================================================
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  tier         String   @default("free")
+  roles        String[] @default(["user"])
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  memories         Memory[]
+  sessions         Session[]
+  reminders        Reminder[]
+  usage            UserUsage?
+  idempotencyKeys  IdempotencyKey[]
+  aiCostTracking   AiCostTracking[]
+
+  @@map("users")
+}
+
+model UserUsage {
+  userId            String   @id @map("user_id") @db.Uuid
+  memoriesToday     Int      @default(0) @map("memories_today")
+  memoriesThisMonth Int      @default(0) @map("memories_this_month")
+  imagesThisMonth   Int      @default(0) @map("images_this_month")
+  voiceThisMonth    Int      @default(0) @map("voice_this_month")
+  searchesToday     Int      @default(0) @map("searches_today")
+  storageBytes      BigInt   @default(0) @map("storage_bytes")
+  lastDailyReset    DateTime @default(now()) @map("last_daily_reset")
+  lastMonthlyReset  DateTime @default(now()) @map("last_monthly_reset")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_usage")
+}
+
+model TierLimit {
+  tier             String @id
+  memoriesPerDay   Int    @map("memories_per_day")
+  memoriesPerMonth Int    @map("memories_per_month")
+  imagesPerMonth   Int    @map("images_per_month")
+  voicePerMonth    Int    @map("voice_per_month")
+  searchesPerDay   Int    @map("searches_per_day")
+  storageBytes     BigInt @map("storage_bytes")
+  apiRatePerMin    Int    @map("api_rate_per_min")
+
+  @@map("tier_limits")
+}
+
+// ============================================================================
+// MEMORY TYPE REGISTRY (Admin-controlled)
+// ============================================================================
+
+model MemoryType {
+  id              String          @id @default(uuid()) @db.Uuid
+  code            String          @unique // e.g., "event", "location", "note"
+  label           String          // Human-readable name
+  description     String?
+  icon            String?         @default("📝")
+  color           String?         @default("#6B7280")
+  storageStrategy StorageStrategy @default(generic) @map("storage_strategy")
+  tableName       String?         @map("table_name") // e.g., "events", "locations", null for generic
+  enabled         Boolean         @default(true)
+  sortOrder       Int             @default(0) @map("sort_order")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  assignments MemoryTypeAssignment[]
+
+  @@map("memory_types")
+}
+
+// ============================================================================
+// MEMORY (Root Entity)
+// ============================================================================
+
+model Memory {
+  id               String           @id @default(uuid()) @db.Uuid
+  userId           String           @map("user_id") @db.Uuid
+  title            String?          @db.VarChar(500)
+  body             String?          @db.Text
+  occurredAt       DateTime?        @map("occurred_at") // When the memory happened
+  startAt          DateTime?        @map("start_at")    // For events
+  endAt            DateTime?        @map("end_at")      // For events
+  data             Json?            // Generic metadata for non-structured types
+  latitude         Float?
+  longitude        Float?
+  imageUrl         String?          @map("image_url")
+  state            MemoryState      @default(SAVED)
+  contentHash      String?          @map("content_hash") @db.VarChar(32)
+  enrichmentStatus EnrichmentStatus @default(pending) @map("enrichment_status")
+  enrichmentQueuedAt DateTime?      @map("enrichment_queued_at")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  user                User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  typeAssignments     MemoryTypeAssignment[]
+  reminders           Reminder[]
+  embeddings          Embedding[]
+  idempotencyKeys     IdempotencyKey[]
+  aiCostTracking      AiCostTracking[]
+
+  // Structured type relations (1:1)
+  event               Event?
+  location            Location?
+  person              Person?
+  word                Word?
+
+  // Link relations
+  linksFrom           MemoryLink[]             @relation("LinkSource")
+  linksTo             MemoryLink[]             @relation("LinkTarget")
+
+  @@index([userId, state])
+  @@index([userId, contentHash, createdAt])
+  @@index([occurredAt])
+  @@map("memories")
+}
+
+// ============================================================================
+// MEMORY TYPE ASSIGNMENT (Many-to-Many)
+// ============================================================================
+
+model MemoryTypeAssignment {
+  memoryId     String   @map("memory_id") @db.Uuid
+  memoryTypeId String   @map("memory_type_id") @db.Uuid
+  confidence   Float?   @default(1.0) // AI confidence score
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  memory     Memory     @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  memoryType MemoryType @relation(fields: [memoryTypeId], references: [id], onDelete: Cascade)
+
+  @@id([memoryId, memoryTypeId])
+  @@index([memoryTypeId])
+  @@map("memory_type_assignments")
+}
+
+// ============================================================================
+// STRUCTURED MEMORY TYPES (Dedicated Tables)
+// ============================================================================
+
+// Events - structured type
+model Event {
+  memoryId       String    @id @map("memory_id") @db.Uuid
+  startAt        DateTime? @map("start_at")
+  endAt          DateTime? @map("end_at")
+  timezone       String?   @db.VarChar(50)
+  recurrenceRule String?   @map("recurrence_rule") @db.Text
+  description    String?   @db.Text
+  tags           String[]  @default([])
+  lastEnrichedAt DateTime? @map("last_enriched_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@map("events")
+}
+
+// Locations - structured type
+model Location {
+  memoryId       String    @id @map("memory_id") @db.Uuid
+  address        String?   @db.Text
+  city           String?   @db.VarChar(100)
+  state          String?   @db.VarChar(100)
+  country        String?   @db.VarChar(100)
+  latitude       Float?
+  longitude      Float?
+  placeType      String?   @map("place_type") @db.VarChar(50)
+  lastEnrichedAt DateTime? @map("last_enriched_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@map("locations")
+}
+
+// People - structured type
+model Person {
+  memoryId       String    @id @map("memory_id") @db.Uuid
+  displayName    String    @map("display_name") @db.VarChar(200)
+  email          String?   @db.VarChar(255)
+  phone          String?   @db.VarChar(50)
+  bio            String?   @db.Text
+  lastEnrichedAt DateTime? @map("last_enriched_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@map("people")
+}
+
+// Words - structured type (kept for vocabulary learning)
+model Word {
+  memoryId       String    @id @map("memory_id") @db.Uuid
+  word           String    @db.VarChar(100)
+  description    String?   @db.Text
+  phonetic       String?   @db.VarChar(100)
+  partOfSpeech   String?   @map("part_of_speech") @db.VarChar(50)
+  etymology      String?   @db.Text
+  examples       Json?     // Array of example sentences
+  synonyms       Json?     // Array of synonyms
+  antonyms       Json?     // Array of antonyms
+  difficulty     String?   @db.VarChar(20)
+  lastEnrichedAt DateTime? @map("last_enriched_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@index([word])
+  @@map("words")
+}
+
+// ============================================================================
+// MEMORY LINKS (Relationships)
+// ============================================================================
+
+model MemoryLink {
+  id          String    @id @default(uuid()) @db.Uuid
+  sourceId    String    @map("source_id") @db.Uuid
+  targetId    String    @map("target_id") @db.Uuid
+  linkType    LinkType  @map("link_type")
+  metadata    Json?     // Additional link metadata
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  source Memory @relation("LinkSource", fields: [sourceId], references: [id], onDelete: Cascade)
+  target Memory @relation("LinkTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, targetId, linkType])
+  @@index([sourceId])
+  @@index([targetId])
+  @@index([linkType])
+  @@map("memory_links")
+}
+
+// ============================================================================
+// SUPPORTING TABLES
+// ============================================================================
+
+model Embedding {
+  id           String   @id @default(uuid()) @db.Uuid
+  memoryId     String   @map("memory_id") @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  modelVersion String   @default("text-embedding-ada-002") @map("model_version")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([memoryId])
+  @@map("embeddings")
+}
+
+model Reminder {
+  id          String         @id @default(uuid()) @db.Uuid
+  userId      String         @map("user_id") @db.Uuid
+  memoryId    String         @map("memory_id") @db.Uuid
+  scheduledAt DateTime       @map("scheduled_at")
+  sentAt      DateTime?      @map("sent_at")
+  status      ReminderStatus @default(pending)
+  readAt      DateTime?      @map("read_at")
+  dismissedAt DateTime?      @map("dismissed_at")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, readAt])
+  @@index([userId, status, readAt, dismissedAt])
+  @@map("reminders")
+}
+
+model Session {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  refreshTokenHash String   @map("refresh_token_hash")
+  expiresAt        DateTime @map("expires_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model IdempotencyKey {
+  idempotencyKey String   @id @map("idempotency_key") @db.VarChar(100)
+  userId         String   @map("user_id") @db.Uuid
+  endpoint       String   @db.VarChar(100)
+  requestHash    String?  @map("request_hash") @db.VarChar(64)
+  responseStatus Int?     @map("response_status")
+  responseBody   Json?    @map("response_body")
+  createdAt      DateTime @default(now()) @map("created_at")
+  expiresAt      DateTime @map("expires_at")
+
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memory   Memory? @relation(fields: [memoryId], references: [id])
+  memoryId String? @map("memory_id") @db.Uuid
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("idempotency_keys")
+}
+
+model AiCostTracking {
+  id         Int      @id @default(autoincrement())
+  date       DateTime @default(now()) @db.Date
+  userId     String   @map("user_id") @db.Uuid
+  operation  String   @db.VarChar(50)
+  tokensUsed Int      @map("tokens_used")
+  costCents  Decimal  @map("cost_cents") @db.Decimal(10, 4)
+  model      String   @db.VarChar(100)
+  memoryId   String?  @map("memory_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memory Memory? @relation(fields: [memoryId], references: [id])
+
+  @@index([date])
+  @@index([userId, date])
+  @@map("ai_cost_tracking")
+}

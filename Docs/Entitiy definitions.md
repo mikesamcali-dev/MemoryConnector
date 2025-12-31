@@ -1,0 +1,1 @@
+A location.Is a geographical place.An event is.Includes a location.And a bunch of memories and a memory is a specific thing.

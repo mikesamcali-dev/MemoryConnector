@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { User } from '../common/decorators/user.decorator';
@@ -17,6 +17,12 @@ export class RemindersController {
     return this.remindersService.getInbox(user.id);
   }
 
+  @Get('upcoming')
+  @ApiOperation({ summary: 'Get upcoming reminders' })
+  async getUpcoming(@User() user: any) {
+    return this.remindersService.getUpcoming(user.id, 5);
+  }
+
   @Post(':id/read')
   @ApiOperation({ summary: 'Mark reminder as read' })
   async markAsRead(@Param('id') id: string, @User() user: any) {
@@ -27,6 +33,29 @@ export class RemindersController {
   @ApiOperation({ summary: 'Dismiss reminder' })
   async dismiss(@Param('id') id: string, @User() user: any) {
     return this.remindersService.dismiss(user.id, id);
+  }
+
+  @Get('memory/:memoryId')
+  @ApiOperation({ summary: 'Get all reminders for a specific memory' })
+  async getForMemory(@Param('memoryId') memoryId: string, @User() user: any) {
+    return this.remindersService.getForMemory(user.id, memoryId);
+  }
+
+  @Put(':id/schedule')
+  @ApiOperation({ summary: 'Update reminder scheduled time' })
+  async updateSchedule(
+    @Param('id') id: string,
+    @Body() body: { scheduledAt: string },
+    @User() user: any
+  ) {
+    const newScheduledAt = new Date(body.scheduledAt);
+    return this.remindersService.updateScheduledTime(user.id, id, newScheduledAt);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a reminder' })
+  async delete(@Param('id') id: string, @User() user: any) {
+    return this.remindersService.deleteReminder(user.id, id);
   }
 }
 

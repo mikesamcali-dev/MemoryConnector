@@ -81,68 +81,59 @@ export class SearchService {
     limit: number,
     offset: number
   ): Promise<SearchResult> {
-    // Convert query to tsquery format
-    const words = query
-      .split(/\s+/)
-      .filter((w) => w.length > 2)
-      .map((w) => w.replace(/[^\w]/g, ''))
-      .filter((w) => w.length > 0);
+    // Simple case-insensitive search using ILIKE
+    const searchPattern = `%${query}%`;
 
-    if (words.length === 0) {
-      return {
-        memories: [],
-        method: 'keyword',
-        degraded: true,
-        query,
-        totalCount: 0,
-      };
-    }
-
-    const tsQuery = words.join(' & ');
-
-    // Use raw query for full-text search
-    const result = await this.prisma.$queryRaw<Array<{
-      id: string;
-      user_id: string;
-      type: string | null;
-      text_content: string | null;
-      image_url: string | null;
-      state: string;
-      created_at: Date;
-      updated_at: Date;
-      relevance_score: number;
-    }>>`
-      SELECT m.id, m.user_id, m.type, m.text_content, m.image_url, m.state, m.created_at, m.updated_at,
-             ts_rank(text_search_vector, to_tsquery('english', ${tsQuery})) as relevance_score
-      FROM memories m
-      WHERE m.user_id = ${userId}::uuid
-      AND m.state NOT IN ('DELETED', 'DRAFT')
-      AND m.text_search_vector @@ to_tsquery('english', ${tsQuery})
-      ORDER BY relevance_score DESC
-      LIMIT ${limit} OFFSET ${offset}
-    `;
+    const memories = await this.prisma.memory.findMany({
+      where: {
+        userId,
+        state: { notIn: [MemoryState.DELETED, MemoryState.DRAFT] },
+        OR: [
+          {
+            title: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+          {
+            body: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
+      skip: offset,
+      take: limit,
+    });
 
     // Get total count
-    const countResult = await this.prisma.$queryRaw<Array<{ count: bigint }>>`
-      SELECT COUNT(*) as count FROM memories m
-      WHERE m.user_id = ${userId}::uuid
-      AND m.state NOT IN ('DELETED', 'DRAFT')
-      AND m.text_search_vector @@ to_tsquery('english', ${tsQuery})
-    `;
-
-    const totalCount = Number(countResult[0]?.count || 0);
+    const totalCount = await this.prisma.memory.count({
+      where: {
+        userId,
+        state: { notIn: [MemoryState.DELETED, MemoryState.DRAFT] },
+        OR: [
+          {
+            title: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+          {
+            body: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+        ],
+      },
+    });
 
     return {
-      memories: result.map((r) => ({
-        id: r.id,
-        userId: r.user_id,
-        type: r.type,
-        textContent: r.text_content,
-        imageUrl: r.image_url,
-        state: r.state,
-        createdAt: r.created_at,
-        updatedAt: r.updated_at,
-        relevanceScore: r.relevance_score,
+      memories: memories.map((m) => ({
+        ...m,
+        relevanceScore: 1.0, // Simple keyword search doesn't have relevance scoring
       })),
       method: 'keyword',
       degraded: true,
