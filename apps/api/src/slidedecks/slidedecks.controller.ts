@@ -16,7 +16,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { User } from '../auth/decorators/user.decorator';
+import { User } from '../common/decorators/user.decorator';
 import { SlideDecksService } from './slidedecks.service';
 import { CreateSlideDeckDto } from './dto/create-slidedeck.dto';
 import { SlideDeckResponseDto, SlideResponseDto } from './dto/slidedeck-response.dto';
