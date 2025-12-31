@@ -6,7 +6,7 @@ import {
   deleteYouTubeVideo,
   YouTubeVideo,
 } from '../api/admin';
-import { ArrowLeft, Video, Plus, Search, Trash2, ExternalLink, FileText, Clock } from 'lucide-react';
+import { ArrowLeft, Video, Plus, Search, Trash2, ExternalLink, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export function YouTubeBuilderPage() {

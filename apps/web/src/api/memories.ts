@@ -100,6 +100,7 @@ export interface Memory {
     description: string | null;
     address: string | null;
     city: string | null;
+    state: string | null;
     country: string | null;
     latitude: number | null;
     longitude: number | null;
@@ -126,6 +127,12 @@ export interface Memory {
     duration: string | null;
     viewCount: number | null;
     likeCount: number | null;
+    commentCount: number | null;
+    favoriteCount: number | null;
+    license: string | null;
+    madeForKids: boolean | null;
+    captionAvailable: boolean | null;
+    capturedAt: string | null;
   };
   tiktokVideo?: {
     id: string;
@@ -198,11 +205,13 @@ export interface Memory {
 
 export interface MemoryType {
   id: string;
-  name: string;
-  slug: string;
+  code: string;
+  label: string;
   description?: string;
   icon?: string;
   color?: string;
+  enabled: boolean;
+  storageStrategy: 'generic' | 'structured';
   sortOrder: number;
 }
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAllPeople, createPerson, updatePerson, deletePerson, createPersonRelationship, getPersonRelationships } from '../api/admin';
+import { getAllPeople, createPerson, updatePerson, deletePerson, createPersonRelationship } from '../api/admin';
 import { ArrowLeft, User, Plus, Search, Edit, Trash2, Mail, Phone, Link2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -67,7 +67,7 @@ export function PersonBuilderPage() {
       );
       return { previousPeople };
     },
-    onError: (err, deletedId, context: any) => {
+    onError: (_err, _deletedId, context: any) => {
       queryClient.setQueryData(['people'], context?.previousPeople);
     },
     onSettled: () => {

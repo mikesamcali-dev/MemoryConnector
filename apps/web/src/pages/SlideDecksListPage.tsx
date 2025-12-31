@@ -50,7 +50,7 @@ export function SlideDecksListPage() {
   });
 
   const handleCreate = () => {
-    createMutation.mutate();
+    createMutation.mutate(undefined);
   };
 
   const handleView = (id: string) => {

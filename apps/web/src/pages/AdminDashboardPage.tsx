@@ -44,10 +44,11 @@ export function AdminDashboardPage() {
   const [showFailedJobsModal, setShowFailedJobsModal] = useState(false);
   const [memoriesSearchTerm, setMemoriesSearchTerm] = useState('');
   const [formData, setFormData] = useState({
-    name: '',
-    slug: '',
+    label: '',
+    code: '',
     icon: '',
     color: '#3B82F6',
+    enabled: true,
   });
 
   // Fetch data
@@ -154,7 +155,7 @@ export function AdminDashboardPage() {
   });
 
   const resetForm = () => {
-    setFormData({ name: '', slug: '', icon: '', color: '#3B82F6' });
+    setFormData({ label: '', code: '', icon: '', color: '#3B82F6', enabled: true });
   };
 
   const handleCreateSubmit = (e: React.FormEvent) => {
@@ -170,10 +171,11 @@ export function AdminDashboardPage() {
   const startEdit = (type: any) => {
     setEditingType(type);
     setFormData({
-      name: type.name,
-      slug: type.slug,
+      label: type.label,
+      code: type.code,
       icon: type.icon,
       color: type.color,
+      enabled: type.enabled,
     });
   };
 
@@ -422,18 +424,18 @@ export function AdminDashboardPage() {
                   />
                   <input
                     type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    value={formData.label}
+                    onChange={(e) => setFormData({ ...formData, label: e.target.value })}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded"
-                    placeholder="Name"
+                    placeholder="Label"
                     required
                   />
                   <input
                     type="text"
-                    value={formData.slug}
-                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                    value={formData.code}
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                     className="w-32 px-3 py-2 border border-gray-300 rounded"
-                    placeholder="slug"
+                    placeholder="code"
                     required
                   />
                   <input
@@ -471,13 +473,13 @@ export function AdminDashboardPage() {
                       }}
                     >
                       <span className="mr-1">{type.icon}</span>
-                      {type.name}
+                      {type.label}
                     </div>
-                    <span className="text-sm text-gray-500">({type.slug})</span>
+                    <span className="text-sm text-gray-500">({type.code})</span>
                     {type.usageCount !== undefined && (
                       <span className="text-sm text-gray-400">{type.usageCount} uses</span>
                     )}
-                    {!type.isActive && (
+                    {!type.enabled && (
                       <span className="px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded">Inactive</span>
                     )}
                   </div>
@@ -490,7 +492,7 @@ export function AdminDashboardPage() {
                     </button>
                     <button
                       onClick={() => {
-                        if (confirm(`Are you sure you want to delete "${type.name}"?`)) {
+                        if (confirm(`Are you sure you want to delete "${type.label}"?`)) {
                           deleteMutation.mutate(type.id);
                         }
                       }}
@@ -616,11 +618,11 @@ export function AdminDashboardPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Label</label>
                 <input
                   type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  value={formData.label}
+                  onChange={(e) => setFormData({ ...formData, label: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   placeholder="My Memory Type"
                   required
@@ -628,16 +630,16 @@ export function AdminDashboardPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Code</label>
                 <input
                   type="text"
-                  value={formData.slug}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                  value={formData.code}
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   placeholder="my-type"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">Lowercase, hyphens only</p>
+                <p className="text-xs text-gray-500 mt-1">Lowercase, hyphens/underscores only</p>
               </div>
 
               <div>

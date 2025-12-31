@@ -7,7 +7,7 @@ import {
   getMemoryRelationships,
   deleteMemoryRelationship,
 } from '../api/memoryRelationships';
-import { ArrowLeft, Save, Link as LinkIcon, Plus, X, Trash2, MapPin, AlertCircle, Video } from 'lucide-react';
+import { ArrowLeft, Save, Link as LinkIcon, Plus, X, Trash2, MapPin, Video } from 'lucide-react';
 
 export function LinkMemoryPage() {
   const { id } = useParams<{ id: string }>();
@@ -515,12 +515,10 @@ export function LinkMemoryPage() {
                       >
                         <div className="flex-1">
                           <div className="font-medium text-gray-900">
-                            {linkType === 'word' && item.word}
                             {linkType === 'event' && item.name}
                             {linkType === 'person' && item.displayName}
                             {linkType === 'location' && item.name}
                             {linkType === 'video' && item.title}
-                            {linkType === 'memory' && (item.textContent || 'Untitled')}
                           </div>
                           {linkType === 'person' && item.email && (
                             <div className="text-xs text-gray-500 mt-1">{item.email}</div>
@@ -574,24 +572,27 @@ export function LinkMemoryPage() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Current Links</h2>
         <div className="space-y-2">
-          {/* Word Link */}
-          {memory?.word && (
-            <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">📚</span>
-                <div>
-                  <div className="font-medium text-gray-900">{memory.word.word}</div>
-                  <div className="text-xs text-gray-500">Word</div>
+          {/* Word Links */}
+{/* Word Links */}
+          {memory?.wordLinks && memory.wordLinks.length > 0 && (
+            memory.wordLinks.map((link: any) => (
+              <div key={link.id} className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">📚</span>
+                  <div>
+                    <div className="font-medium text-gray-900">{link.word.word}</div>
+                    <div className="text-xs text-gray-500">Word</div>
+                  </div>
                 </div>
+                <button
+                  onClick={() => {/* TODO: Implement word link removal */}}
+                  className="p-1 text-red-600 hover:bg-red-100 rounded"
+                  title="Unlink"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-              <button
-                onClick={() => updateMutation.mutate({ wordId: null })}
-                className="p-1 text-red-600 hover:bg-red-100 rounded"
-                title="Unlink"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+            ))
           )}
 
           {/* Event Link */}
@@ -722,7 +723,7 @@ export function LinkMemoryPage() {
             </div>
           ))}
 
-          {!memory?.word && !memory?.event && !memory?.person && !memory?.location && !memory?.youtubeVideo && !relationships?.length && (
+          {!memory?.wordLinks?.length && !memory?.event && !memory?.person && !memory?.location && !memory?.youtubeVideo && !relationships?.length && (
             <p className="text-sm text-gray-500 text-center py-4">
               No links yet. Add links above to connect this memory.
             </p>

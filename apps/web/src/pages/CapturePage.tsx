@@ -529,10 +529,9 @@ export function CapturePage() {
       const existingWords = await lookupWord(word.toLowerCase().trim());
 
       if (existingWords && existingWords.length > 0) {
-        // Word already exists, navigate to the existing word's memory
-        setError(`Word "${word}" already exists in the database`);
+        // Word already exists
+        setError(`Word "${word}" already exists in the database. View it in the Words page.`);
         setSpellingErrors(prev => prev.filter(e => e.word !== word));
-        navigate(`/app/memories/${existingWords[0].memoryId}/link`);
         return;
       }
 

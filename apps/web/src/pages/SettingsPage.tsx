@@ -427,7 +427,7 @@ export function SettingsPage() {
                       }}
                     >
                       <span>{memory.type.icon}</span>
-                      <span>{memory.type.name}</span>
+                      <span>{memory.type.label}</span>
                     </span>
                   )}
                 </div>

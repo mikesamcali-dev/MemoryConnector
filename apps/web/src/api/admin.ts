@@ -633,6 +633,12 @@ export interface YouTubeVideo {
   chapters: any | null;
   viewCount: number | null;
   likeCount: number | null;
+  commentCount: number | null;
+  favoriteCount: number | null;
+  license: string | null;
+  madeForKids: boolean | null;
+  captionAvailable: boolean | null;
+  capturedAt: string | null;
   categoryId: string | null;
   tags: any | null;
   externalLinks: any | null;

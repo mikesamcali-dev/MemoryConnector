@@ -145,7 +145,7 @@ export function EntitySuggestionsModal({
                     title={
                       wordMatch.isNewWord
                         ? 'Click to create a vocabulary entry for this word'
-                        : `Already exists in: ${wordMatch.existingWord?.memoryTitle || 'your vocabulary'}`
+                        : `Already exists in your vocabulary (used in ${wordMatch.existingWord?.memoryCount || 0} memories)`
                     }
                   >
                     {wordMatch.word}

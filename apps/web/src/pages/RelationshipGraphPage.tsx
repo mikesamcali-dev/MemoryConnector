@@ -43,12 +43,12 @@ export function RelationshipGraphPage() {
     if (graphData) {
       const { nodes: newNodes, edges: newEdges } = transformToGraph(graphData);
       setNodes(newNodes);
-      setEdges(newEdges);
+      setEdges(newEdges as any);
     }
   }, [graphData, setNodes, setEdges]);
 
   // Handle node click - select node
-  const onNodeClick: NodeMouseHandler = useCallback((event, node) => {
+  const onNodeClick: NodeMouseHandler = useCallback((_event, node) => {
     setSelectedNodeId(node.id);
   }, []);
 

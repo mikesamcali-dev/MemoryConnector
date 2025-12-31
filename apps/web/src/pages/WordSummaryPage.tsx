@@ -180,11 +180,11 @@ export function WordSummaryPage() {
                 </tr>
               ) : (
                 sortedWords.map((word) => {
-                  const isEnriching = enrichingIds.has(word.memoryId);
+                  const isEnriching = enrichingIds.has(word.id);
                   const isDeleting = deleteMutation.isPending;
 
                   return (
-                    <tr key={word.memoryId} className="hover:bg-gray-50">
+                    <tr key={word.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="text-sm font-medium text-gray-900">
@@ -230,7 +230,7 @@ export function WordSummaryPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => handleEnrich(word.memoryId)}
+                            onClick={() => handleEnrich(word.id)}
                             disabled={isEnriching || isDeleting}
                             className="inline-flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Enrich with AI"
@@ -248,7 +248,7 @@ export function WordSummaryPage() {
                             )}
                           </button>
                           <button
-                            onClick={() => handleDelete(word.memoryId, word.word)}
+                            onClick={() => handleDelete(word.id, word.word)}
                             disabled={isEnriching || isDeleting}
                             className="inline-flex items-center gap-1 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Delete word"

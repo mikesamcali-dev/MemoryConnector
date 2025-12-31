@@ -418,95 +418,8 @@ export function MemoryDetailPage() {
         )}
       </div>
 
-      {/* Word Information Section */}
-      {memory.word && (
-        <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-gray-900">{memory.word.word}</h2>
-            {memory.word.phonetic && (
-              <span className="text-gray-500">{memory.word.phonetic}</span>
-            )}
-          </div>
-
-          <div className="space-y-4">
-            {/* Part of Speech and Difficulty */}
-            <div className="flex gap-2">
-              {memory.word.partOfSpeech && (
-                <span className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-full">
-                  {memory.word.partOfSpeech}
-                </span>
-              )}
-              {memory.word.difficulty && (
-                <span
-                  className={`px-3 py-1 text-sm rounded-full ${
-                    memory.word.difficulty === 'easy'
-                      ? 'bg-green-100 text-green-700'
-                      : memory.word.difficulty === 'medium'
-                      ? 'bg-yellow-100 text-yellow-700'
-                      : 'bg-red-100 text-red-700'
-                  }`}
-                >
-                  {memory.word.difficulty}
-                </span>
-              )}
-            </div>
-
-            {/* Definition */}
-            {memory.word.description && (
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-1">Definition</h3>
-                <p className="text-gray-700">{memory.word.description}</p>
-              </div>
-            )}
-
-            {/* Etymology */}
-            {memory.word.etymology && (
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-1">Etymology</h3>
-                <p className="text-gray-700">{memory.word.etymology}</p>
-              </div>
-            )}
-
-            {/* Examples */}
-            {memory.word.examples && memory.word.examples.length > 0 && (
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Examples</h3>
-                <ul className="list-disc list-inside space-y-1">
-                  {memory.word.examples.map((example, idx) => (
-                    <li key={idx} className="text-gray-700">{example}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Synonyms and Antonyms */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {memory.word.synonyms && memory.word.synonyms.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Synonyms</h3>
-                  <p className="text-gray-700">{memory.word.synonyms.join(', ')}</p>
-                </div>
-              )}
-
-              {memory.word.antonyms && memory.word.antonyms.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Antonyms</h3>
-                  <p className="text-gray-700">{memory.word.antonyms.join(', ')}</p>
-                </div>
-              )}
-            </div>
-
-            {/* Last Enriched */}
-            {memory.word.lastEnrichedAt && (
-              <div className="pt-3 border-t border-gray-200">
-                <p className="text-xs text-gray-500">
-                  Last updated: {new Date(memory.word.lastEnrichedAt).toLocaleString()}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Word Information Section - Legacy single word display (deprecated) */}
+      {/* This section is kept for backwards compatibility but wordLinks should be used instead */}
 
       {/* Event Information Section */}
       {memory.event && (
@@ -904,7 +817,7 @@ export function MemoryDetailPage() {
       )}
 
       {/* Related Memories Section */}
-      {(memory.sourceRelationships?.length > 0 || memory.relatedFromMemories?.length > 0) && (
+      {((memory.sourceRelationships?.length ?? 0) > 0 || (memory.relatedFromMemories?.length ?? 0) > 0) && (
         <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900">
@@ -938,7 +851,7 @@ export function MemoryDetailPage() {
                             color: rel.relatedMemory.type.color,
                           }}
                         >
-                          {rel.relatedMemory.type.icon} {rel.relatedMemory.type.name}
+                          {rel.relatedMemory.type.icon} {rel.relatedMemory.type.label}
                         </span>
                       )}
                       <span className="text-xs text-gray-500">
@@ -974,7 +887,7 @@ export function MemoryDetailPage() {
                             color: rel.sourceMemory.type.color,
                           }}
                         >
-                          {rel.sourceMemory.type.icon} {rel.sourceMemory.type.name}
+                          {rel.sourceMemory.type.icon} {rel.sourceMemory.type.label}
                         </span>
                       )}
                       <span className="text-xs text-gray-500">
@@ -1099,7 +1012,7 @@ export function MemoryDetailPage() {
         ) : (
           <p className="text-sm text-gray-500">
             No reminders for this memory.
-            {memory?.type?.slug === 'word' && ' Word memories automatically get 3 reminders when created.'}
+            {memory?.type?.code === 'word' && ' Word memories automatically get 3 reminders when created.'}
           </p>
         )}
       </div>

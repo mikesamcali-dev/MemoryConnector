@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   getAuditTrail,
@@ -19,7 +19,6 @@ import {
   CheckCircle,
   XCircle,
   Eye,
-  Download,
   Calendar,
   User,
   Activity,
@@ -37,7 +36,7 @@ export function AuditTrailPage() {
   const [selectedEvent, setSelectedEvent] = useState<AuditTrailEvent | null>(null);
 
   // Fetch audit trail with filters
-  const { data: auditData, isLoading, refetch } = useQuery({
+  const { data: auditData, isLoading } = useQuery({
     queryKey: ['audit-trail', filters],
     queryFn: () => getAuditTrail(filters),
   });

@@ -13,8 +13,8 @@ export interface GraphNode extends Node {
   };
 }
 
-export interface GraphEdge extends Edge {
-  data: {
+export interface GraphEdge extends Omit<Edge, 'data'> {
+  data?: {
     relationshipType: string;
     relationshipId: string;
   };
@@ -27,6 +27,13 @@ export function transformToGraph(data: PersonRelationshipGraph): {
   nodes: GraphNode[];
   edges: GraphEdge[];
 } {
+  // Count relationships per person
+  const relationshipCounts = new Map<string, number>();
+  data.relationships.forEach((rel) => {
+    relationshipCounts.set(rel.sourcePersonId, (relationshipCounts.get(rel.sourcePersonId) || 0) + 1);
+    relationshipCounts.set(rel.targetPersonId, (relationshipCounts.get(rel.targetPersonId) || 0) + 1);
+  });
+
   // Create nodes from people
   const nodes: GraphNode[] = data.people.map((person, index) => ({
     id: person.id,
@@ -39,8 +46,7 @@ export function transformToGraph(data: PersonRelationshipGraph): {
       phone: person.phone || undefined,
       bio: person.bio || undefined,
       memoryCount: person._count?.memories || 0,
-      relationshipCount:
-        (person._count?.relationshipsFrom || 0) + (person._count?.relationshipsTo || 0),
+      relationshipCount: relationshipCounts.get(person.id) || 0,
     },
   }));
 
