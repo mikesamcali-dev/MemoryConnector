@@ -197,13 +197,20 @@ export class AuditLoggingInterceptor implements NestInterceptor {
       return { resultCount: response.length };
     }
 
-    // Limit response size
-    const str = JSON.stringify(response);
-    if (str.length > 5000) {
-      return { truncated: true, size: str.length };
+    // Limit response size - handle circular references
+    try {
+      const str = JSON.stringify(response);
+      if (str.length > 5000) {
+        return { truncated: true, size: str.length };
+      }
+      return this.redactSensitiveData(response);
+    } catch (error) {
+      // Handle circular reference or other serialization errors
+      if (error instanceof TypeError && error.message.includes('circular')) {
+        return { error: 'Circular reference detected - response not logged' };
+      }
+      return { error: 'Failed to serialize response' };
     }
-
-    return this.redactSensitiveData(response);
   }
 
   private redactSensitiveData(data: any): any {

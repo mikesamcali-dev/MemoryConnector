@@ -6,7 +6,7 @@ import {
   deleteYouTubeVideo,
   YouTubeVideo,
 } from '../api/admin';
-import { ArrowLeft, Video, Plus, Search, Trash2, ExternalLink, Clock } from 'lucide-react';
+import { ArrowLeft, Video, Search, Trash2, ExternalLink, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export function YouTubeBuilderPage() {
@@ -14,7 +14,6 @@ export function YouTubeBuilderPage() {
   const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [showAddForm, setShowAddForm] = useState(false);
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [extracting, setExtracting] = useState(false);
   const [extractError, setExtractError] = useState<string | null>(null);
@@ -57,7 +56,6 @@ export function YouTubeBuilderPage() {
       queryClient.invalidateQueries({ queryKey: ['youtube-videos'] });
 
       setYoutubeUrl('');
-      setShowAddForm(false);
       setExtractError(null);
     } catch (error: any) {
       setExtractError(error.message || 'Failed to add YouTube video');
@@ -95,72 +93,58 @@ export function YouTubeBuilderPage() {
         </p>
       </div>
 
-      {/* Add Video Button */}
-      <div className="mb-6">
-        <button
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-        >
-          <Plus className="h-4 w-4" />
-          {showAddForm ? 'Cancel' : 'Add YouTube Video'}
-        </button>
-      </div>
-
       {/* Add Video Form */}
-      {showAddForm && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Add YouTube Video</h2>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Add YouTube Video</h2>
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                YouTube URL
-              </label>
-              <input
-                type="url"
-                value={youtubeUrl}
-                onChange={(e) => setYoutubeUrl(e.target.value)}
-                placeholder="https://www.youtube.com/watch?v=..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    handleAddVideo();
-                  }
-                }}
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                Paste a YouTube video URL. We'll extract the video ID and create a record.
-              </p>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              YouTube URL
+            </label>
+            <input
+              type="url"
+              value={youtubeUrl}
+              onChange={(e) => setYoutubeUrl(e.target.value)}
+              placeholder="https://www.youtube.com/watch?v=..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleAddVideo();
+                }
+              }}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Paste a YouTube video URL. We'll extract the video ID and create a record.
+            </p>
+          </div>
+
+          {extractError && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-800">
+              {extractError}
             </div>
+          )}
 
-            {extractError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-800">
-                {extractError}
-              </div>
-            )}
-
-            <div className="flex gap-3">
-              <button
-                onClick={handleAddVideo}
-                disabled={extracting}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {extracting ? 'Adding...' : 'Add Video'}
-              </button>
-              <button
-                onClick={() => {
-                  setShowAddForm(false);
-                  setYoutubeUrl('');
-                  setExtractError(null);
-                }}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-            </div>
+          <div className="flex gap-3">
+            <button
+              onClick={handleAddVideo}
+              disabled={extracting}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {extracting ? 'Adding...' : 'Add Video'}
+            </button>
+            <button
+              onClick={() => {
+                setYoutubeUrl('');
+                setExtractError(null);
+              }}
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+            >
+              Clear
+            </button>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Search */}
       <div className="mb-6">

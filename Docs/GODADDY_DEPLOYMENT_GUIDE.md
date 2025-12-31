@@ -764,6 +764,13 @@ pm2 status
 pm2 logs memory-connector-api --lines 50
 # Expected: Should show NestJS startup logs
 
+  # Check the Redis password line in .env
+  grep "REDIS_PASSWORD" /var/www/memory-connector/apps/api/.env
+
+  # Remove any comment lines before the password
+  sed -i '/# Replace TOogb8eV01WJ095FJPcHxh2ixcOZwr8bhA0iwKIkIj0=/d' /var/www/memory-connector/apps/api/.env
+
+
 # Test API health endpoint
 curl http://localhost:4000/api/v1/health
 # Expected: {"status":"ok","timestamp":"..."}
@@ -1028,10 +1035,10 @@ sudo systemctl status nginx
 **Before requesting SSL certificate, verify DNS is pointing to your VPS:**
 ```bash
 # Check A record resolution
-dig +short yourdomain.com
+dig +short memoryConnector.com
 # Expected: YOUR_VPS_IP (e.g., 123.45.67.89)
 
-dig +short www.yourdomain.com
+dig +short www.memoryConnector.com
 # Expected: YOUR_VPS_IP (e.g., 123.45.67.89)
 
 # If DNS not resolving correctly:
@@ -1048,7 +1055,7 @@ sudo mkdir -p /var/www/certbot
 
 # Run Certbot with Nginx plugin
 # Replace yourdomain.com with your actual domain
-sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+sudo certbot --nginx -d memoryConnector.com -d www.memoryConnector.com
 
 # Follow interactive prompts:
 # 1. Enter email address: your-email@example.com
@@ -1074,7 +1081,7 @@ sudo certbot certificates
 # Expected: Shows certificate info, expiry date (90 days from now)
 
 # Test HTTPS access
-curl -I https://yourdomain.com
+curl -I https://memoryConnector.com
 # Expected: HTTP/2 200 OK
 
 # Test SSL Labs rating (from browser)
@@ -1330,18 +1337,18 @@ curl http://localhost:4000/api/v1/health
 # Expected: {"status":"ok","timestamp":"..."}
 
 # Test through Nginx (HTTPS)
-curl https://yourdomain.com/api/v1/health
+curl https://memoryconnector.com/api/v1/health
 # Expected: {"status":"ok","timestamp":"..."}
 
 # Test API documentation
-curl https://yourdomain.com/api/v1/docs
+curl https://memoryconnector.com/api/v1/docs
 # Expected: HTML content (Swagger UI)
 ```
 
 #### 11.2 Test Frontend
 
 **From your browser:**
-1. Visit: `https://yourdomain.com`
+1. Visit: `https://memoryconnector.com`
 2. Expected: Memory Connector login page loads
 3. Test login with seeded user:
    - Email: `test@example.com`
