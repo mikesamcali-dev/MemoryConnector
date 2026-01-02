@@ -10,6 +10,11 @@ export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  // Use production API URL or localhost for development
+  const apiUrl = window.location.hostname === 'localhost'
+    ? 'http://localhost:4000'
+    : `${window.location.protocol}//${window.location.hostname}`;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -97,7 +102,7 @@ export function LoginPage() {
 
         <div>
           <a
-            href="http://localhost:4000/api/v1/auth/google"
+            href={`${apiUrl}/api/v1/auth/google`}
             className="w-full flex items-center justify-center gap-3 h-12 md:h-10 px-4 border border-gray-300 text-base md:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24">
