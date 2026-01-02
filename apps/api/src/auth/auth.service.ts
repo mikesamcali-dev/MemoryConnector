@@ -104,5 +104,51 @@ export class AuthService {
   async logout(refreshToken: string) {
     await this.sessionsService.revokeSession(refreshToken);
   }
+
+  async googleLogin(googleUser: { googleId: string; email: string; name: string }) {
+    // Check if user exists by Google ID
+    let user = await this.prisma.user.findUnique({
+      where: { googleId: googleUser.googleId },
+    });
+
+    if (!user) {
+      // Check if user exists by email (might have signed up with password)
+      user = await this.prisma.user.findUnique({
+        where: { email: googleUser.email },
+      });
+
+      if (user) {
+        // Link Google account to existing email account
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            googleId: googleUser.googleId,
+            provider: 'google',
+          },
+        });
+      } else {
+        // Create new user with Google OAuth
+        user = await this.prisma.user.create({
+          data: {
+            email: googleUser.email,
+            googleId: googleUser.googleId,
+            provider: 'google',
+            tier: 'free',
+            roles: ['user'],
+          },
+        });
+
+        // Create user usage record
+        await this.prisma.userUsage.create({
+          data: {
+            userId: user.id,
+          },
+        });
+      }
+    }
+
+    // Log the user in
+    return this.login(user);
+  }
 }
 

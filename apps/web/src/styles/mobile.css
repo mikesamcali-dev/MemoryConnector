@@ -1,0 +1,150 @@
+/**
+ * Mobile-First Responsive Utility Classes
+ * These classes provide consistent mobile-to-desktop responsive patterns
+ */
+
+/* Typography responsive utilities */
+.mobile-heading {
+  @apply text-2xl md:text-3xl font-bold;
+}
+
+.mobile-subheading {
+  @apply text-lg md:text-xl font-semibold;
+}
+
+.mobile-title {
+  @apply text-base md:text-lg font-medium;
+}
+
+.mobile-body {
+  @apply text-base md:text-sm;
+}
+
+.mobile-caption {
+  @apply text-xs md:text-sm;
+}
+
+/* Spacing utilities */
+.mobile-spacing {
+  @apply p-3 md:p-6;
+}
+
+.mobile-spacing-sm {
+  @apply p-2 md:p-4;
+}
+
+.mobile-spacing-lg {
+  @apply p-4 md:p-8;
+}
+
+.mobile-gap {
+  @apply gap-2 md:gap-4;
+}
+
+.mobile-gap-sm {
+  @apply gap-1 md:gap-2;
+}
+
+.mobile-gap-lg {
+  @apply gap-3 md:gap-6;
+}
+
+.mobile-mb {
+  @apply mb-4 md:mb-6;
+}
+
+.mobile-mb-sm {
+  @apply mb-2 md:mb-4;
+}
+
+.mobile-mb-lg {
+  @apply mb-6 md:mb-8;
+}
+
+/* Layout utilities */
+.mobile-container {
+  @apply px-3 py-4 md:px-6 md:py-8;
+}
+
+.mobile-max-w {
+  @apply max-w-full md:max-w-7xl mx-auto;
+}
+
+.mobile-grid {
+  @apply flex flex-col md:grid md:grid-cols-2;
+}
+
+.mobile-stack {
+  @apply flex flex-col md:flex-row;
+}
+
+/* Card utilities */
+.mobile-card {
+  @apply p-3 md:p-6 rounded-lg bg-white border border-gray-200;
+}
+
+.mobile-card-sm {
+  @apply p-2 md:p-4 rounded-lg bg-white border border-gray-200;
+}
+
+/* Touch target utilities */
+.touch-target {
+  @apply min-h-tap min-w-tap;
+}
+
+.touch-target-lg {
+  @apply min-h-tap-lg min-w-tap-lg;
+}
+
+/* Button utilities */
+.mobile-button {
+  @apply h-12 px-4 text-base md:h-10 md:px-3 md:text-sm;
+}
+
+.mobile-button-sm {
+  @apply h-10 px-3 text-sm md:h-9 md:px-2 md:text-xs;
+}
+
+/* Input utilities */
+.mobile-input {
+  @apply h-12 px-3 text-base md:h-10 md:text-sm;
+}
+
+.mobile-textarea {
+  @apply px-3 py-3 text-base md:py-2 md:text-sm;
+}
+
+/* Safe area utilities */
+.safe-top {
+  @apply pt-safe-t;
+}
+
+.safe-bottom {
+  @apply pb-safe-b;
+}
+
+.safe-left {
+  @apply pl-safe-l;
+}
+
+.safe-right {
+  @apply pr-safe-r;
+}
+
+/* Hide/Show utilities */
+.mobile-only {
+  @apply block md:hidden;
+}
+
+.desktop-only {
+  @apply hidden md:block;
+}
+
+/* Interactive states for mobile */
+.mobile-active {
+  @apply active:bg-gray-100;
+}
+
+.mobile-active-primary {
+  @apply active:bg-blue-50;
+}

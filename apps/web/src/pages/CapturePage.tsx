@@ -558,8 +558,8 @@ export function CapturePage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Capture a Memory</h1>
-      <p className="text-gray-600 mb-6">Save your thoughts, ideas, and moments</p>
+      <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-2">Capture a Memory</h1>
+      <p className="hidden md:block text-gray-600 mb-6">Save your thoughts, ideas, and moments</p>
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
@@ -624,10 +624,10 @@ export function CapturePage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mb-8">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 md:space-y-4 mb-6 md:mb-8">
         {/* Text input first */}
         <div>
-          <label htmlFor="text" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="text" className="hidden md:block text-sm font-medium text-gray-700 mb-2">
             What do you want to remember?
           </label>
           <div className="relative">
@@ -635,9 +635,9 @@ export function CapturePage() {
               id="text"
               value={textValue}
               onChange={handleTextChange}
-              rows={6}
+              rows={window.innerWidth < 768 ? 3 : 6}
               autoFocus
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               placeholder="Write your memory here..."
             />
             {isAnalyzing && (
@@ -728,6 +728,7 @@ export function CapturePage() {
               <img
                 src={imagePreview}
                 alt="Preview"
+                loading="lazy"
                 className="h-32 w-auto rounded-md border border-gray-300"
               />
               <button
@@ -844,7 +845,7 @@ export function CapturePage() {
           <button
             type="submit"
             disabled={loading || uploadingImage || addingUrl}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            className="w-full md:w-auto h-12 md:h-auto px-4 py-2 bg-blue-600 text-white text-base md:text-sm rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           >
             {uploadingImage ? 'Uploading image...' : addingUrl ? 'Analyzing URL...' : loading ? 'Saving...' : 'Save Memory'}
           </button>
@@ -852,8 +853,11 @@ export function CapturePage() {
       </form>
 
       {/* Upcoming Reminders Section - Now at the bottom */}
-      <div className="border-t border-gray-200 pt-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Upcoming Reminders</h2>
+      <div className="border-t border-gray-200 pt-4 md:pt-6">
+        <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4">
+          <span className="hidden md:inline">Upcoming Reminders</span>
+          <span className="md:hidden">Reminders</span>
+        </h2>
 
         {loadingReminders && (
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">

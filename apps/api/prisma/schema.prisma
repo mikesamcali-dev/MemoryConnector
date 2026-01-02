@@ -87,7 +87,9 @@ enum IngestionStatus {
 model User {
   id           String   @id @default(uuid()) @db.Uuid
   email        String   @unique
-  passwordHash String   @map("password_hash")
+  passwordHash String?  @map("password_hash")
+  googleId     String?  @unique @map("google_id")
+  provider     String?  @default("local") // 'local' or 'google'
   tier         String   @default("free")
   roles        String[] @default(["user"])
   createdAt    DateTime @default(now()) @map("created_at")

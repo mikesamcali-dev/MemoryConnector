@@ -15,6 +15,7 @@ import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { AuthGuard } from '@nestjs/passport';
 import { SignupDto, LoginDto } from './dto/auth.dto';
 import { ConfigService } from '@nestjs/config';
 
@@ -114,6 +115,40 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'User information' })
   async getMe(@Req() req: any) {
     return req.user;
+  }
+
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Initiate Google OAuth login' })
+  @ApiResponse({ status: 302, description: 'Redirect to Google OAuth' })
+  async googleAuth() {
+    // Initiates Google OAuth flow
+  }
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Google OAuth callback' })
+  @ApiResponse({ status: 200, description: 'Login successful' })
+  async googleAuthCallback(@Req() req: any, @Res() res: Response) {
+    // Handle Google OAuth callback
+    const result = await this.authService.googleLogin({
+      googleId: req.user.googleId,
+      email: req.user.email,
+      name: req.user.name,
+    });
+
+    // Set refresh token in httpOnly cookie
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      path: '/api/v1/auth/refresh',
+    });
+
+    // Redirect to frontend with access token
+    const frontendUrl = this.config.get<string>('FRONTEND_URL', 'http://localhost:5173');
+    return res.redirect(`${frontendUrl}/auth/callback?token=${result.accessToken}`);
   }
 }
 

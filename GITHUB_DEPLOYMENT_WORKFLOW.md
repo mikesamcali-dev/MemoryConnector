@@ -1,7 +1,7 @@
 # GitHub Deployment Workflow
 
 ## Overview
-This guide covers how to push local changes to GitHub and deploy them to your GoDaddy production server.
+This guide covers how to push local changes to GitHub and deploy them to your Ubuntu production server.
 
 ---
 
@@ -76,40 +76,29 @@ git push -u origin main
 
 ---
 
-## 📥 Part 2: Deploy to GoDaddy Production Server
+## 📥 Part 2: Deploy to Ubuntu Production Server
 
 ### Step 1: Connect to Your Production Server
 
 ```bash
-# SSH into your GoDaddy server
-ssh username@your-godaddy-server.com
+# SSH into your Ubuntu server
+ssh username@your-server-ip-or-domain
 
 # Or if using a specific SSH key:
-ssh -i /path/to/your-key.pem username@your-godaddy-server.com
+ssh -i /path/to/your-key.pem username@your-server-ip-or-domain
 
 # Or if using a specific port:
-ssh -p 2222 username@your-godaddy-server.com
+ssh -p 22 username@your-server-ip-or-domain
 ```
 
-> **Note:** Replace `username` and `your-godaddy-server.com` with your actual credentials.
-> You can find your SSH details in GoDaddy's cPanel under "SSH Access" or "Web Hosting" section.
+> **Note:** Replace `username` and `your-server-ip-or-domain` with your actual credentials.
 
 ### Step 2: Navigate to Your Application Directory
 
 ```bash
 # Navigate to where your app is deployed
-cd /home/username/memory-connector
-
-# Or it might be in:
-# cd /var/www/memory-connector
-# cd ~/public_html/memory-connector
+cd /var/www/memory-connector
 ```
-
-> **Find your directory:**
-> ```bash
-> # If you're not sure where it is:
-> find /home -name "memory-connector" -type d 2>/dev/null
-> ```
 
 ### Step 3: Check Current Status
 
@@ -123,6 +112,8 @@ git status
 # View current commit
 git log --oneline -5
 ```
+  redis-cli -a 'EC8KYwAkq/SMT0SjIkNY3QnPTjy/mhKR5hJvEtrdTvE=' ping
+
 
 ### Step 4: Backup Current State (Safety First!)
 
@@ -140,7 +131,7 @@ git rev-parse HEAD > last-deployment.txt
 
 ```bash
 # Make sure you're in the app directory
-cd /home/username/memory-connector
+cd /var/www/memory-connector
 
 # Fetch the latest changes
 git fetch origin
@@ -287,20 +278,13 @@ The frontend deployment depends on your GoDaddy setup:
 pm2 restart memory-connector-web
 ```
 
-#### Option B: If serving static files from public_html
+#### Option B: If serving static files via Nginx/Apache
 
 ```bash
-# Copy built files to your public_html or web root
-cp -r apps/web/dist/* /home/username/public_html/
+# Copy to your web root (adjust path based on your web server config)
+cp -r apps/web/dist/* /var/www/memory-connector/public/
 
-# Or if you have a specific subdirectory:
-cp -r apps/web/dist/* /home/username/public_html/app/
-```
-
-#### Option C: If using a specific web directory
-
-```bash
-# Copy to wherever your web server is configured to serve from
+# Or if serving from a different location:
 rsync -av --delete apps/web/dist/ /var/www/html/memory-connector/
 ```
 
@@ -392,10 +376,10 @@ If something goes wrong, you can quickly rollback:
 
 ```bash
 # SSH into production server
-ssh username@your-godaddy-server.com
+ssh username@your-server-ip
 
 # Navigate to app directory
-cd /home/username/memory-connector
+cd /var/www/memory-connector
 
 # Find the previous commit
 git log --oneline -5
@@ -411,8 +395,8 @@ cd apps/api && pnpm build
 cd ../web && pnpm build
 pm2 restart memory-connector-api
 
-# Re-deploy frontend files
-cp -r apps/web/dist/* /home/username/public_html/
+# Re-deploy frontend files (if applicable)
+cp -r apps/web/dist/* /var/www/memory-connector/public/
 ```
 
 ### Option 2: Restore from Backup
@@ -440,10 +424,10 @@ git commit -m "message"       # Commit changes
 git push origin main          # Push to GitHub
 ```
 
-### Production Server (GoDaddy)
+### Production Server (Ubuntu)
 ```bash
 ssh user@server               # Connect to server
-cd /path/to/app               # Navigate to app
+cd /var/www/memory-connector  # Navigate to app
 git pull origin main          # Pull changes
 pnpm install                  # Install dependencies
 pnpm build                    # Build (in apps/api and apps/web)
@@ -451,43 +435,34 @@ pm2 restart app-name          # Restart service
 pm2 logs app-name             # Check logs
 ```
 
-### Common GoDaddy Paths
-- cPanel File Manager: `/home/username/`
-- Public HTML: `/home/username/public_html/`
-- Application: `/home/username/memory-connector/`
-- Logs: `/home/username/logs/` or `~/memory-connector/logs/`
+### Common Ubuntu Server Paths
+- Application: `/var/www/memory-connector/`
+- Web Root: `/var/www/html/` or `/var/www/memory-connector/public/`
+- Logs: `/var/log/` or `/var/www/memory-connector/logs/`
+- Nginx Config: `/etc/nginx/sites-available/`
 
 ---
 
-## 🔐 GoDaddy SSH Connection Info
+## 🔐 Ubuntu Server SSH Connection Info
 
-### Finding Your SSH Details:
+### Connection Details:
 
-1. **Login to GoDaddy cPanel:**
-   - Go to https://myaccount.godaddy.com
-   - Navigate to "Web Hosting" or "cPanel"
+1. **Server Information:**
+   - **Server:** Your server IP address or domain name
+   - **Port:** Usually `22` (default SSH port)
+   - **Username:** Your Ubuntu user (often `root` or `ubuntu`)
+   - **Authentication:** SSH key (recommended) or password
 
-2. **Enable SSH Access:**
-   - In cPanel, search for "SSH Access"
-   - Make sure SSH is enabled
-   - Note your SSH username (usually your cPanel username)
-
-3. **Connection Details:**
-   - **Server:** Usually `your-domain.com` or `ip-address`
-   - **Port:** Usually `22` (or check cPanel for custom port)
-   - **Username:** Your cPanel username
-   - **Authentication:** Password or SSH key
-
-4. **Common Connection Strings:**
+2. **Common Connection Strings:**
    ```bash
    # Standard connection
-   ssh cpaneluser@yourdomain.com
+   ssh username@your-server-ip
 
-   # With specific port
-   ssh -p 2222 cpaneluser@yourdomain.com
+   # With SSH key
+   ssh -i ~/.ssh/your-key.pem username@your-server-ip
 
-   # With IP address
-   ssh cpaneluser@123.45.67.89
+   # With domain name
+   ssh username@yourdomain.com
    ```
 
 ### First Time Setup:
@@ -498,11 +473,12 @@ If this is your first time deploying:
 # 1. SSH into server
 ssh user@server
 
-# 2. Navigate to home directory
-cd ~
+# 2. Navigate to web root
+cd /var/www
 
 # 3. Clone repository
-git clone https://github.com/yourusername/memory-connector.git
+sudo git clone https://github.com/yourusername/memory-connector.git
+sudo chown -R $USER:$USER memory-connector
 
 # 4. Install dependencies
 cd memory-connector
@@ -517,6 +493,7 @@ cd apps/api && pnpm build
 cd ../web && pnpm build
 
 # 7. Start with PM2
+cd ../..
 pm2 start apps/api/dist/main.js --name memory-connector-api
 pm2 startup  # Enable auto-start
 pm2 save  # Save current process list
@@ -580,11 +557,11 @@ npm run build
 # In browser: Ctrl+Shift+Delete -> Clear all cached files
 
 # On server, verify files were copied correctly
-ls -la /home/username/public_html/
+ls -la /var/www/memory-connector/public/
 ls -la apps/web/dist/
 
 # Recopy files
-cp -r apps/web/dist/* /home/username/public_html/
+cp -r apps/web/dist/* /var/www/memory-connector/public/
 ```
 
 ### Problem: Git pull conflicts

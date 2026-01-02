@@ -1,7 +1,10 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Brain, Plus, Search, Bell, Settings, LogOut, ShieldCheck, MapPin, User, Network, Video, Film, Image, Link as LinkIcon, Presentation } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useIsMobile } from '../hooks/useIsMobile';
+import { BottomNav } from './mobile/BottomNav';
+import { BottomSheet } from './mobile/BottomSheet';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -11,6 +14,8 @@ export function AppLayout({ children }: AppLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const isMobile = useIsMobile();
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -41,9 +46,23 @@ export function AppLayout({ children }: AppLayoutProps) {
     ? [...baseNavItems, { path: '/app/admin', icon: ShieldCheck, label: 'Admin' }]
     : baseNavItems;
 
+  // Primary items shown in bottom nav (mobile)
+  const primaryNavItems = [
+    { path: '/app/capture', icon: Plus, label: 'Capture' },
+    { path: '/app/search', icon: Search, label: 'Search' },
+    { path: '/app/reminders', icon: Bell, label: 'Reminders' },
+    { path: '/app/settings', icon: Settings, label: 'Settings' },
+  ];
+
+  // Overflow items for "More" menu (mobile)
+  const moreNavItems = navItems.filter(
+    item => !primaryNavItems.find(p => p.path === item.path)
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Navigation Bar */}
+      {/* Top Navigation Bar - Desktop only */}
+      {!isMobile && (
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -97,13 +116,17 @@ export function AppLayout({ children }: AppLayoutProps) {
           </div>
         </div>
       </nav>
+      )}
 
       {/* Page Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className={`
+        ${isMobile ? 'px-3 py-4 pb-20' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'}
+      `}>
         {children}
       </main>
 
-      {/* Footer */}
+      {/* Footer - Desktop only */}
+      {!isMobile && (
       <footer className="mt-auto border-t border-gray-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center text-sm text-gray-500">
@@ -116,6 +139,53 @@ export function AppLayout({ children }: AppLayoutProps) {
           </div>
         </div>
       </footer>
+      )}
+
+      {/* Bottom Navigation - Mobile only */}
+      {isMobile && <BottomNav onMoreClick={() => setIsMoreMenuOpen(true)} />}
+
+      {/* More Menu Bottom Sheet - Mobile only */}
+      <BottomSheet
+        isOpen={isMoreMenuOpen}
+        onClose={() => setIsMoreMenuOpen(false)}
+        title="More"
+      >
+        <div className="space-y-1">
+          {moreNavItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.path);
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={() => setIsMoreMenuOpen(false)}
+                className={`
+                  flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all min-h-tap
+                  ${active
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'text-gray-700 active:bg-gray-100'
+                  }
+                `}
+              >
+                <Icon className="h-5 w-5" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+
+          {/* Logout option in More menu */}
+          <button
+            onClick={() => {
+              setIsMoreMenuOpen(false);
+              handleLogout();
+            }}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium text-red-600 active:bg-red-50 transition-all min-h-tap"
+          >
+            <LogOut className="h-5 w-5" />
+            <span>Logout</span>
+          </button>
+        </div>
+      </BottomSheet>
     </div>
   );
 }

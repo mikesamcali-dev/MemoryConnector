@@ -184,19 +184,29 @@ export class EntityProcessorService {
       }
 
       // Create new person entity (Person is a shared entity, not tied to a memory)
+      // Build a human-readable bio from extracted metadata
+      const bioParts: string[] = [];
+
+      if (person.inferred_profession) {
+        bioParts.push(person.inferred_profession);
+      }
+
+      if (person.inferred_age_range) {
+        bioParts.push(`Age: ${person.inferred_age_range}`);
+      }
+
+      if (person.inferred_gender) {
+        bioParts.push(`Gender: ${person.inferred_gender}`);
+      }
+
+      const bio = bioParts.length > 0 ? bioParts.join(' • ') : null;
+
       const newPerson = await this.prisma.person.create({
         data: {
           displayName: personName,
           email: person.contact_info?.[0]?.email || null,
           phone: person.contact_info?.[0]?.phone || null,
-          bio: JSON.stringify({
-            name_variants: person.name_variants || [],
-            inferred_profession: person.inferred_profession,
-            inferred_gender: person.inferred_gender,
-            inferred_age_range: person.inferred_age_range,
-            confidence_score: person.confidence_score,
-            provenance: person.provenance || [],
-          }),
+          bio: bio,
         },
       });
 

@@ -13,6 +13,7 @@ interface AuthContextType {
   user: User | null;
   accessToken: string | null;
   login: (email: string, password: string) => Promise<void>;
+  loginWithToken: (token: string) => Promise<void>;
   signup: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
@@ -54,6 +55,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     navigate('/app/capture');
   };
 
+  const loginWithToken = async (token: string) => {
+    // Store token
+    setAccessToken(token);
+    localStorage.setItem('accessToken', token);
+
+    // Fetch user data
+    const userData = await api.getMe(token);
+    setUser(userData);
+
+    // Navigate to app
+    navigate('/app/capture');
+  };
+
   const signup = async (email: string, password: string) => {
     const result = await api.signup(email, password);
     setAccessToken(result.accessToken);
@@ -77,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, accessToken, login, signup, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, accessToken, login, loginWithToken, signup, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

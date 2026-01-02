@@ -132,18 +132,18 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-8">Settings</h1>
+    <div className="max-w-6xl mx-auto p-3 md:p-6">
+      <h1 className="text-2xl md:text-3xl font-bold mb-4 md:mb-8">Settings</h1>
 
-      <div className="grid md:grid-cols-2 gap-6 mb-8">
+      <div className="flex flex-col md:grid md:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
         {/* Account Info */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold mb-4">Account</h2>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+          <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Account</h2>
           <div className="space-y-2">
-            <p className="text-sm text-gray-600">
-              <span className="font-medium">Email:</span> {user?.email}
+            <p className="text-xs md:text-sm text-gray-600">
+              <span className="font-medium">Email:</span> <span className="break-all">{user?.email}</span>
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-xs md:text-sm text-gray-600">
               <span className="font-medium">Tier:</span>{' '}
               <span className="capitalize inline-flex items-center gap-2">
                 {user?.tier}
@@ -160,29 +160,30 @@ export function SettingsPage() {
           </div>
           <button
             onClick={logout}
-            className="mt-6 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="mt-4 md:mt-6 w-full md:w-auto h-12 md:h-auto px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
           >
             Logout
           </button>
         </div>
 
         {/* Usage Stats */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-blue-600" />
-            Usage Statistics
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+          <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 flex items-center gap-2">
+            <TrendingUp className="h-4 md:h-5 w-4 md:w-5 text-blue-600" />
+            <span className="hidden md:inline">Usage Statistics</span>
+            <span className="md:hidden">Usage</span>
           </h2>
           {loadingStats ? (
             <p className="text-sm text-gray-600">Loading...</p>
           ) : usageStats ? (
-            <div className="space-y-3">
+            <div className="space-y-2 md:space-y-3">
               <div>
-                <p className="text-sm font-medium text-gray-700">Memories Today</p>
+                <p className="text-xs md:text-sm font-medium text-gray-700">Memories Today</p>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-gray-900">
+                  <span className="text-xl md:text-2xl font-bold text-gray-900">
                     {usageStats.memories_today}
                   </span>
-                  <span className="text-sm text-gray-600">
+                  <span className="text-xs md:text-sm text-gray-600">
                     / {usageStats.memories_per_day === -1 ? '∞' : usageStats.memories_per_day}
                   </span>
                 </div>
@@ -200,12 +201,12 @@ export function SettingsPage() {
               </div>
 
               <div>
-                <p className="text-sm font-medium text-gray-700">Memories This Month</p>
+                <p className="text-xs md:text-sm font-medium text-gray-700">Memories This Month</p>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-gray-900">
+                  <span className="text-xl md:text-2xl font-bold text-gray-900">
                     {usageStats.memories_this_month}
                   </span>
-                  <span className="text-sm text-gray-600">
+                  <span className="text-xs md:text-sm text-gray-600">
                     / {usageStats.memories_per_month === -1 ? '∞' : usageStats.memories_per_month}
                   </span>
                 </div>
@@ -241,16 +242,17 @@ export function SettingsPage() {
       </div>
 
       {/* Reminder Settings */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Bell className="h-5 w-5 text-blue-600" />
-            Reminder Settings
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6 mb-6 md:mb-8">
+        <div className="flex items-center justify-between mb-3 md:mb-4">
+          <h2 className="text-lg md:text-xl font-semibold flex items-center gap-2">
+            <Bell className="h-4 md:h-5 w-4 md:w-5 text-blue-600" />
+            <span className="hidden md:inline">Reminder Settings</span>
+            <span className="md:hidden">Reminders</span>
           </h2>
           {!editingReminders && (
             <button
               onClick={() => setEditingReminders(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="px-3 md:px-4 py-2 text-sm md:text-base bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
               Edit
             </button>
@@ -390,31 +392,33 @@ export function SettingsPage() {
       </div>
 
       {/* Recent Memories */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-blue-600" />
-            Your Memories ({memories?.length || 0})
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+        <div className="flex items-center justify-between mb-3 md:mb-4">
+          <h2 className="text-lg md:text-xl font-semibold flex items-center gap-2">
+            <Calendar className="h-4 md:h-5 w-4 md:w-5 text-blue-600" />
+            <span className="hidden md:inline">Your Memories ({memories?.length || 0})</span>
+            <span className="md:hidden">Memories ({memories?.length || 0})</span>
           </h2>
           <Link
             to="/app/capture"
-            className="text-sm bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700"
+            className="text-xs md:text-sm bg-blue-600 text-white px-2 md:px-3 py-1.5 rounded hover:bg-blue-700"
           >
-            Add New
+            <span className="hidden md:inline">Add New</span>
+            <span className="md:inline">+</span>
           </Link>
         </div>
 
         {loadingMemories ? (
           <p className="text-sm text-gray-600">Loading memories...</p>
         ) : memories && memories.length > 0 ? (
-          <div className="space-y-2 max-h-96 overflow-y-auto">
+          <div className="space-y-2 md:max-h-96 md:overflow-y-auto">
             {memories.map((memory) => (
               <div
                 key={memory.id}
-                className="flex items-start justify-between gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                className="flex items-start justify-between gap-2 md:gap-4 p-2 md:p-3 bg-gray-50 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-900 line-clamp-2">
+                  <p className="text-xs md:text-sm text-gray-900 line-clamp-2">
                     {memory.textContent || '(No text)'}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">{formatDate(memory.createdAt)}</p>
@@ -427,21 +431,21 @@ export function SettingsPage() {
                       }}
                     >
                       <span>{memory.type.icon}</span>
-                      <span>{memory.type.label}</span>
+                      <span className="hidden md:inline">{memory.type.label}</span>
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
                   <button
                     onClick={() => navigate(`/app/memories/${memory.id}`)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                    className="p-2 min-w-tap min-h-tap flex items-center justify-center text-blue-600 hover:bg-blue-50 active:bg-blue-100 rounded-md transition-colors"
                     title="View/Edit"
                   >
                     <Edit className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => setDeleteConfirmId(memory.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                    className="p-2 min-w-tap min-h-tap flex items-center justify-center text-red-600 hover:bg-red-50 active:bg-red-100 rounded-md transition-colors"
                     title="Delete"
                   >
                     <Trash2 className="h-4 w-4" />

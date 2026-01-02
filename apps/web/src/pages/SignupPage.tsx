@@ -24,14 +24,14 @@ export function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-start md:items-center justify-center bg-gray-50 pt-8 md:py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-6 md:space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-4 md:mt-6 text-center text-2xl md:text-3xl font-extrabold text-gray-900">
             Create your account
           </h2>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-6 md:mt-8 space-y-4 md:space-y-6" onSubmit={handleSubmit}>
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
               {error}
@@ -48,7 +48,7 @@ export function SignupPage() {
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full h-12 md:h-10 px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 text-base md:text-sm rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10"
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -65,7 +65,7 @@ export function SignupPage() {
                 autoComplete="new-password"
                 required
                 minLength={8}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full h-12 md:h-10 px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 text-base md:text-sm rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10"
                 placeholder="Password (min 8 characters)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -77,7 +77,7 @@ export function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              className="group relative w-full flex justify-center h-12 md:h-10 px-4 border border-transparent text-base md:text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
               {loading ? 'Creating account...' : 'Sign up'}
             </button>
@@ -86,7 +86,7 @@ export function SignupPage() {
           <div className="text-center">
             <Link
               to="/login"
-              className="text-sm text-blue-600 hover:text-blue-500"
+              className="text-base md:text-sm text-blue-600 hover:text-blue-500"
             >
               Already have an account? Sign in
             </Link>

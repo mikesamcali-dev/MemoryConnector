@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { CheckCircle, AlertTriangle, XCircle, Info, X } from 'lucide-react';
 import { useOfflineSync } from '../hooks/useOfflineSync';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 type ToastType = 'success' | 'warning' | 'error' | 'info';
 
@@ -27,6 +28,8 @@ const BG_COLORS: Record<ToastType, string> = {
 };
 
 export function SyncToast({ type, message, actions, autoDismiss, onDismiss }: SyncToastProps) {
+  const isMobile = useIsMobile();
+
   useEffect(() => {
     if (autoDismiss) {
       const timer = setTimeout(onDismiss, autoDismiss);
@@ -36,7 +39,7 @@ export function SyncToast({ type, message, actions, autoDismiss, onDismiss }: Sy
 
   return (
     <div
-      className={`fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 border rounded-lg shadow-lg p-4 ${BG_COLORS[type]}`}
+      className={`fixed ${isMobile ? 'bottom-20' : 'bottom-4'} left-4 right-4 md:left-auto md:right-4 md:w-96 border rounded-lg shadow-lg p-3 md:p-4 ${BG_COLORS[type]}`}
       role="alert"
       aria-live="polite"
     >
