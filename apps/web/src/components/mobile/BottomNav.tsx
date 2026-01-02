@@ -1,6 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Plus, Search, Bell, Settings, MoreHorizontal } from 'lucide-react';
-import { useState } from 'react';
 
 interface BottomNavProps {
   onMoreClick?: () => void;

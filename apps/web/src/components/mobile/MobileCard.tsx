@@ -13,7 +13,6 @@ export interface MobileCardProps {
 }
 
 export function MobileCard({
-  id,
   textContent,
   createdAt,
   memoryType,
@@ -24,8 +23,6 @@ export function MobileCard({
   const { handleTouchStart, handleTouchMove, handleTouchEnd, translateX, isSwiping } = useSwipeGesture({
     threshold: 50,
   });
-
-  const showActions = translateX < -30;
 
   const handleCardClick = () => {
     if (!isSwiping && onTap) {
