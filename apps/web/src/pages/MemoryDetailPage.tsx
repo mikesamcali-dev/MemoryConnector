@@ -29,7 +29,7 @@ export function MemoryDetailPage() {
   const [showWordModal, setShowWordModal] = useState(false);
   const [analyzingWords, setAnalyzingWords] = useState(false);
   const [selectedWords, setSelectedWords] = useState<string[]>([]);
-  const [selectedWordDetails, setSelectedWordDetails] = useState<any>(null);
+  const [selectedWordDetails] = useState<any>(null);
   const [showWordDetailsModal, setShowWordDetailsModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState<any>(null);
   const [showImageModal, setShowImageModal] = useState(false);
@@ -201,12 +201,6 @@ export function MemoryDetailPage() {
     setSelectedWords([]);
   };
 
-  // Handle clicking a linked word to show definition
-  const handleWordClick = (word: any) => {
-    setSelectedWordDetails({ word });
-    setShowWordDetailsModal(true);
-  };
-
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto">
@@ -255,39 +249,40 @@ export function MemoryDetailPage() {
           </button>
         </div>
 
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900">Memory Details</h1>
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Memory Details</h1>
+          <div className="flex flex-wrap items-center gap-2 md:gap-3">
             {!isEditing && (
               <>
                 <button
                   onClick={() => navigate(`/app/memories/${id}/link`)}
-                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+                  className="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm md:text-base"
                 >
                   <Link2 className="h-4 w-4" />
-                  Link
+                  <span className="hidden sm:inline">Link</span>
                 </button>
                 <button
                   onClick={handleAnalyzeForWords}
                   disabled={analyzingWords}
-                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                  className="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 text-sm md:text-base whitespace-nowrap"
                 >
                   <BookOpen className="h-4 w-4" />
-                  {analyzingWords ? 'Analyzing...' : 'Find Words'}
+                  <span className="hidden sm:inline">{analyzingWords ? 'Analyzing...' : 'Find Words'}</span>
+                  <span className="sm:hidden">Words</span>
                 </button>
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  className="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm md:text-base"
                 >
                   <Edit2 className="h-4 w-4" />
-                  Edit
+                  <span className="hidden sm:inline">Edit</span>
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                  className="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm md:text-base"
                 >
                   <Trash2 className="h-4 w-4" />
-                  Delete
+                  <span className="hidden sm:inline">Delete</span>
                 </button>
               </>
             )}
