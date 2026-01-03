@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { getMemory, updateMemory, deleteMemory, analyzeText, WordMatch, linkWordsToMemory } from '../api/memories';
 import { getRemindersForMemory, updateReminderSchedule, deleteReminder } from '../api/reminders';
-import { ArrowLeft, Save, MapPin, Calendar, Edit2, X, Clock, Trash2, Plus, Link2, BookOpen, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Save, MapPin, Calendar, Edit2, X, Clock, Trash2, Plus, Link2, BookOpen, Image as ImageIcon, ExternalLink } from 'lucide-react';
 import { EntitySuggestionsModal } from '../components/EntitySuggestionsModal';
 
 const updateMemorySchema = z.object({
@@ -888,6 +888,102 @@ export function MemoryDetailPage() {
                   {link.image.capturedAt
                     ? new Date(link.image.capturedAt).toLocaleDateString()
                     : 'No date'}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Linked URLs Section */}
+      {memory.urlPageLinks && memory.urlPageLinks.length > 0 && (
+        <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <ExternalLink className="h-6 w-6 text-purple-600" />
+            <h2 className="text-2xl font-bold text-gray-900">Linked URLs ({memory.urlPageLinks.length})</h2>
+          </div>
+          <div className="space-y-4">
+            {memory.urlPageLinks.map((link) => (
+              <div key={link.id} className="border border-purple-200 rounded-lg p-4 hover:bg-purple-50 transition-colors">
+                <div className="flex items-start gap-3">
+                  {/* Thumbnail or Icon */}
+                  {link.urlPage.imageUrl ? (
+                    <img
+                      src={link.urlPage.imageUrl}
+                      alt={link.urlPage.title || 'URL preview'}
+                      className="w-24 h-24 object-cover rounded-md flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 bg-purple-100 rounded-md flex items-center justify-center flex-shrink-0">
+                      <ExternalLink className="h-8 w-8 text-purple-600" />
+                    </div>
+                  )}
+
+                  {/* URL Info */}
+                  <div className="flex-1 min-w-0">
+                    {/* Title */}
+                    <a
+                      href={link.urlPage.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-lg font-semibold text-purple-900 hover:text-purple-700 hover:underline line-clamp-2 block mb-1"
+                    >
+                      {link.urlPage.title || 'Untitled'}
+                    </a>
+
+                    {/* Site Name & Author */}
+                    {(link.urlPage.siteName || link.urlPage.author) && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                        {link.urlPage.siteName && <span>{link.urlPage.siteName}</span>}
+                        {link.urlPage.siteName && link.urlPage.author && <span>•</span>}
+                        {link.urlPage.author && <span>{link.urlPage.author}</span>}
+                      </div>
+                    )}
+
+                    {/* Description or Summary */}
+                    {(link.urlPage.description || link.urlPage.summary) && (
+                      <p className="text-sm text-gray-700 mb-3 line-clamp-3">
+                        {link.urlPage.description || link.urlPage.summary}
+                      </p>
+                    )}
+
+                    {/* Tags */}
+                    {link.urlPage.tags && link.urlPage.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {link.urlPage.tags.slice(0, 5).map((tag, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                        {link.urlPage.tags.length > 5 && (
+                          <span className="text-xs text-gray-500">
+                            +{link.urlPage.tags.length - 5} more
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* URL */}
+                    <a
+                      href={link.urlPage.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-purple-600 hover:underline truncate block"
+                    >
+                      {link.urlPage.url}
+                    </a>
+
+                    {/* Metadata */}
+                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                      {link.urlPage.publishedAt && (
+                        <span>Published: {new Date(link.urlPage.publishedAt).toLocaleDateString()}</span>
+                      )}
+                      <span>Fetched: {new Date(link.urlPage.fetchedAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}

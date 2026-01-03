@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Plus, Search, Bell, Settings, MoreHorizontal } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Presentation, Video } from 'lucide-react';
 
 interface BottomNavProps {
   onMoreClick?: () => void;
@@ -9,14 +9,14 @@ export function BottomNav({ onMoreClick }: BottomNavProps) {
   const location = useLocation();
 
   const isActive = (path: string) => {
-    return location.pathname === path;
+    return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
   const navItems = [
     { path: '/app/capture', icon: Plus, label: 'Capture' },
+    { path: '/app/slidedecks', icon: Presentation, label: 'Slides' },
     { path: '/app/search', icon: Search, label: 'Search' },
-    { path: '/app/reminders', icon: Bell, label: 'Reminders' },
-    { path: '/app/settings', icon: Settings, label: 'Settings' },
+    { path: '/app/tiktok-videos', icon: Video, label: 'TikTok' },
   ];
 
   return (

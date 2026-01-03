@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery } from '@tanstack/react-query';
-import { createMemory, analyzeText, PersonMatch, LocationMatch, SpellingError, YouTubeVideoMatch, WordMatch } from '../api/memories';
+import { createMemory, analyzeText, PersonMatch, LocationMatch, YouTubeVideoMatch, WordMatch } from '../api/memories';
 import { lookupWord } from '../api/admin';
 import { getUpcomingReminders } from '../api/reminders';
 import { uploadImage, linkImageToMemory } from '../api/images';
@@ -16,7 +16,6 @@ import { Clock, AlertCircle, Calendar, Loader, Users, MapPinned, Video, BookOpen
 import { useDebounce } from '../hooks/useDebounce';
 import { useHaptics } from '../hooks/useHaptics';
 import { EntitySuggestionsModal } from '../components/EntitySuggestionsModal';
-import { SpellCheckIndicator } from '../components/SpellCheckIndicator';
 
 const memorySchema = z.object({
   text: z.string().min(1, 'Memory text is required'),
@@ -45,7 +44,6 @@ export function CapturePage() {
   const [detectedLocations, setDetectedLocations] = useState<LocationMatch[]>([]);
   const [detectedYouTubeVideos, setDetectedYouTubeVideos] = useState<YouTubeVideoMatch[]>([]);
   const [detectedWords, setDetectedWords] = useState<WordMatch[]>([]);
-  const [spellingErrors, setSpellingErrors] = useState<SpellingError[]>([]);
   const [showEntityModal, setShowEntityModal] = useState(false);
   const [linkedEntities, setLinkedEntities] = useState<{
     persons: string[];
@@ -151,7 +149,6 @@ export function CapturePage() {
         setDetectedLocations([]);
         setDetectedYouTubeVideos([]);
         setDetectedWords([]);
-        setSpellingErrors([]);
         return;
       }
 
@@ -162,7 +159,6 @@ export function CapturePage() {
         setDetectedLocations(result.locations);
         setDetectedYouTubeVideos(result.youtubeVideos);
         setDetectedWords(result.words);
-        setSpellingErrors(result.spellingErrors);
 
         // Auto-show modal if entities detected (excluding words)
         if (result.persons.length > 0 || result.locations.length > 0 || result.youtubeVideos.length > 0) {
@@ -541,28 +537,6 @@ export function CapturePage() {
     }
   };
 
-  // Handle spell-check suggestion
-  const handleAcceptSuggestion = (error: SpellingError, suggestion: string) => {
-    const newText = textValue.substring(0, error.position.start) +
-                    suggestion +
-                    textValue.substring(error.position.end);
-    setTextValue(newText);
-    setValue('text', newText);
-    // Remove this error from the list
-    setSpellingErrors(prev => prev.filter(e => e.word !== error.word));
-  };
-
-  // Handle excluding a word from spell-check
-  const handleExcludeWord = (word: string) => {
-    // Remove this word from the current spelling errors list
-    setSpellingErrors(prev => prev.filter(e => e.word !== word));
-  };
-
-  // Handle skipping a word from spell-check (just hide it for now)
-  const handleSkipWord = (word: string) => {
-    // Remove this word from the current spelling errors list
-    setSpellingErrors(prev => prev.filter(e => e.word !== word));
-  };
 
   // Voice input handler
   const handleVoiceInput = () => {
@@ -606,42 +580,6 @@ export function CapturePage() {
     recognition.start();
   };
 
-  // Handle adding a word to the database as a vocabulary word
-  const handleAddToDatabase = async (word: string) => {
-    try {
-      setLoading(true);
-
-      // Check if word already exists
-      const existingWords = await lookupWord(word.toLowerCase().trim());
-
-      if (existingWords && existingWords.length > 0) {
-        // Word already exists
-        setError(`Word "${word}" already exists in the database. View it in the Words page.`);
-        setSpellingErrors(prev => prev.filter(e => e.word !== word));
-        return;
-      }
-
-      const wordDraft = createDraft(word);
-
-      // Create a memory for this word
-      const createdMemory = await createMemory({
-        ...wordDraft,
-        text: word,
-      });
-
-      // Remove this word from the spelling errors list
-      setSpellingErrors(prev => prev.filter(e => e.word !== word));
-
-      // Navigate to the memory detail page or link page
-      navigate(`/app/memories/${createdMemory.id}/link`);
-    } catch (err: any) {
-      console.error('Failed to add word to database:', err);
-      setError(err.message || 'Failed to add word to database');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="max-w-2xl mx-auto">
       {error && (
@@ -661,15 +599,6 @@ export function CapturePage() {
           )}
         </div>
       )}
-
-      {/* Spell check indicator */}
-      <SpellCheckIndicator
-        spellingErrors={spellingErrors}
-        onAcceptSuggestion={handleAcceptSuggestion}
-        onExcludeWord={handleExcludeWord}
-        onSkipWord={handleSkipWord}
-        onAddToDatabase={handleAddToDatabase}
-      />
 
       {/* YouTube video auto-link indicator */}
       {linkedEntities.youtubeVideos.length > 0 && (

@@ -27,17 +27,17 @@ export function AppLayout({ children }: AppLayoutProps) {
   };
 
   const baseNavItems = [
-    { path: '/app/feed', icon: Home, label: 'Home' },
     { path: '/app/capture', icon: Plus, label: 'Capture' },
+    { path: '/app/slidedecks', icon: Presentation, label: 'Slides' },
     { path: '/app/search', icon: Search, label: 'Search' },
-    { path: '/app/slidedecks', icon: Presentation, label: 'Slide Decks' },
+    { path: '/app/tiktok-videos', icon: Film, label: 'TikTok' },
+    { path: '/app/feed', icon: Home, label: 'Home' },
     { path: '/app/atlas', icon: Map, label: 'Atlas' },
     { path: '/app/locations', icon: MapPin, label: 'Locations' },
     { path: '/app/people', icon: User, label: 'People' },
     { path: '/app/images', icon: Image, label: 'Images' },
     { path: '/app/urls', icon: LinkIcon, label: 'URLs' },
     { path: '/app/youtube-videos', icon: Video, label: 'YouTube' },
-    { path: '/app/tiktok-videos', icon: Film, label: 'TikTok' },
     { path: '/app/relationships', icon: Network, label: 'Network' },
     { path: '/app/reminders', icon: Bell, label: 'Reminders' },
     { path: '/app/settings', icon: Settings, label: 'Settings' },

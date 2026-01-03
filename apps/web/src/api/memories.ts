@@ -84,6 +84,23 @@ export interface Memory {
       capturedAt?: string;
     };
   }[];
+  urlPageLinks?: {
+    id: string;
+    createdAt: string;
+    urlPage: {
+      id: string;
+      url: string;
+      title?: string;
+      description?: string;
+      summary?: string;
+      author?: string;
+      publishedAt?: string;
+      siteName?: string;
+      imageUrl?: string;
+      tags?: string[];
+      fetchedAt: string;
+    };
+  }[];
   event?: {
     id: string;
     name: string;
