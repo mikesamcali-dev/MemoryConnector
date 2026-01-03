@@ -19,11 +19,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { searchMemories } from '../api/search';
 import { getUpcomingReminders } from '../api/reminders';
 import { getUserUrlPages } from '../api/urlPages';
-import { useIsMobile } from '../hooks/useIsMobile';
 
 export function DashboardPage() {
   const { user } = useAuth();
-  const isMobile = useIsMobile();
 
   // Fetch recent memories
   const { data: memoriesData } = useQuery({
@@ -40,13 +38,16 @@ export function DashboardPage() {
   // Fetch upcoming reminders
   const { data: reminders } = useQuery({
     queryKey: ['upcoming-reminders'],
-    queryFn: () => getUpcomingReminders(5),
+    queryFn: () => getUpcomingReminders(),
   });
 
   // Fetch recent URLs
   const { data: urlPages } = useQuery({
     queryKey: ['recent-urls'],
-    queryFn: () => getUserUrlPages(0, 5),
+    queryFn: async () => {
+      const pages = await getUserUrlPages();
+      return pages.slice(0, 5);
+    },
   });
 
   const firstName = user?.email?.split('@')[0] || 'there';
@@ -57,7 +58,7 @@ export function DashboardPage() {
     return 'Good evening';
   })();
 
-  const lastLogin = user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A';
+  const accountAge = user ? 'Active' : 'N/A';
 
   // Stats cards data
   const statsCards = [
@@ -108,7 +109,7 @@ export function DashboardPage() {
         <div className="mt-4 flex items-center gap-4 text-sm text-blue-100">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
-            <span>Member since {lastLogin}</span>
+            <span>Account {accountAge}</span>
           </div>
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
@@ -216,18 +217,18 @@ export function DashboardPage() {
           <div className="space-y-3">
             {reminders.map((reminder) => (
               <div
-                key={reminder.id}
+                key={reminder.reminderId}
                 className="p-4 bg-purple-50 rounded-lg border border-purple-100"
               >
                 <div className="flex items-start gap-3">
                   <Calendar className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900">
-                      {reminder.title || 'Reminder'}
+                      {reminder.memoryPreview || 'Reminder'}
                     </p>
-                    {reminder.scheduledFor && (
+                    {reminder.scheduledAt && (
                       <p className="text-sm text-gray-600 mt-1">
-                        {new Date(reminder.scheduledFor).toLocaleString()}
+                        {new Date(reminder.scheduledAt).toLocaleString()}
                       </p>
                     )}
                   </div>
