@@ -28,17 +28,24 @@ export function DashboardPage() {
     queryKey: ['recent-memories'],
     queryFn: async () => {
       const result = await searchMemories('');
+      // Use totalCount if available, otherwise fallback to memories array length
+      const total = result.totalCount || result.memories.length;
       return {
-        total: result.totalCount,
+        total,
         recent: result.memories.slice(0, 5),
       };
     },
+    // Disable caching so it refetches on page navigation
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // Fetch upcoming reminders
   const { data: reminders } = useQuery({
     queryKey: ['upcoming-reminders'],
     queryFn: () => getUpcomingReminders(),
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // Fetch recent URLs
@@ -48,6 +55,8 @@ export function DashboardPage() {
       const pages = await getUserUrlPages();
       return pages.slice(0, 5);
     },
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const firstName = user?.email?.split('@')[0] || 'there';
