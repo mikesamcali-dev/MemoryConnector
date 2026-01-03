@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Brain, Plus, Search, Bell, Settings, LogOut, ShieldCheck, MapPin, User, Network, Video, Film, Image, Link as LinkIcon, Presentation, Map } from 'lucide-react';
+import { Brain, Plus, Search, Bell, Settings, LogOut, ShieldCheck, MapPin, User, Network, Video, Film, Image, Link as LinkIcon, Presentation, Map, MoreHorizontal, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { BottomNav } from './mobile/BottomNav';
@@ -16,6 +16,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { user, logout } = useAuth();
   const isMobile = useIsMobile();
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [isDesktopMoreOpen, setIsDesktopMoreOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -50,6 +51,16 @@ export function AppLayout({ children }: AppLayoutProps) {
   // Items shown in bottom nav (mobile) - defined in BottomNav component
   const bottomNavPaths = ['/app/capture', '/app/slidedecks', '/app/search', '/app/tiktok-videos'];
 
+  // Primary nav items for desktop
+  const desktopPrimaryPaths = ['/app/capture', '/app/slidedecks', '/app/search', '/app/tiktok-videos'];
+
+  // Desktop "More" menu items (excluding settings and admin which go on the right)
+  const desktopMoreItems = navItems.filter(
+    item => !desktopPrimaryPaths.includes(item.path) &&
+            item.path !== '/app/settings' &&
+            item.path !== '/app/admin'
+  );
+
   // Overflow items for "More" menu (mobile)
   const moreNavItems = navItems.filter(
     item => !bottomNavPaths.includes(item.path)
@@ -70,26 +81,109 @@ export function AppLayout({ children }: AppLayoutProps) {
 
             {/* Main Navigation */}
             <div className="flex items-center gap-1">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const active = isActive(item.path);
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`
-                      flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all
-                      ${active
-                        ? 'bg-blue-50 text-blue-600'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                      }
-                    `}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span className="hidden md:inline">{item.label}</span>
-                  </Link>
-                );
-              })}
+              {/* Primary Nav Items */}
+              {navItems
+                .filter(item => desktopPrimaryPaths.includes(item.path))
+                .map((item) => {
+                  const Icon = item.icon;
+                  const active = isActive(item.path);
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={`
+                        flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all
+                        ${active
+                          ? 'bg-blue-50 text-blue-600'
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                        }
+                      `}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+
+              {/* More Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsDesktopMoreOpen(!isDesktopMoreOpen)}
+                  onBlur={() => setTimeout(() => setIsDesktopMoreOpen(false), 200)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all"
+                >
+                  <MoreHorizontal className="h-5 w-5" />
+                  <span>More</span>
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+
+                {isDesktopMoreOpen && (
+                  <div className="absolute top-full right-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                    {desktopMoreItems.map((item) => {
+                      const Icon = item.icon;
+                      const active = isActive(item.path);
+                      return (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          onClick={() => setIsDesktopMoreOpen(false)}
+                          className={`
+                            flex items-center gap-3 px-4 py-2 font-medium transition-all
+                            ${active
+                              ? 'bg-blue-50 text-blue-600'
+                              : 'text-gray-700 hover:bg-gray-100'
+                            }
+                          `}
+                        >
+                          <Icon className="h-5 w-5" />
+                          <span>{item.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Settings */}
+              {navItems
+                .filter(item => item.path === '/app/settings')
+                .map((item) => {
+                  const Icon = item.icon;
+                  const active = isActive(item.path);
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={`
+                        flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all
+                        ${active
+                          ? 'bg-blue-50 text-blue-600'
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                        }
+                      `}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span>Settings</span>
+                    </Link>
+                  );
+                })}
+
+              {/* Admin (if user is admin) */}
+              {user?.roles.includes('admin') && (
+                <Link
+                  to="/app/admin"
+                  className={`
+                    flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all
+                    ${isActive('/app/admin')
+                      ? 'bg-blue-50 text-blue-600'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    }
+                  `}
+                >
+                  <ShieldCheck className="h-5 w-5" />
+                  <span>Admin</span>
+                </Link>
+              )}
             </div>
 
             {/* User Menu */}
