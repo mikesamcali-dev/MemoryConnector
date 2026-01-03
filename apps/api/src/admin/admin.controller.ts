@@ -407,6 +407,7 @@ export class AdminController {
         tier: true,
         roles: true,
         provider: true,
+        isEnabled: true,
         createdAt: true,
         updatedAt: true,
         _count: {
@@ -427,6 +428,7 @@ export class AdminController {
       tier: user.tier,
       roles: user.roles,
       provider: user.provider,
+      isEnabled: user.isEnabled,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       memoryCount: user._count.memories,
@@ -446,6 +448,7 @@ export class AdminController {
         tier: true,
         roles: true,
         provider: true,
+        isEnabled: true,
         createdAt: true,
         updatedAt: true,
         _count: {
@@ -499,6 +502,31 @@ export class AdminController {
     return this.prisma.user.update({
       where: { id },
       data: { tier: body.tier },
+    });
+  }
+
+  @Put('users/:id/enabled')
+  @ApiOperation({ summary: 'Enable or disable a user' })
+  async updateUserEnabled(
+    @Param('id') id: string,
+    @Body() body: { isEnabled: boolean }
+  ) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    return this.prisma.user.update({
+      where: { id },
+      data: { isEnabled: body.isEnabled },
+      select: {
+        id: true,
+        email: true,
+        isEnabled: true,
+        tier: true,
+        roles: true,
+      },
     });
   }
 

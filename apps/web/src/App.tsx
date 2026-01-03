@@ -35,6 +35,7 @@ const UrlBuilderPage = lazy(() => import('./pages/UrlBuilderPage').then(m => ({ 
 const SlideDecksListPage = lazy(() => import('./pages/SlideDecksListPage').then(m => ({ default: m.SlideDecksListPage })));
 const SlideDeckViewerPage = lazy(() => import('./pages/SlideDeckViewerPage').then(m => ({ default: m.SlideDeckViewerPage })));
 const AtlasPage = lazy(() => import('./pages/AtlasPage').then(m => ({ default: m.AtlasPage })));
+const AdminPanelPage = lazy(() => import('./pages/AdminPanelPage').then(m => ({ default: m.AdminPanelPage })));
 
 function App() {
   return (
@@ -277,6 +278,16 @@ function App() {
                 <ProtectedRoute>
                   <AppLayout>
                     <AtlasPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/admin"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AppLayout>
+                    <AdminPanelPage />
                   </AppLayout>
                 </ProtectedRoute>
               }

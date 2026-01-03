@@ -92,6 +92,7 @@ model User {
   provider     String?  @default("local") // 'local' or 'google'
   tier         String   @default("free")
   roles        String[] @default(["user"])
+  isEnabled    Boolean  @default(true) @map("is_enabled")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
