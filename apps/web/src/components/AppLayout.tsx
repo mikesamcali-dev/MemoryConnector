@@ -128,7 +128,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
       {/* Page Content */}
       <main className={`
-        ${isMobile ? 'px-3 py-4 pb-20' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'}
+        ${isMobile ? 'px-3 pt-4 pb-20' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'}
       `}>
         {children}
       </main>
