@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAllUsers, updateUserEnabled } from '../api/admin';
+import {
+  getAllUsers,
+  updateUserEnabled,
+  getSystemStats,
+  getAICostTracking,
+  getCircuitBreakerStatus,
+  getEnrichmentWorkerStatus,
+  triggerEnrichment,
+} from '../api/admin';
 import {
   Users,
   ShieldCheck,
@@ -10,16 +18,54 @@ import {
   Loader,
   CheckCircle,
   XCircle,
+  Database,
+  DollarSign,
+  Zap,
+  Play,
+  TrendingUp,
+  AlertCircle,
 } from 'lucide-react';
 
 export function AdminPanelPage() {
   const queryClient = useQueryClient();
   const [loadingUserId, setLoadingUserId] = useState<string | null>(null);
 
+  // Fetch system stats
+  const { data: stats } = useQuery({
+    queryKey: ['admin-stats'],
+    queryFn: getSystemStats,
+  });
+
+  // Fetch AI cost tracking
+  const { data: aiCosts } = useQuery({
+    queryKey: ['admin-ai-costs'],
+    queryFn: getAICostTracking,
+  });
+
+  // Fetch circuit breaker status
+  const { data: circuitBreaker } = useQuery({
+    queryKey: ['admin-circuit-breaker'],
+    queryFn: getCircuitBreakerStatus,
+  });
+
+  // Fetch enrichment worker status
+  const { data: enrichmentWorker } = useQuery({
+    queryKey: ['admin-enrichment-worker'],
+    queryFn: getEnrichmentWorkerStatus,
+  });
+
   // Fetch all users
   const { data: users, isLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: getAllUsers,
+  });
+
+  // Mutation to trigger enrichment
+  const triggerEnrichmentMutation = useMutation({
+    mutationFn: triggerEnrichment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-enrichment-worker'] });
+    },
   });
 
   // Mutation to toggle user enabled/disabled
@@ -48,8 +94,169 @@ export function AdminPanelPage() {
     <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Panel</h1>
-        <p className="text-gray-600">Manage users and system settings</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+        <p className="text-gray-600">Monitor system performance and manage users</p>
+      </div>
+
+      {/* System Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Total Users</p>
+              <p className="text-3xl font-bold text-gray-900">{stats?.users || 0}</p>
+            </div>
+            <Users className="h-8 w-8 text-blue-600" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Total Memories</p>
+              <p className="text-3xl font-bold text-gray-900">{stats?.memories || 0}</p>
+            </div>
+            <Database className="h-8 w-8 text-green-600" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Today</p>
+              <p className="text-3xl font-bold text-gray-900">{stats?.memoriesToday || 0}</p>
+            </div>
+            <TrendingUp className="h-8 w-8 text-purple-600" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Embeddings</p>
+              <p className="text-3xl font-bold text-gray-900">{stats?.embeddings || 0}</p>
+            </div>
+            <Zap className="h-8 w-8 text-yellow-600" />
+          </div>
+        </div>
+      </div>
+
+      {/* AI & Enrichment Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* AI Cost Tracking */}
+        <div className="bg-white rounded-lg shadow-md border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center gap-3">
+              <DollarSign className="h-6 w-6 text-green-600" />
+              <h2 className="text-xl font-bold text-gray-900">AI Cost Tracking</h2>
+            </div>
+          </div>
+          <div className="p-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Daily Spend</span>
+                <span className="text-2xl font-bold text-gray-900">
+                  ${((aiCosts?.dailySpend?.totalCents || 0) / 100).toFixed(2)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Budget Used</span>
+                <span className="text-lg font-semibold text-gray-900">
+                  {aiCosts?.dailySpend?.percentUsed?.toFixed(1) || 0}%
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Circuit State</span>
+                <span
+                  className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                    aiCosts?.dailySpend?.circuitState === 'CLOSED'
+                      ? 'bg-green-100 text-green-800'
+                      : aiCosts?.dailySpend?.circuitState === 'QUEUE_ONLY'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-red-100 text-red-800'
+                  }`}
+                >
+                  {aiCosts?.dailySpend?.circuitState || 'UNKNOWN'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Operations</span>
+                <span className="text-lg font-semibold text-gray-900">
+                  {aiCosts?.dailySpend?.operationCount || 0}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Enrichment Worker */}
+        <div className="bg-white rounded-lg shadow-md border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Activity className="h-6 w-6 text-blue-600" />
+                <h2 className="text-xl font-bold text-gray-900">Enrichment Worker</h2>
+              </div>
+              <button
+                onClick={() => triggerEnrichmentMutation.mutate()}
+                disabled={triggerEnrichmentMutation.isPending}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm"
+              >
+                {triggerEnrichmentMutation.isPending ? (
+                  <>
+                    <Loader className="h-4 w-4 animate-spin" />
+                    Triggering...
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4" />
+                    Trigger
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+          <div className="p-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Worker Status</span>
+                <span
+                  className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                    enrichmentWorker?.worker?.isActive
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                  }`}
+                >
+                  {enrichmentWorker?.worker?.isActive ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Pending</span>
+                <span className="text-lg font-semibold text-gray-900">
+                  {enrichmentWorker?.queue?.pending || 0}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Processing</span>
+                <span className="text-lg font-semibold text-gray-900">
+                  {enrichmentWorker?.queue?.processing || 0}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Completed Today</span>
+                <span className="text-lg font-semibold text-green-600">
+                  {enrichmentWorker?.queue?.completedToday || 0}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Failed Today</span>
+                <span className="text-lg font-semibold text-red-600">
+                  {enrichmentWorker?.queue?.failedToday || 0}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* User Management Section */}
