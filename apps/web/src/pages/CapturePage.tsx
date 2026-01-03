@@ -8,6 +8,7 @@ import { lookupWord } from '../api/admin';
 import { getUpcomingReminders } from '../api/reminders';
 import { uploadImage, linkImageToMemory } from '../api/images';
 import { addUrl, linkUrlPageToMemory } from '../api/urlPages';
+import { extractTikTokMetadata, createTikTokVideo } from '../api/tiktok';
 import { createDraft } from '../utils/idempotency';
 import { compressImage, getSizeReduction } from '../utils/imageCompression';
 import { useAuth } from '../contexts/AuthContext';
@@ -66,6 +67,10 @@ export function CapturePage() {
   const [addingUrl, setAddingUrl] = useState(false);
   const [addedUrlPage, setAddedUrlPage] = useState<any>(null);
   const [urlError, setUrlError] = useState('');
+
+  // TikTok video state
+  const [addingTikTok, setAddingTikTok] = useState(false);
+  const [tiktokError, setTiktokError] = useState('');
 
   // Debounce text input for analysis (1 second delay)
   const debouncedText = useDebounce(textValue, 1000);
@@ -281,6 +286,39 @@ export function CapturePage() {
   const handleRemoveUrl = () => {
     setAddedUrlPage(null);
     setUrlError('');
+  };
+
+  // Handle TikTok video addition
+  const handleAddTikTok = async () => {
+    const url = prompt('Enter TikTok URL:');
+    if (!url || !url.trim()) return;
+
+    setAddingTikTok(true);
+    setTiktokError('');
+
+    try {
+      // Extract metadata from TikTok URL
+      const metadata = await extractTikTokMetadata(url.trim());
+
+      // Create TikTok video
+      const video = await createTikTokVideo(metadata);
+
+      // Add to linked entities
+      setLinkedEntities(prev => ({
+        ...prev,
+        tiktokVideos: [...prev.tiktokVideos, video.id],
+      }));
+
+      console.log('TikTok video linked:', video.id);
+      haptic('success');
+    } catch (err: any) {
+      console.error('Add TikTok video error:', err);
+      setTiktokError(err.message || 'Failed to add TikTok video');
+      haptic('error');
+      setTimeout(() => setTiktokError(''), 5000);
+    } finally {
+      setAddingTikTok(false);
+    }
   };
 
   const onSubmit = async (data: { text: string }) => {
@@ -612,6 +650,28 @@ export function CapturePage() {
         </div>
       )}
 
+      {/* TikTok video auto-link indicator */}
+      {linkedEntities.tiktokVideos.length > 0 && (
+        <div className="bg-pink-50 border border-pink-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center gap-2">
+            <Video className="h-5 w-5 text-pink-600" />
+            <p className="text-sm font-medium text-pink-900">
+              TikTok video will be automatically linked to this memory
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* TikTok error indicator */}
+      {tiktokError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-red-600" />
+            <p className="text-sm font-medium text-red-900">{tiktokError}</p>
+          </div>
+        </div>
+      )}
+
       {/* Pre-linked image indicator */}
       {preLinkedImageId && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
@@ -641,7 +701,7 @@ export function CapturePage() {
         <button
           type="submit"
           form="capture-form"
-          disabled={loading || uploadingImage || addingUrl}
+          disabled={loading || uploadingImage || addingUrl || addingTikTok}
           className="w-full h-12 px-6 bg-blue-600 text-white text-base font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 shadow-md transition-all active:scale-95"
         >
           {uploadingImage ? (
@@ -653,6 +713,11 @@ export function CapturePage() {
             <span className="flex items-center justify-center gap-2">
               <Loader className="h-5 w-5 animate-spin" />
               Analyzing...
+            </span>
+          ) : addingTikTok ? (
+            <span className="flex items-center justify-center gap-2">
+              <Loader className="h-5 w-5 animate-spin" />
+              Adding TikTok...
             </span>
           ) : loading ? (
             <span className="flex items-center justify-center gap-2">
@@ -834,17 +899,16 @@ export function CapturePage() {
           {/* TikTok button */}
           <button
             type="button"
-            onClick={() => {
-              const url = prompt('Enter TikTok URL:');
-              if (url && url.trim()) {
-                setTextValue(prev => prev + (prev ? '\n' : '') + url);
-                setValue('text', textValue + (textValue ? '\n' : '') + url);
-              }
-            }}
-            className="inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border border-gray-300 rounded-md shadow-sm text-base md:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onClick={handleAddTikTok}
+            disabled={addingTikTok}
+            className="inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border border-gray-300 rounded-md shadow-sm text-base md:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             title="Add TikTok video"
           >
-            <Video className="h-5 w-5 md:h-4 md:w-4" />
+            {addingTikTok ? (
+              <Loader className="h-5 w-5 md:h-4 md:w-4 animate-spin" />
+            ) : (
+              <Video className="h-5 w-5 md:h-4 md:w-4" />
+            )}
           </button>
         </div>
 
@@ -940,13 +1004,15 @@ export function CapturePage() {
         <div className="hidden md:flex items-center justify-between">
           <button
             type="submit"
-            disabled={loading || uploadingImage || addingUrl}
+            disabled={loading || uploadingImage || addingUrl || addingTikTok}
             className="w-full md:w-auto h-10 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           >
             {uploadingImage ? (
               'Uploading image...'
             ) : addingUrl ? (
               'Analyzing URL...'
+            ) : addingTikTok ? (
+              'Adding TikTok...'
             ) : loading ? (
               'Saving...'
             ) : (
