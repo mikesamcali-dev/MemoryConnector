@@ -707,7 +707,36 @@ export function CapturePage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 md:space-y-4 mb-36 md:mb-8">
+      {/* Mobile save button - at top to avoid keyboard */}
+      <div className="md:hidden mb-4">
+        <button
+          type="submit"
+          form="capture-form"
+          disabled={loading || uploadingImage || addingUrl}
+          className="w-full h-12 px-6 bg-blue-600 text-white text-base font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 shadow-md transition-all active:scale-95"
+        >
+          {uploadingImage ? (
+            <span className="flex items-center justify-center gap-2">
+              <Loader className="h-5 w-5 animate-spin" />
+              Uploading...
+            </span>
+          ) : addingUrl ? (
+            <span className="flex items-center justify-center gap-2">
+              <Loader className="h-5 w-5 animate-spin" />
+              Analyzing...
+            </span>
+          ) : loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <Loader className="h-5 w-5 animate-spin" />
+              Saving...
+            </span>
+          ) : (
+            'Save Memory'
+          )}
+        </button>
+      </div>
+
+      <form id="capture-form" onSubmit={handleSubmit(onSubmit)} className="space-y-3 md:space-y-4 mb-8">
         {/* Text input first */}
         <div>
           <label htmlFor="text" className="hidden md:block text-sm font-medium text-gray-700 mb-2">
@@ -991,34 +1020,6 @@ export function CapturePage() {
               'Analyzing URL...'
             ) : loading ? (
               'Saving...'
-            ) : (
-              'Save Memory'
-            )}
-          </button>
-        </div>
-
-        {/* Mobile sticky bottom save button */}
-        <div className="md:hidden fixed bottom-16 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-40">
-          <button
-            type="submit"
-            disabled={loading || uploadingImage || addingUrl}
-            className="w-full h-14 px-6 bg-blue-600 text-white text-base font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 shadow-md transition-all active:scale-95"
-          >
-            {uploadingImage ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader className="h-5 w-5 animate-spin" />
-                Uploading...
-              </span>
-            ) : addingUrl ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader className="h-5 w-5 animate-spin" />
-                Analyzing...
-              </span>
-            ) : loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader className="h-5 w-5 animate-spin" />
-                Saving...
-              </span>
             ) : (
               'Save Memory'
             )}
