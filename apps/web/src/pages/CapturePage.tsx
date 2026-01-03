@@ -9,10 +9,12 @@ import { getUpcomingReminders } from '../api/reminders';
 import { uploadImage, linkImageToMemory } from '../api/images';
 import { addUrl, linkUrlPageToMemory } from '../api/urlPages';
 import { createDraft } from '../utils/idempotency';
+import { compressImage, getSizeReduction } from '../utils/imageCompression';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Clock, AlertCircle, Calendar, Loader, Users, MapPinned, Video, BookOpen, Image as ImageIcon, Link as LinkIcon, X } from 'lucide-react';
+import { Clock, AlertCircle, Calendar, Loader, Users, MapPinned, Video, BookOpen, Image as ImageIcon, Link as LinkIcon, X, Mic } from 'lucide-react';
 import { useDebounce } from '../hooks/useDebounce';
+import { useHaptics } from '../hooks/useHaptics';
 import { EntitySuggestionsModal } from '../components/EntitySuggestionsModal';
 import { SpellCheckIndicator } from '../components/SpellCheckIndicator';
 
@@ -24,6 +26,7 @@ export function CapturePage() {
   const { user: _user } = useAuth(); // Reserved for future use
   const navigate = useNavigate();
   const location = useLocation();
+  const { haptic } = useHaptics();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isRateLimitError, setIsRateLimitError] = useState(false);
@@ -55,6 +58,8 @@ export function CapturePage() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [compressingImage, setCompressingImage] = useState(false);
+  const [compressionInfo, setCompressionInfo] = useState<string>('');
   const [preLinkedImageId, setPreLinkedImageId] = useState<string | null>(null);
   const [preLinkedUrlPageId, setPreLinkedUrlPageId] = useState<string | null>(null);
 
@@ -66,6 +71,10 @@ export function CapturePage() {
 
   // Debounce text input for analysis (1 second delay)
   const debouncedText = useDebounce(textValue, 1000);
+
+  // Voice input state
+  const [isListening, setIsListening] = useState(false);
+  const [voiceError, setVoiceError] = useState('');
 
   // Fetch upcoming reminders
   const { data: upcomingReminders, isLoading: loadingReminders, error: remindersError } = useQuery({
@@ -180,7 +189,7 @@ export function CapturePage() {
   });
 
   // Handle image file selection
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -197,20 +206,48 @@ export function CapturePage() {
       return;
     }
 
-    setSelectedImage(file);
+    setCompressingImage(true);
+    setCompressionInfo('');
 
-    // Create preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    try {
+      // Compress image
+      const originalSize = file.size;
+      const compressedFile = await compressImage(file);
+      const compressedSize = compressedFile.size;
+      const reduction = getSizeReduction(originalSize, compressedSize);
+
+      setSelectedImage(compressedFile);
+      setCompressionInfo(`Compressed ${reduction}% (${(originalSize / 1024 / 1024).toFixed(2)}MB → ${(compressedSize / 1024 / 1024).toFixed(2)}MB)`);
+
+      // Create preview from compressed file
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(compressedFile);
+
+      haptic('success');
+    } catch (err) {
+      console.error('Image compression failed:', err);
+      // Fall back to original file
+      setSelectedImage(file);
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setCompressingImage(false);
+    }
   };
 
   // Remove selected image
   const handleRemoveImage = () => {
     setSelectedImage(null);
     setImagePreview(null);
+    setCompressionInfo('');
   };
 
   // Handle URL addition
@@ -251,6 +288,7 @@ export function CapturePage() {
   };
 
   const onSubmit = async (data: { text: string }) => {
+    haptic('light'); // Haptic feedback on submit
     setError('');
     setIsRateLimitError(false);
     setLoading(true);
@@ -352,9 +390,15 @@ export function CapturePage() {
       setUrlInput('');
       reset();
 
+      // Success haptic feedback
+      haptic('success');
+
       // Navigate directly to link page
       navigate(`/app/memories/${createdMemory.id}/link`);
     } catch (err: any) {
+      // Error haptic feedback
+      haptic('error');
+
       // Check if it's a rate limit error (429)
       if (err.status === 429) {
         setIsRateLimitError(true);
@@ -520,6 +564,48 @@ export function CapturePage() {
     setSpellingErrors(prev => prev.filter(e => e.word !== word));
   };
 
+  // Voice input handler
+  const handleVoiceInput = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      setVoiceError('Speech recognition is not supported in your browser');
+      haptic('error');
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      haptic('light');
+      setIsListening(true);
+      setVoiceError('');
+    };
+
+    recognition.onresult = (event: any) => {
+      haptic('success');
+      const transcript = event.results[0][0].transcript;
+      const newValue = textValue + (textValue ? ' ' : '') + transcript;
+      setTextValue(newValue);
+      setValue('text', newValue);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      setVoiceError('Voice input failed. Please try again.');
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
+  };
+
   // Handle adding a word to the database as a vocabulary word
   const handleAddToDatabase = async (word: string) => {
     try {
@@ -621,7 +707,7 @@ export function CapturePage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 md:space-y-4 mb-6 md:mb-8">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 md:space-y-4 mb-36 md:mb-8">
         {/* Text input first */}
         <div>
           <label htmlFor="text" className="hidden md:block text-sm font-medium text-gray-700 mb-2">
@@ -632,7 +718,7 @@ export function CapturePage() {
               id="text"
               value={textValue}
               onChange={handleTextChange}
-              rows={window.innerWidth < 768 ? 3 : 6}
+              rows={window.innerWidth < 768 ? 4 : 6}
               autoFocus
               className="w-full px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               placeholder="Write your memory here..."
@@ -640,10 +726,23 @@ export function CapturePage() {
             {isAnalyzing && (
               <div className="absolute top-2 right-2 flex items-center gap-2 text-sm text-gray-500">
                 <Loader className="h-4 w-4 animate-spin" />
-                <span>Analyzing...</span>
+                <span className="hidden sm:inline">Analyzing...</span>
               </div>
             )}
+            {/* Voice input button (mobile only) */}
+            <button
+              type="button"
+              onClick={handleVoiceInput}
+              disabled={isListening}
+              className="md:hidden absolute bottom-2 right-2 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              title="Voice input"
+            >
+              <Mic className={`h-5 w-5 ${isListening ? 'animate-pulse' : ''}`} />
+            </button>
           </div>
+          {voiceError && (
+            <p className="mt-1 text-sm text-red-600">{voiceError}</p>
+          )}
           {errors.text?.message && (
             <p className="mt-1 text-sm text-red-600">{String(errors.text.message)}</p>
           )}
@@ -699,39 +798,62 @@ export function CapturePage() {
           )}
         </div>
 
-        {/* Media buttons - Image, YouTube, TikTok, URL */}
+        {/* Media buttons - Voice (desktop only), Image, YouTube, TikTok, URL */}
         <div className="flex gap-2">
+          {/* Voice input button (desktop only) */}
+          <button
+            type="button"
+            onClick={handleVoiceInput}
+            disabled={isListening}
+            className="hidden md:inline-flex items-center justify-center h-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            title="Voice input"
+          >
+            <Mic className={`h-4 w-4 ${isListening ? 'animate-pulse text-blue-600' : ''}`} />
+          </button>
+
           {/* Image upload */}
           {!imagePreview ? (
             <label
               htmlFor="image-upload"
-              className="inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border border-gray-300 rounded-md shadow-sm text-base md:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500"
+              className={`inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border border-gray-300 rounded-md shadow-sm text-base md:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500 ${compressingImage ? 'opacity-50 cursor-wait' : ''}`}
               title="Add image"
             >
-              <ImageIcon className="h-5 w-5 md:h-4 md:w-4" />
+              {compressingImage ? (
+                <Loader className="h-5 w-5 md:h-4 md:w-4 animate-spin" />
+              ) : (
+                <ImageIcon className="h-5 w-5 md:h-4 md:w-4" />
+              )}
               <input
                 id="image-upload"
                 type="file"
                 accept="image/*"
                 onChange={handleImageSelect}
                 className="sr-only"
+                disabled={compressingImage}
               />
             </label>
           ) : (
-            <div className="relative">
-              <img
-                src={imagePreview}
-                alt="Preview"
-                loading="lazy"
-                className="h-12 md:h-10 w-auto rounded-md border border-gray-300"
-              />
-              <button
-                type="button"
-                onClick={handleRemoveImage}
-                className="absolute -top-1 -right-1 min-w-[24px] min-h-[24px] p-1 bg-red-500 text-white rounded-full hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 flex items-center justify-center"
-              >
-                <X className="h-3 w-3" />
-              </button>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  loading="lazy"
+                  className="h-12 md:h-10 w-auto rounded-md border border-gray-300"
+                />
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  className="absolute -top-1 -right-1 min-w-[24px] min-h-[24px] p-1 bg-red-500 text-white rounded-full hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 flex items-center justify-center"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+              {compressionInfo && (
+                <span className="hidden md:inline text-xs text-green-600">
+                  {compressionInfo}
+                </span>
+              )}
             </div>
           )}
 
@@ -856,23 +978,49 @@ export function CapturePage() {
           )}
         </div>
 
-        <div className="flex items-center justify-between">
+        {/* Desktop submit button */}
+        <div className="hidden md:flex items-center justify-between">
           <button
             type="submit"
             disabled={loading || uploadingImage || addingUrl}
-            className="w-full md:w-auto h-12 md:h-10 px-4 md:px-3 py-2 bg-blue-600 text-white text-base md:text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            className="w-full md:w-auto h-10 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           >
             {uploadingImage ? (
-              <span className="hidden md:inline">Uploading image...</span>
+              'Uploading image...'
             ) : addingUrl ? (
-              <span className="hidden md:inline">Analyzing URL...</span>
+              'Analyzing URL...'
             ) : loading ? (
               'Saving...'
             ) : (
-              <>
-                <span className="hidden md:inline">Save Memory</span>
-                <span className="md:hidden">Save</span>
-              </>
+              'Save Memory'
+            )}
+          </button>
+        </div>
+
+        {/* Mobile sticky bottom save button */}
+        <div className="md:hidden fixed bottom-16 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-40">
+          <button
+            type="submit"
+            disabled={loading || uploadingImage || addingUrl}
+            className="w-full h-14 px-6 bg-blue-600 text-white text-base font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 shadow-md transition-all active:scale-95"
+          >
+            {uploadingImage ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader className="h-5 w-5 animate-spin" />
+                Uploading...
+              </span>
+            ) : addingUrl ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader className="h-5 w-5 animate-spin" />
+                Analyzing...
+              </span>
+            ) : loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader className="h-5 w-5 animate-spin" />
+                Saving...
+              </span>
+            ) : (
+              'Save Memory'
             )}
           </button>
         </div>
