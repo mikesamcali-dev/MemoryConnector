@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Brain, Plus, Search, Bell, Settings, LogOut, ShieldCheck, MapPin, User, Network, Video, Film, Image, Link as LinkIcon, Presentation, Home, Map } from 'lucide-react';
+import { Brain, Plus, Search, Bell, Settings, LogOut, ShieldCheck, MapPin, User, Network, Video, Film, Image, Link as LinkIcon, Presentation, Map } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { BottomNav } from './mobile/BottomNav';
@@ -31,7 +31,6 @@ export function AppLayout({ children }: AppLayoutProps) {
     { path: '/app/slidedecks', icon: Presentation, label: 'Slides' },
     { path: '/app/search', icon: Search, label: 'Search' },
     { path: '/app/tiktok-videos', icon: Film, label: 'TikTok' },
-    { path: '/app/feed', icon: Home, label: 'Home' },
     { path: '/app/atlas', icon: Map, label: 'Atlas' },
     { path: '/app/locations', icon: MapPin, label: 'Locations' },
     { path: '/app/people', icon: User, label: 'People' },
@@ -48,17 +47,12 @@ export function AppLayout({ children }: AppLayoutProps) {
     ? [...baseNavItems, { path: '/app/admin', icon: ShieldCheck, label: 'Admin' }]
     : baseNavItems;
 
-  // Primary items shown in bottom nav (mobile)
-  const primaryNavItems = [
-    { path: '/app/feed', icon: Home, label: 'Home' },
-    { path: '/app/capture', icon: Plus, label: 'Capture' },
-    { path: '/app/search', icon: Search, label: 'Search' },
-    { path: '/app/reminders', icon: Bell, label: 'Reminders' },
-  ];
+  // Items shown in bottom nav (mobile) - defined in BottomNav component
+  const bottomNavPaths = ['/app/capture', '/app/slidedecks', '/app/search', '/app/tiktok-videos'];
 
   // Overflow items for "More" menu (mobile)
   const moreNavItems = navItems.filter(
-    item => !primaryNavItems.find(p => p.path === item.path)
+    item => !bottomNavPaths.includes(item.path)
   );
 
   return (
@@ -69,7 +63,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <Link to="/app/capture" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <Link to="/app/feed" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <Brain className="h-8 w-8 text-blue-600" />
               <span className="text-xl font-bold text-gray-900 hidden sm:inline">Memory Connector</span>
             </Link>
@@ -118,6 +112,18 @@ export function AppLayout({ children }: AppLayoutProps) {
           </div>
         </div>
       </nav>
+      )}
+
+      {/* Mobile Header - Mobile only */}
+      {isMobile && (
+        <div className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
+          <div className="flex items-center justify-center h-14 px-4">
+            <Link to="/app/feed" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <Brain className="h-7 w-7 text-blue-600" />
+              <span className="text-lg font-bold text-gray-900">MC</span>
+            </Link>
+          </div>
+        </div>
       )}
 
       {/* Page Content */}
