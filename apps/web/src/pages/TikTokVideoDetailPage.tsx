@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTikTokVideo, getTikTokVideoMemories, enrichTikTokVideo } from '../api/tiktok';
-import { ArrowLeft, Video, Calendar, Eye, ThumbsUp, Share2, MessageCircle, FileText, ExternalLink, Sparkles, Loader } from 'lucide-react';
+import { ArrowLeft, Video, Calendar, Eye, ThumbsUp, Share2, MessageCircle, FileText, ExternalLink, Sparkles, Loader, Plus } from 'lucide-react';
 
 export function TikTokVideoDetailPage() {
   const { videoId } = useParams<{ videoId: string }>();
@@ -200,34 +200,46 @@ export function TikTokVideoDetailPage() {
               )}
             </div>
 
-            {/* External Link */}
-            <div className="mt-4 flex gap-3">
-              <a
-                href={video.canonicalUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 text-sm"
-              >
-                <ExternalLink className="h-4 w-4" />
-                View on TikTok
-              </a>
+            {/* Action Buttons */}
+            <div className="mt-4 flex flex-col gap-3">
+              {/* Prominent Add Memory Button */}
               <button
-                onClick={() => enrichMutation.mutate()}
-                disabled={enrichMutation.isPending}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm disabled:opacity-50"
+                onClick={() => navigate('/app/capture', { state: { tiktokVideoId: video.id } })}
+                className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
               >
-                {enrichMutation.isPending ? (
-                  <>
-                    <Loader className="h-4 w-4 animate-spin" />
-                    Enriching...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" />
-                    Enrich with Whisper
-                  </>
-                )}
+                <Plus className="h-6 w-6" />
+                Add Memory & Reminders
               </button>
+
+              {/* Secondary Actions */}
+              <div className="flex gap-3">
+                <a
+                  href={video.canonicalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 text-sm"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  View on TikTok
+                </a>
+                <button
+                  onClick={() => enrichMutation.mutate()}
+                  disabled={enrichMutation.isPending}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm disabled:opacity-50"
+                >
+                  {enrichMutation.isPending ? (
+                    <>
+                      <Loader className="h-4 w-4 animate-spin" />
+                      Enriching...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      Enrich with Whisper
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -340,12 +352,13 @@ export function TikTokVideoDetailPage() {
           ) : !memories || memories.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-              <p>No memories linked to this video yet</p>
+              <p className="mb-4">No memories linked to this video yet</p>
               <button
                 onClick={() => navigate('/app/capture', { state: { tiktokVideoId: video?.id } })}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-md hover:shadow-lg transition-all"
               >
-                Create Memory
+                <Plus className="h-5 w-5" />
+                Add Memory & Reminders
               </button>
             </div>
           ) : (
