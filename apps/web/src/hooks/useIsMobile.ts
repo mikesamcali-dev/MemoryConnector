@@ -6,13 +6,15 @@ import { useState, useEffect } from 'react';
  * Handles SSR safely and listens to resize events
  */
 export function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(false);
+  // Default to mobile-first to prevent flash of desktop layout
+  const [isMobile, setIsMobile] = useState(true);
 
   useEffect(() => {
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
 
+    // Check immediately on mount
     checkIsMobile();
 
     window.addEventListener('resize', checkIsMobile);
