@@ -100,7 +100,7 @@ export class GamificationService {
           totalMemoriesCreated: { increment: 1 },
         },
       });
-      return;
+      return await this.checkAndUnlockAchievements(userId);
     }
 
     const daysDiff = Math.floor(
