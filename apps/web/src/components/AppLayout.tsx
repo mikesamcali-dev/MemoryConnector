@@ -52,7 +52,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const bottomNavPaths = ['/app/capture', '/app/slidedecks', '/app/search', '/app/tiktok-videos'];
 
   // Primary nav items for desktop
-  const desktopPrimaryPaths = ['/app/capture', '/app/slidedecks', '/app/search', '/app/tiktok-videos'];
+  const desktopPrimaryPaths = ['/app/capture', '/app/slidedecks', '/app/tiktok-videos', '/app/images'];
 
   // Desktop "More" menu items (excluding settings and admin which go on the right)
   const desktopMoreItems = navItems.filter(
