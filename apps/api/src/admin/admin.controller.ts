@@ -406,7 +406,9 @@ export class AdminController {
         email: true,
         tier: true,
         roles: true,
+        provider: true,
         createdAt: true,
+        updatedAt: true,
         _count: {
           select: {
             memories: true,
@@ -424,11 +426,114 @@ export class AdminController {
       email: user.email,
       tier: user.tier,
       roles: user.roles,
+      provider: user.provider,
       createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
       memoryCount: user._count.memories,
     }));
     console.log('Returning users:', result);
     return result;
+  }
+
+  @Get('users/:id')
+  @ApiOperation({ summary: 'Get user by ID' })
+  async getUser(@Param('id') id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        tier: true,
+        roles: true,
+        provider: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            memories: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    return {
+      ...user,
+      memoryCount: user._count.memories,
+    };
+  }
+
+  @Put('users/:id/roles')
+  @ApiOperation({ summary: 'Update user roles' })
+  async updateUserRoles(
+    @Param('id') id: string,
+    @Body() body: { roles: string[] }
+  ) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    return this.prisma.user.update({
+      where: { id },
+      data: { roles: body.roles },
+    });
+  }
+
+  @Put('users/:id/tier')
+  @ApiOperation({ summary: 'Update user tier' })
+  async updateUserTier(
+    @Param('id') id: string,
+    @Body() body: { tier: 'free' | 'premium' }
+  ) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    return this.prisma.user.update({
+      where: { id },
+      data: { tier: body.tier },
+    });
+  }
+
+  @Delete('users/:id')
+  @ApiOperation({ summary: 'Delete user and all associated data' })
+  async deleteUser(@Param('id') id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            memories: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    // Delete user (cascade will handle memories and related data)
+    await this.prisma.user.delete({
+      where: { id },
+    });
+
+    return {
+      success: true,
+      message: `User ${user.email} and ${user._count.memories} memories deleted`,
+      deletedUser: {
+        id: user.id,
+        email: user.email,
+        memoriesDeleted: user._count.memories,
+      },
+    };
   }
 
   @Get('memories-by-user')

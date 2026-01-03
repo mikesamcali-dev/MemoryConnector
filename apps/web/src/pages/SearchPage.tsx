@@ -90,22 +90,22 @@ export function SearchPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search..."
-            className="flex-1 h-12 md:h-auto px-4 py-2 text-base md:text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 h-12 md:h-10 px-4 md:px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {isMobile && searchTerm && (
             <button
               type="button"
               onClick={() => setIsFiltersOpen(true)}
-              className="min-w-tap h-12 px-3 bg-gray-100 text-gray-700 rounded-md active:bg-gray-200"
+              className="min-w-[48px] min-h-[48px] h-12 px-3 bg-gray-100 text-gray-700 rounded-md active:bg-gray-200 flex items-center justify-center"
             >
               <SlidersHorizontal className="h-5 w-5" />
             </button>
           )}
           <button
             type="submit"
-            className="min-w-tap h-12 md:h-auto md:px-6 md:py-2 px-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="min-w-[48px] min-h-[48px] h-12 md:h-10 md:px-4 md:py-2 px-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center"
           >
-            <Search className="h-5 w-5 md:hidden" />
+            <Search className="h-5 w-5 md:h-4 md:w-4 md:hidden" />
             <span className="hidden md:inline">Search</span>
           </button>
         </div>
@@ -242,7 +242,7 @@ export function SearchPage() {
           {/* Apply Button */}
           <button
             onClick={() => setIsFiltersOpen(false)}
-            className="w-full h-12 bg-blue-600 text-white rounded-lg font-medium active:bg-blue-700"
+            className="w-full h-12 px-4 py-2 bg-blue-600 text-white text-base rounded-lg font-medium active:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             Apply
           </button>

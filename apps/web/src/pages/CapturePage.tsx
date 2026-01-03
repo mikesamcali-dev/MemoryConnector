@@ -558,9 +558,6 @@ export function CapturePage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-2">Capture a Memory</h1>
-      <p className="hidden md:block text-gray-600 mb-6">Save your thoughts, ideas, and moments</p>
-
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
           {error}
@@ -658,95 +655,121 @@ export function CapturePage() {
                 <button
                   type="button"
                   onClick={() => setShowEntityModal(true)}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 border border-purple-200 text-purple-700 rounded-md text-sm hover:bg-purple-100 transition-colors"
+                  className="inline-flex items-center gap-1 h-12 md:h-10 px-4 md:px-3 py-2 bg-purple-50 border border-purple-200 text-purple-700 rounded-md text-base md:text-sm hover:bg-purple-100 transition-colors"
                 >
-                  <Users className="h-4 w-4" />
-                  {detectedPersons.length} {detectedPersons.length === 1 ? 'person' : 'people'} detected
+                  <Users className="h-5 w-5 md:h-4 md:w-4" />
+                  <span className="hidden md:inline">{detectedPersons.length} {detectedPersons.length === 1 ? 'person' : 'people'} detected</span>
+                  <span className="md:hidden">{detectedPersons.length} {detectedPersons.length === 1 ? 'person' : 'people'}</span>
                 </button>
               )}
               {detectedLocations.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setShowEntityModal(true)}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 border border-green-200 text-green-700 rounded-md text-sm hover:bg-green-100 transition-colors"
+                  className="inline-flex items-center gap-1 h-12 md:h-10 px-4 md:px-3 py-2 bg-green-50 border border-green-200 text-green-700 rounded-md text-base md:text-sm hover:bg-green-100 transition-colors"
                 >
-                  <MapPinned className="h-4 w-4" />
-                  {detectedLocations.length} {detectedLocations.length === 1 ? 'location' : 'locations'} detected
+                  <MapPinned className="h-5 w-5 md:h-4 md:w-4" />
+                  <span className="hidden md:inline">{detectedLocations.length} {detectedLocations.length === 1 ? 'location' : 'locations'} detected</span>
+                  <span className="md:hidden">{detectedLocations.length} {detectedLocations.length === 1 ? 'location' : 'locations'}</span>
                 </button>
               )}
               {detectedYouTubeVideos.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setShowEntityModal(true)}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm hover:bg-red-100 transition-colors"
+                  className="inline-flex items-center gap-1 h-12 md:h-10 px-4 md:px-3 py-2 bg-red-50 border border-red-200 text-red-700 rounded-md text-base md:text-sm hover:bg-red-100 transition-colors"
                 >
-                  <Video className="h-4 w-4" />
-                  {detectedYouTubeVideos.length} {detectedYouTubeVideos.length === 1 ? 'video' : 'videos'} detected
+                  <Video className="h-5 w-5 md:h-4 md:w-4" />
+                  <span className="hidden md:inline">{detectedYouTubeVideos.length} {detectedYouTubeVideos.length === 1 ? 'video' : 'videos'} detected</span>
+                  <span className="md:hidden">{detectedYouTubeVideos.length} {detectedYouTubeVideos.length === 1 ? 'video' : 'videos'}</span>
                 </button>
               )}
               {detectedWords.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setShowEntityModal(true)}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-md text-sm hover:bg-indigo-100 transition-colors"
+                  className="inline-flex items-center gap-1 h-12 md:h-10 px-4 md:px-3 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-md text-base md:text-sm hover:bg-indigo-100 transition-colors"
                 >
-                  <BookOpen className="h-4 w-4" />
-                  Words/Phrases ({detectedWords.length})
+                  <BookOpen className="h-5 w-5 md:h-4 md:w-4" />
+                  <span className="hidden md:inline">Words/Phrases ({detectedWords.length})</span>
+                  <span className="md:hidden">Words ({detectedWords.length})</span>
                 </button>
               )}
             </div>
           )}
         </div>
 
-        {/* Image upload field */}
-        <div>
-          <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-2">
-            Add an Image (Optional)
-          </label>
+        {/* Media buttons - Image, YouTube, TikTok, URL */}
+        <div className="flex gap-2">
+          {/* Image upload */}
           {!imagePreview ? (
-            <div className="mt-1">
-              <label
-                htmlFor="image-upload"
-                className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500"
-              >
-                <ImageIcon className="h-5 w-5" />
-                Choose Image
-                <input
-                  id="image-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageSelect}
-                  className="sr-only"
-                />
-              </label>
-              <p className="mt-1 text-xs text-gray-500">
-                Max size: 50MB. Supported formats: JPEG, PNG, WebP, HEIC
-              </p>
-            </div>
+            <label
+              htmlFor="image-upload"
+              className="inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border border-gray-300 rounded-md shadow-sm text-base md:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500"
+              title="Add image"
+            >
+              <ImageIcon className="h-5 w-5 md:h-4 md:w-4" />
+              <input
+                id="image-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleImageSelect}
+                className="sr-only"
+              />
+            </label>
           ) : (
-            <div className="mt-1 relative inline-block">
+            <div className="relative">
               <img
                 src={imagePreview}
                 alt="Preview"
                 loading="lazy"
-                className="h-32 w-auto rounded-md border border-gray-300"
+                className="h-12 md:h-10 w-auto rounded-md border border-gray-300"
               />
               <button
                 type="button"
                 onClick={handleRemoveImage}
-                className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="absolute -top-1 -right-1 min-w-[24px] min-h-[24px] p-1 bg-red-500 text-white rounded-full hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 flex items-center justify-center"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3 w-3" />
               </button>
             </div>
           )}
+
+          {/* YouTube button */}
+          <button
+            type="button"
+            onClick={() => {
+              const url = prompt('Enter YouTube URL:');
+              if (url && url.trim()) {
+                setTextValue(prev => prev + (prev ? '\n' : '') + url);
+                setValue('text', textValue + (textValue ? '\n' : '') + url);
+              }
+            }}
+            className="inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border border-gray-300 rounded-md shadow-sm text-base md:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500"
+            title="Add YouTube video"
+          >
+            <Video className="h-5 w-5 md:h-4 md:w-4 text-red-600" />
+          </button>
+
+          {/* TikTok button */}
+          <button
+            type="button"
+            onClick={() => {
+              const url = prompt('Enter TikTok URL:');
+              if (url && url.trim()) {
+                setTextValue(prev => prev + (prev ? '\n' : '') + url);
+                setValue('text', textValue + (textValue ? '\n' : '') + url);
+              }
+            }}
+            className="inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border border-gray-300 rounded-md shadow-sm text-base md:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            title="Add TikTok video"
+          >
+            <Video className="h-5 w-5 md:h-4 md:w-4" />
+          </button>
         </div>
 
         {/* URL input field */}
         <div>
-          <label htmlFor="url" className="block text-sm font-medium text-gray-700 mb-2">
-            Add a Web Page URL (Optional)
-          </label>
           {!addedUrlPage ? (
             <div className="mt-1">
               <div className="flex gap-2">
@@ -761,35 +784,27 @@ export function CapturePage() {
                       handleAddUrl();
                     }
                   }}
-                  placeholder="https://example.com/article"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="https://example.com"
+                  className="flex-1 h-12 md:h-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   disabled={addingUrl}
                 />
                 <button
                   type="button"
                   onClick={handleAddUrl}
                   disabled={addingUrl || !urlInput.trim()}
-                  className="inline-flex items-center gap-2 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 h-12 md:h-10 px-4 md:px-3 py-2 border border-transparent rounded-md shadow-sm text-base md:text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                  title="Add URL"
                 >
                   {addingUrl ? (
-                    <>
-                      <Loader className="h-4 w-4 animate-spin" />
-                      Analyzing...
-                    </>
+                    <Loader className="h-5 w-5 md:h-4 md:w-4 animate-spin" />
                   ) : (
-                    <>
-                      <LinkIcon className="h-4 w-4" />
-                      Add URL
-                    </>
+                    <LinkIcon className="h-5 w-5 md:h-4 md:w-4" />
                   )}
                 </button>
               </div>
               {urlError && (
                 <p className="mt-1 text-xs text-red-600">{urlError}</p>
               )}
-              <p className="mt-1 text-xs text-gray-500">
-                AI will analyze the page and extract metadata automatically
-              </p>
             </div>
           ) : (
             <div className="mt-1 border border-purple-200 rounded-md p-3 bg-purple-50">
@@ -832,9 +847,9 @@ export function CapturePage() {
                 <button
                   type="button"
                   onClick={handleRemoveUrl}
-                  className="ml-2 p-1 text-red-600 hover:text-red-800 focus:outline-none"
+                  className="ml-2 min-w-[48px] min-h-[48px] md:min-w-[40px] md:min-h-[40px] p-2 md:p-1 text-red-600 hover:text-red-800 focus:outline-none flex items-center justify-center"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-5 w-5 md:h-4 md:w-4" />
                 </button>
               </div>
             </div>
@@ -845,9 +860,20 @@ export function CapturePage() {
           <button
             type="submit"
             disabled={loading || uploadingImage || addingUrl}
-            className="w-full md:w-auto h-12 md:h-auto px-4 py-2 bg-blue-600 text-white text-base md:text-sm rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            className="w-full md:w-auto h-12 md:h-10 px-4 md:px-3 py-2 bg-blue-600 text-white text-base md:text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            {uploadingImage ? 'Uploading image...' : addingUrl ? 'Analyzing URL...' : loading ? 'Saving...' : 'Save Memory'}
+            {uploadingImage ? (
+              <span className="hidden md:inline">Uploading image...</span>
+            ) : addingUrl ? (
+              <span className="hidden md:inline">Analyzing URL...</span>
+            ) : loading ? (
+              'Saving...'
+            ) : (
+              <>
+                <span className="hidden md:inline">Save Memory</span>
+                <span className="md:hidden">Save</span>
+              </>
+            )}
           </button>
         </div>
       </form>

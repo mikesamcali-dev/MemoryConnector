@@ -275,7 +275,7 @@ export function RemindersPage() {
                     e.stopPropagation();
                     dismissMutation.mutate(reminder.reminderId);
                   }}
-                  className="p-1 min-w-tap min-h-tap flex items-center justify-center text-gray-400 hover:text-gray-600 active:text-gray-700"
+                  className="min-w-[48px] min-h-[48px] md:min-w-[40px] md:min-h-[40px] p-2 md:p-1 flex items-center justify-center text-gray-400 hover:text-gray-600 active:text-gray-700 text-xl md:text-lg"
                   aria-label="Dismiss reminder"
                 >
                   ×

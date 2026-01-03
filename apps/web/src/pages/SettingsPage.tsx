@@ -160,7 +160,7 @@ export function SettingsPage() {
           </div>
           <button
             onClick={logout}
-            className="mt-4 md:mt-6 w-full md:w-auto h-12 md:h-auto px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="mt-4 md:mt-6 w-full md:w-auto h-12 md:h-10 px-4 md:px-3 py-2 bg-red-600 text-white text-base md:text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
           >
             Logout
           </button>
@@ -252,7 +252,7 @@ export function SettingsPage() {
           {!editingReminders && (
             <button
               onClick={() => setEditingReminders(true)}
-              className="px-3 md:px-4 py-2 text-sm md:text-base bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="h-12 md:h-10 px-4 md:px-3 py-2 text-base md:text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               Edit
             </button>
@@ -302,19 +302,20 @@ export function SettingsPage() {
             {remindersEnabled && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">First reminder</label>
+                  <label className="hidden md:block text-sm font-medium text-gray-700 mb-2">First reminder</label>
                   <div className="flex gap-2">
                     <input
                       type="number"
                       min="1"
                       value={firstValue}
                       onChange={(e) => setFirstValue(parseInt(e.target.value) || 1)}
-                      className="w-24 px-3 py-2 border border-gray-300 rounded-md"
+                      placeholder="1st"
+                      className="w-24 h-12 md:h-10 px-3 py-2 border border-gray-300 rounded-md text-base md:text-sm"
                     />
                     <select
                       value={firstUnit}
                       onChange={(e) => setFirstUnit(e.target.value as any)}
-                      className="px-3 py-2 border border-gray-300 rounded-md"
+                      className="h-12 md:h-10 px-3 py-2 border border-gray-300 rounded-md text-base md:text-sm"
                     >
                       <option value="minutes">Minutes</option>
                       <option value="hours">Hours</option>
@@ -325,19 +326,20 @@ export function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Second reminder</label>
+                  <label className="hidden md:block text-sm font-medium text-gray-700 mb-2">Second reminder</label>
                   <div className="flex gap-2">
                     <input
                       type="number"
                       min="1"
                       value={secondValue}
                       onChange={(e) => setSecondValue(parseInt(e.target.value) || 1)}
-                      className="w-24 px-3 py-2 border border-gray-300 rounded-md"
+                      placeholder="2nd"
+                      className="w-24 h-12 md:h-10 px-3 py-2 border border-gray-300 rounded-md text-base md:text-sm"
                     />
                     <select
                       value={secondUnit}
                       onChange={(e) => setSecondUnit(e.target.value as any)}
-                      className="px-3 py-2 border border-gray-300 rounded-md"
+                      className="h-12 md:h-10 px-3 py-2 border border-gray-300 rounded-md text-base md:text-sm"
                     >
                       <option value="minutes">Minutes</option>
                       <option value="hours">Hours</option>
@@ -348,19 +350,20 @@ export function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Third reminder</label>
+                  <label className="hidden md:block text-sm font-medium text-gray-700 mb-2">Third reminder</label>
                   <div className="flex gap-2">
                     <input
                       type="number"
                       min="1"
                       value={thirdValue}
                       onChange={(e) => setThirdValue(parseInt(e.target.value) || 1)}
-                      className="w-24 px-3 py-2 border border-gray-300 rounded-md"
+                      placeholder="3rd"
+                      className="w-24 h-12 md:h-10 px-3 py-2 border border-gray-300 rounded-md text-base md:text-sm"
                     />
                     <select
                       value={thirdUnit}
                       onChange={(e) => setThirdUnit(e.target.value as any)}
-                      className="px-3 py-2 border border-gray-300 rounded-md"
+                      className="h-12 md:h-10 px-3 py-2 border border-gray-300 rounded-md text-base md:text-sm"
                     >
                       <option value="minutes">Minutes</option>
                       <option value="hours">Hours</option>
@@ -376,13 +379,13 @@ export function SettingsPage() {
               <button
                 onClick={handleSaveReminders}
                 disabled={updatePrefsMutation.isPending}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                className="h-12 md:h-10 px-4 md:px-3 py-2 bg-blue-600 text-white text-base md:text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
               >
                 {updatePrefsMutation.isPending ? 'Saving...' : 'Save'}
               </button>
               <button
                 onClick={() => setEditingReminders(false)}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+                className="h-12 md:h-10 px-4 md:px-3 py-2 bg-gray-200 text-gray-700 text-base md:text-sm font-medium rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
               >
                 Cancel
               </button>
@@ -438,17 +441,17 @@ export function SettingsPage() {
                 <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
                   <button
                     onClick={() => navigate(`/app/memories/${memory.id}`)}
-                    className="p-2 min-w-tap min-h-tap flex items-center justify-center text-blue-600 hover:bg-blue-50 active:bg-blue-100 rounded-md transition-colors"
+                    className="min-w-[48px] min-h-[48px] md:min-w-[40px] md:min-h-[40px] p-2 flex items-center justify-center text-blue-600 hover:bg-blue-50 active:bg-blue-100 rounded-md transition-colors"
                     title="View/Edit"
                   >
-                    <Edit className="h-4 w-4" />
+                    <Edit className="h-5 w-5 md:h-4 md:w-4" />
                   </button>
                   <button
                     onClick={() => setDeleteConfirmId(memory.id)}
-                    className="p-2 min-w-tap min-h-tap flex items-center justify-center text-red-600 hover:bg-red-50 active:bg-red-100 rounded-md transition-colors"
+                    className="min-w-[48px] min-h-[48px] md:min-w-[40px] md:min-h-[40px] p-2 flex items-center justify-center text-red-600 hover:bg-red-50 active:bg-red-100 rounded-md transition-colors"
                     title="Delete"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-5 w-5 md:h-4 md:w-4" />
                   </button>
                 </div>
               </div>
@@ -459,9 +462,10 @@ export function SettingsPage() {
             <p className="text-gray-600 mb-4">No memories yet</p>
             <Link
               to="/app/capture"
-              className="inline-block bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              className="inline-block h-12 md:h-10 px-4 md:px-3 py-2 bg-blue-600 text-white text-base md:text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center"
             >
-              Create Your First Memory
+              <span className="hidden md:inline">Create Your First Memory</span>
+              <span className="md:hidden">Create Memory</span>
             </Link>
           </div>
         )}
@@ -478,14 +482,14 @@ export function SettingsPage() {
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setDeleteConfirmId(null)}
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                className="h-12 md:h-10 px-4 md:px-3 py-2 bg-gray-200 text-gray-800 text-base md:text-sm font-medium rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
                 disabled={deleteMutation.isPending}
               >
                 Cancel
               </button>
               <button
                 onClick={() => deleteMutation.mutate(deleteConfirmId)}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                className="h-12 md:h-10 px-4 md:px-3 py-2 bg-red-600 text-white text-base md:text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
                 disabled={deleteMutation.isPending}
               >
                 {deleteMutation.isPending ? 'Deleting...' : 'Delete'}

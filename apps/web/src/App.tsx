@@ -9,16 +9,13 @@ import { OfflineStatusToast } from './components/SyncToast';
 const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
 const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
 const SignupPage = lazy(() => import('./pages/SignupPage').then(m => ({ default: m.SignupPage })));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })));
 const OAuthCallbackPage = lazy(() => import('./pages/OAuthCallbackPage').then(m => ({ default: m.OAuthCallbackPage })));
 const CapturePage = lazy(() => import('./pages/CapturePage').then(m => ({ default: m.CapturePage })));
 const SearchPage = lazy(() => import('./pages/SearchPage').then(m => ({ default: m.SearchPage })));
 const MemoryDetailPage = lazy(() => import('./pages/MemoryDetailPage').then(m => ({ default: m.MemoryDetailPage })));
 const RemindersPage = lazy(() => import('./pages/RemindersPage').then(m => ({ default: m.RemindersPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
-const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage').then(m => ({ default: m.AdminDashboardPage })));
-const ExtractionDataPage = lazy(() => import('./pages/ExtractionDataPage').then(m => ({ default: m.ExtractionDataPage })));
-const EnrichmentFailuresPage = lazy(() => import('./pages/EnrichmentFailuresPage').then(m => ({ default: m.EnrichmentFailuresPage })));
-const WordSummaryPage = lazy(() => import('./pages/WordSummaryPage').then(m => ({ default: m.WordSummaryPage })));
 const AuditTrailPage = lazy(() => import('./pages/AuditTrailPage').then(m => ({ default: m.AuditTrailPage })));
 const LinkMemoryPage = lazy(() => import('./pages/LinkMemoryPage').then(m => ({ default: m.LinkMemoryPage })));
 const UpgradePage = lazy(() => import('./pages/UpgradePage').then(m => ({ default: m.UpgradePage })));
@@ -51,6 +48,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/auth/callback" element={<OAuthCallbackPage />} />
 
             {/* Protected app routes with layout */}
@@ -253,47 +251,7 @@ function App() {
               }
             />
             <Route
-              path="/app/admin"
-              element={
-                <ProtectedRoute requireAdmin={true}>
-                  <AppLayout>
-                    <AdminDashboardPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/app/admin/extraction-data"
-              element={
-                <ProtectedRoute requireAdmin={true}>
-                  <AppLayout>
-                    <ExtractionDataPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/app/admin/enrichment-failures"
-              element={
-                <ProtectedRoute requireAdmin={true}>
-                  <AppLayout>
-                    <EnrichmentFailuresPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/app/admin/words"
-              element={
-                <ProtectedRoute requireAdmin={true}>
-                  <AppLayout>
-                    <WordSummaryPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/app/admin/audit-trail"
+              path="/app/audit-trail"
               element={
                 <ProtectedRoute requireAdmin={true}>
                   <AppLayout>

@@ -21,10 +21,10 @@ export function BottomNav({ onMoreClick }: BottomNavProps) {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe-b z-50 shadow-lg"
+      className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-lg safe-bottom"
       aria-label="Mobile bottom navigation"
     >
-      <div className="flex justify-around items-center h-16">
+      <div className="flex justify-around items-center h-16 px-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
@@ -35,7 +35,7 @@ export function BottomNav({ onMoreClick }: BottomNavProps) {
               aria-label={item.label}
               aria-current={active ? 'page' : undefined}
               className={`
-                flex flex-col items-center justify-center gap-1 min-w-tap min-h-tap px-2 py-1 rounded-lg transition-all
+                flex flex-col items-center justify-center gap-0.5 min-w-[48px] min-h-[48px] px-2 py-1.5 rounded-lg transition-all
                 ${active
                   ? 'text-blue-600'
                   : 'text-gray-600 active:bg-gray-100'
@@ -43,7 +43,7 @@ export function BottomNav({ onMoreClick }: BottomNavProps) {
               `}
             >
               <Icon className="h-6 w-6" />
-              <span className="text-xs font-medium">{item.label}</span>
+              <span className="text-[10px] font-medium leading-tight">{item.label}</span>
             </Link>
           );
         })}
@@ -52,10 +52,10 @@ export function BottomNav({ onMoreClick }: BottomNavProps) {
         <button
           onClick={onMoreClick}
           aria-label="More options"
-          className="flex flex-col items-center justify-center gap-1 min-w-tap min-h-tap px-2 py-1 rounded-lg text-gray-600 active:bg-gray-100 transition-all"
+          className="flex flex-col items-center justify-center gap-0.5 min-w-[48px] min-h-[48px] px-2 py-1.5 rounded-lg text-gray-600 active:bg-gray-100 transition-all"
         >
           <MoreHorizontal className="h-6 w-6" />
-          <span className="text-xs font-medium">More</span>
+          <span className="text-[10px] font-medium leading-tight">More</span>
         </button>
       </div>
     </nav>

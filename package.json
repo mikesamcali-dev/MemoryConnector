@@ -5,7 +5,11 @@
   "description": "Memory Connector - MVP Implementation",
   "scripts": {
     "dev": "pnpm --filter './apps/*' dev --parallel",
+    "dev:web": "pnpm --filter @memory-connector/web dev",
+    "dev:admin": "pnpm --filter @memory-connector/admin dev",
+    "dev:api": "pnpm --filter @memory-connector/api dev",
     "build": "pnpm --filter './apps/*' build",
+    "build:admin": "pnpm --filter './apps/admin' build",
     "lint": "pnpm --filter './apps/*' lint && pnpm --filter './packages/*' lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
