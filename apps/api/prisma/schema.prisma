@@ -100,6 +100,7 @@ model User {
   sessions            Session[]
   reminders           Reminder[]
   usage               UserUsage?
+  stats               UserStats?
   reminderPreferences UserReminderPreferences?
   idempotencyKeys     IdempotencyKey[]
   aiCostTracking      AiCostTracking[]
@@ -125,6 +126,42 @@ model UserUsage {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_usage")
+}
+
+model UserStats {
+  id                    String   @id @default(uuid()) @db.Uuid
+  userId                String   @unique @map("user_id") @db.Uuid
+
+  // Capture streaks
+  currentStreakDays     Int      @default(0) @map("current_streak_days")
+  longestStreakDays     Int      @default(0) @map("longest_streak_days")
+  lastCaptureDate       DateTime? @map("last_capture_date")
+
+  // Review statistics
+  totalReviewsCompleted Int      @default(0) @map("total_reviews_completed")
+  totalReviewsAgain     Int      @default(0) @map("total_reviews_again")
+  totalReviewsHard      Int      @default(0) @map("total_reviews_hard")
+  totalReviewsGood      Int      @default(0) @map("total_reviews_good")
+  totalReviewsEasy      Int      @default(0) @map("total_reviews_easy")
+
+  // Memory statistics
+  totalMemoriesCreated  Int      @default(0) @map("total_memories_created")
+  totalLinksCreated     Int      @default(0) @map("total_links_created")
+
+  // Sentiment balance
+  sentimentPositive     Int      @default(0) @map("sentiment_positive")
+  sentimentNeutral      Int      @default(0) @map("sentiment_neutral")
+  sentimentNegative     Int      @default(0) @map("sentiment_negative")
+
+  // Achievements (JSON array of achievement codes)
+  achievementsUnlocked  Json     @default("[]") @map("achievements_unlocked")
+
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_stats")
 }
 
 model UserReminderPreferences {
@@ -208,6 +245,15 @@ model Memory {
   personId         String?          @map("person_id") @db.Uuid
   youtubeVideoId   String?          @map("youtube_video_id") @db.Uuid
   tiktokVideoId    String?          @map("tiktok_video_id") @db.Uuid
+
+  // Spaced Repetition System (SRS) fields
+  lastReviewedAt   DateTime?        @map("last_reviewed_at")
+  nextReviewAt     DateTime?        @map("next_review_at")
+  reviewInterval   Int?             @default(1) @map("review_interval") // Days until next review
+  easeFactor       Float?           @default(2.5) @map("ease_factor") // SM-2 algorithm ease factor
+  reviewCount      Int              @default(0) @map("review_count")
+  lapseCount       Int              @default(0) @map("lapse_count") // Times marked "Again"
+
   createdAt        DateTime         @default(now()) @map("created_at")
   updatedAt        DateTime         @updatedAt @map("updated_at")
 
@@ -243,6 +289,7 @@ model Memory {
   @@index([personId])
   @@index([youtubeVideoId])
   @@index([tiktokVideoId])
+  @@index([userId, nextReviewAt]) // For SRS queries
   @@map("memories")
 }
 

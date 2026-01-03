@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Brain, Plus, Search, Bell, Settings, LogOut, ShieldCheck, MapPin, User, Network, Video, Film, Image, Link as LinkIcon, Presentation } from 'lucide-react';
+import { Brain, Plus, Search, Bell, Settings, LogOut, ShieldCheck, MapPin, User, Network, Video, Film, Image, Link as LinkIcon, Presentation, Home, Map } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { BottomNav } from './mobile/BottomNav';
@@ -27,9 +27,11 @@ export function AppLayout({ children }: AppLayoutProps) {
   };
 
   const baseNavItems = [
+    { path: '/app/feed', icon: Home, label: 'Home' },
     { path: '/app/capture', icon: Plus, label: 'Capture' },
     { path: '/app/search', icon: Search, label: 'Search' },
     { path: '/app/slidedecks', icon: Presentation, label: 'Slide Decks' },
+    { path: '/app/atlas', icon: Map, label: 'Atlas' },
     { path: '/app/locations', icon: MapPin, label: 'Locations' },
     { path: '/app/people', icon: User, label: 'People' },
     { path: '/app/images', icon: Image, label: 'Images' },
@@ -48,10 +50,10 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   // Primary items shown in bottom nav (mobile)
   const primaryNavItems = [
+    { path: '/app/feed', icon: Home, label: 'Home' },
     { path: '/app/capture', icon: Plus, label: 'Capture' },
     { path: '/app/search', icon: Search, label: 'Search' },
     { path: '/app/reminders', icon: Bell, label: 'Reminders' },
-    { path: '/app/settings', icon: Settings, label: 'Settings' },
   ];
 
   // Overflow items for "More" menu (mobile)

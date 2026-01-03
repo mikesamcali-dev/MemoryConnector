@@ -770,17 +770,101 @@ export function MemoryDetailPage() {
         <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center gap-3 mb-4">
             <BookOpen className="h-6 w-6 text-indigo-600" />
-            <h2 className="text-2xl font-bold text-gray-900">Linked Words ({memory.wordLinks.length})</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Vocabulary Words ({memory.wordLinks.length})</h2>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="space-y-4">
             {memory.wordLinks.map((link) => (
-              <button
-                key={link.id}
-                onClick={() => handleWordClick(link.word)}
-                className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 border border-indigo-300 transition-colors font-medium"
-              >
-                {link.word.word}
-              </button>
+              <div key={link.id} className="border border-indigo-200 rounded-lg overflow-hidden">
+                {/* Word Header */}
+                <div className="bg-indigo-50 px-4 py-3 border-b border-indigo-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-xl font-bold text-indigo-900">{link.word.word}</h3>
+                      {link.word.phonetic && (
+                        <span className="text-sm text-indigo-600 italic">{link.word.phonetic}</span>
+                      )}
+                      {link.word.partOfSpeech && (
+                        <span className="px-2 py-0.5 bg-indigo-200 text-indigo-800 rounded text-xs font-medium">
+                          {link.word.partOfSpeech}
+                        </span>
+                      )}
+                    </div>
+                    {link.word.difficulty && (
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        link.word.difficulty === 'easy' ? 'bg-green-100 text-green-700' :
+                        link.word.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-red-100 text-red-700'
+                      }`}>
+                        {link.word.difficulty}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Word Details */}
+                <div className="p-4 space-y-3">
+                  {/* Definition */}
+                  {link.word.description && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Definition</h4>
+                      <p className="text-gray-900">{link.word.description}</p>
+                    </div>
+                  )}
+
+                  {/* Etymology */}
+                  {link.word.etymology && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Etymology</h4>
+                      <p className="text-gray-700 text-sm">{link.word.etymology}</p>
+                    </div>
+                  )}
+
+                  {/* Examples */}
+                  {link.word.examples && Array.isArray(link.word.examples) && link.word.examples.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Examples</h4>
+                      <ul className="space-y-1">
+                        {link.word.examples.map((example: string, index: number) => (
+                          <li key={index} className="text-sm text-gray-700 flex items-start">
+                            <span className="text-indigo-600 mr-2">•</span>
+                            <span className="italic">"{example}"</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Synonyms & Antonyms */}
+                  {((link.word.synonyms && link.word.synonyms.length > 0) || (link.word.antonyms && link.word.antonyms.length > 0)) && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {link.word.synonyms && Array.isArray(link.word.synonyms) && link.word.synonyms.length > 0 && (
+                        <div>
+                          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Synonyms</h4>
+                          <div className="flex flex-wrap gap-1">
+                            {link.word.synonyms.map((synonym: string, index: number) => (
+                              <span key={index} className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">
+                                {synonym}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {link.word.antonyms && Array.isArray(link.word.antonyms) && link.word.antonyms.length > 0 && (
+                        <div>
+                          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Antonyms</h4>
+                          <div className="flex flex-wrap gap-1">
+                            {link.word.antonyms.map((antonym: string, index: number) => (
+                              <span key={index} className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs">
+                                {antonym}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
         </div>

@@ -8,6 +8,8 @@ import { UsersModule } from './users/users.module';
 import { MemoriesModule } from './memories/memories.module';
 import { SearchModule } from './search/search.module';
 import { RemindersModule } from './reminders/reminders.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { GamificationModule } from './gamification/gamification.module';
 import { SlideDecksModule } from './slidedecks/slidedecks.module';
 import { WordsModule } from './words/words.module';
 import { EventsModule } from './events/events.module';
@@ -66,6 +68,8 @@ import { AuditLoggingInterceptor } from './audit-trail/interceptors/audit-loggin
     MemoriesModule,
     SearchModule,
     RemindersModule,
+    ReviewsModule,
+    GamificationModule,
     SlideDecksModule,
     WordsModule,
     EventsModule,

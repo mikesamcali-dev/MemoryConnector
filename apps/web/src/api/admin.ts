@@ -339,8 +339,22 @@ export async function deleteWord(id: string): Promise<void> {
 }
 
 export async function lookupWord(wordText: string): Promise<Word[]> {
-  const response = await fetchWithAuth(`/words/lookup/${encodeURIComponent(wordText)}`);
-  return response.json();
+  try {
+    const response = await fetchWithAuth(`/words/lookup/${encodeURIComponent(wordText)}`);
+    const text = await response.text();
+
+    // Handle empty response
+    if (!text || text.trim() === '') {
+      return [];
+    }
+
+    // Parse JSON
+    return JSON.parse(text);
+  } catch (error) {
+    // If word doesn't exist or any error occurs, return empty array
+    console.warn(`Failed to lookup word "${wordText}":`, error);
+    return [];
+  }
 }
 
 export async function deduplicateWords(): Promise<{ removed: number; kept: number }> {

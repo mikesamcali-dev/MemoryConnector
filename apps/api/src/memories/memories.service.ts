@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { UsageService } from '../usage/usage.service';
 import { DuplicateDetectionService } from '../duplicate-detection/duplicate-detection.service';
 import { EnrichmentQueueService } from '../enrichment/enrichment-queue.service';
+import { GamificationService } from '../gamification/gamification.service';
 import { WordsService } from '../words/words.service';
 import { EventsService } from '../events/events.service';
 import { LocationsService } from '../locations/locations.service';
@@ -18,6 +19,7 @@ export class MemoriesService {
     private usageService: UsageService,
     private duplicateDetection: DuplicateDetectionService,
     private enrichmentQueue: EnrichmentQueueService,
+    private gamificationService: GamificationService,
     private wordsService: WordsService,
     private eventsService: EventsService,
     private locationsService: LocationsService,
@@ -149,9 +151,13 @@ export class MemoriesService {
     // Queue for enrichment (handles circuit breaker internally)
     const { queued } = await this.enrichmentQueue.enqueueEnrichment(memory.id, userId);
 
+    // Update gamification stats (streak, achievements)
+    const newAchievements = await this.gamificationService.updateCaptureStreak(userId);
+
     return {
       ...this.transformMemoryResponse(memory),
       enrichmentQueued: queued,
+      newAchievements: newAchievements.map(a => ({ id: a.id, name: a.name, icon: a.icon })),
     };
   }
 

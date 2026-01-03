@@ -27,13 +27,19 @@ EXTRACTION RULES:
 
 3. WORDS & PHRASES: Extract both individual meaningful words AND multi-word phrases
    - Include individual words: ["serendipitous", "ephemeral", "paradigm"]
-   - Include meaningful phrases (2-4 words): ["Detroit Tigers", "quantum entanglement", "machine learning"]
+   - Include meaningful phrases (2-4 words):
+     * Common idioms: ["red herring", "wild goose chase", "piece of cake"]
+     * Technical terms: ["quantum entanglement", "machine learning", "artificial intelligence"]
+     * Proper nouns: ["Detroit Tigers", "New York Times", "United Nations"]
+     * Compound concepts: ["supply chain", "climate change", "social media"]
    - EXCLUDE common stop words (the, a, an, I, you, he, she, it, we, they, as, at, by, for, from, in, into, of, on, to, with, is, was, are, were, be, been, being, have, has, had, do, does, did, will, would, should, could, may, might, can)
    - EXCLUDE person names or location names already extracted
    - EXCLUDE single letters or numbers
-   - For phrases containing both individual words and phrases, include BOTH:
-     Example: "Detroit Tigers" → ["Detroit", "Tigers", "Detroit Tigers"]
-   - Return as array of strings: ["delicious", "conversation", "Detroit Tigers", "exciting"]
+   - IMPORTANT: Prioritize extracting well-known phrases as complete units
+     * If you see "red herring", extract it as ["red herring"] (NOT as ["red", "herring"])
+     * If you see "wild goose chase", extract it as ["wild goose chase"] (NOT as ["wild", "goose", "chase"])
+     * Common phrases should be kept together as single entries
+   - Return as array of strings: ["delicious", "conversation", "red herring", "exciting"]
 
 OUTPUT FORMAT (JSON only, no markdown):
 {
@@ -147,6 +153,23 @@ export class LLMExtractionService {
    */
   private singularize(word: string): string {
     const trimmed = word.trim();
+    const lowerTrimmed = trimmed.toLowerCase();
+
+    // List of common phrases and idioms that should NOT be singularized
+    const preservedPhrases = [
+      'red herring', 'wild goose chase', 'piece of cake', 'break the ice',
+      'hit the nail on the head', 'once in a blue moon', 'blessing in disguise',
+      'devil\'s advocate', 'elephant in the room', 'silver lining',
+      'the last straw', 'best of both worlds', 'see eye to eye',
+      'united states', 'united nations', 'social media', 'climate change',
+      'machine learning', 'artificial intelligence', 'quantum computing',
+      'supply chain', 'status quo', 'modus operandi', 'per se',
+    ];
+
+    // Check if this is a preserved phrase (case-insensitive)
+    if (preservedPhrases.includes(lowerTrimmed)) {
+      return trimmed; // Return original without singularization
+    }
 
     // Handle phrases by singularizing each word
     if (trimmed.includes(' ')) {
