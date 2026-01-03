@@ -300,8 +300,20 @@ export function CapturePage() {
       // Extract metadata from TikTok URL
       const metadata = await extractTikTokMetadata(url.trim());
 
-      // Create TikTok video
-      const video = await createTikTokVideo(metadata);
+      // Create TikTok video (only pass fields accepted by createTikTokVideo)
+      const video = await createTikTokVideo({
+        tiktokVideoId: metadata.tiktokVideoId,
+        canonicalUrl: metadata.canonicalUrl,
+        title: metadata.title,
+        description: metadata.description,
+        thumbnailUrl: metadata.thumbnailUrl,
+        creatorDisplayName: metadata.creatorDisplayName,
+        creatorUsername: metadata.creatorUsername,
+        creatorId: metadata.creatorId,
+        publishedAt: metadata.publishedAt,
+        durationSeconds: metadata.durationSeconds,
+        transcript: metadata.transcript,
+      });
 
       // Add to linked entities
       setLinkedEntities(prev => ({
