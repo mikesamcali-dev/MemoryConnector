@@ -7,6 +7,8 @@ import { OfflineStatusToast } from './components/SyncToast';
 
 // Lazy load pages for better initial bundle size
 const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
+const MindFeedPage = lazy(() => import('./pages/MindFeedPage').then(m => ({ default: m.MindFeedPage })));
+const SynapseReviewPage = lazy(() => import('./pages/SynapseReviewPage').then(m => ({ default: m.SynapseReviewPage })));
 const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
 const SignupPage = lazy(() => import('./pages/SignupPage').then(m => ({ default: m.SignupPage })));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })));
@@ -32,6 +34,7 @@ const ImageBuilderPage = lazy(() => import('./pages/ImageBuilderPage').then(m =>
 const UrlBuilderPage = lazy(() => import('./pages/UrlBuilderPage').then(m => ({ default: m.UrlBuilderPage })));
 const SlideDecksListPage = lazy(() => import('./pages/SlideDecksListPage').then(m => ({ default: m.SlideDecksListPage })));
 const SlideDeckViewerPage = lazy(() => import('./pages/SlideDeckViewerPage').then(m => ({ default: m.SlideDeckViewerPage })));
+const AtlasPage = lazy(() => import('./pages/AtlasPage').then(m => ({ default: m.AtlasPage })));
 
 function App() {
   return (
@@ -53,12 +56,28 @@ function App() {
 
             {/* Protected app routes with layout */}
             <Route
+              path="/app/feed"
+              element={
+                <ProtectedRoute>
+                  <Navigate to="/app/capture" replace />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/app/capture"
               element={
                 <ProtectedRoute>
                   <AppLayout>
                     <CapturePage />
                   </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/review"
+              element={
+                <ProtectedRoute>
+                  <SynapseReviewPage />
                 </ProtectedRoute>
               }
             />
@@ -246,6 +265,16 @@ function App() {
                 <ProtectedRoute>
                   <AppLayout>
                     <RelationshipGraphPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/atlas"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <AtlasPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
