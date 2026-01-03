@@ -28,8 +28,11 @@ export function DashboardPage() {
     queryKey: ['recent-memories'],
     queryFn: async () => {
       const result = await searchMemories('');
-      // Use totalCount if available, otherwise fallback to memories array length
-      const total = result.totalCount || result.memories.length;
+      // Use totalCount if it's a valid number, otherwise use memories array length
+      const total = (typeof result.totalCount === 'number' && result.totalCount > 0)
+        ? result.totalCount
+        : result.memories.length;
+      console.log('Dashboard memories data:', { totalCount: result.totalCount, memoriesLength: result.memories.length, calculatedTotal: total });
       return {
         total,
         recent: result.memories.slice(0, 5),
@@ -38,6 +41,7 @@ export function DashboardPage() {
     // Disable caching so it refetches on page navigation
     staleTime: 0,
     gcTime: 0,
+    refetchOnMount: 'always',
   });
 
   // Fetch upcoming reminders

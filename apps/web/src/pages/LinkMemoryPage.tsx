@@ -25,10 +25,12 @@ export function LinkMemoryPage() {
   const [showLocationForm, setShowLocationForm] = useState(false);
 
   // Fetch the memory
-  const { data: memory, isLoading } = useQuery({
+  const { data: memory, isLoading, isError, error } = useQuery({
     queryKey: ['memory', id],
     queryFn: () => getMemory(id!),
     enabled: !!id,
+    retry: 3,
+    retryDelay: 1000,
   });
 
   useEffect(() => {
@@ -246,7 +248,34 @@ export function LinkMemoryPage() {
     return (
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-center py-12">
-          <div className="text-gray-600">Loading...</div>
+          <div className="text-gray-600">Loading memory...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+          Error loading memory: {error instanceof Error ? error.message : 'Unknown error'}
+        </div>
+        <button
+          onClick={() => navigate('/app/search')}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Search
+        </button>
+      </div>
+    );
+  }
+
+  if (!memory) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-gray-600">Memory not found</div>
         </div>
       </div>
     );

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createMemory, analyzeText, PersonMatch, LocationMatch, YouTubeVideoMatch, WordMatch } from '../api/memories';
 import { lookupWord } from '../api/admin';
 import { getUpcomingReminders } from '../api/reminders';
@@ -27,6 +27,7 @@ export function CapturePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { haptic } = useHaptics();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isRateLimitError, setIsRateLimitError] = useState(false);
@@ -438,6 +439,9 @@ export function CapturePage() {
 
       // Success haptic feedback
       haptic('success');
+
+      // Pre-populate the query cache with the created memory
+      queryClient.setQueryData(['memory', createdMemory.id], createdMemory);
 
       // Navigate directly to link page
       navigate(`/app/memories/${createdMemory.id}/link`);
