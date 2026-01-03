@@ -23,6 +23,14 @@ export class TikTokVideosService {
   }
 
   /**
+   * Truncate string to max length
+   */
+  private truncate(str: string | null | undefined, maxLength: number): string | null {
+    if (!str) return null;
+    return str.length > maxLength ? str.substring(0, maxLength) : str;
+  }
+
+  /**
    * Create a new TikTok video entry
    */
   async create(createDto: CreateTikTokVideoDto): Promise<any> {
@@ -42,14 +50,14 @@ export class TikTokVideosService {
 
     const video = await this.prisma.tikTokVideo.create({
       data: {
-        tiktokVideoId: createDto.tiktokVideoId,
-        canonicalUrl: createDto.canonicalUrl,
-        title: createDto.title,
+        tiktokVideoId: this.truncate(createDto.tiktokVideoId, 64) || 'unknown',
+        canonicalUrl: this.truncate(createDto.canonicalUrl, 2048) || '',
+        title: this.truncate(createDto.title, 512) || 'TikTok Video',
         description: createDto.description,
-        thumbnailUrl: createDto.thumbnailUrl,
-        creatorDisplayName: createDto.creatorDisplayName,
-        creatorUsername: createDto.creatorUsername,
-        creatorId: createDto.creatorId,
+        thumbnailUrl: this.truncate(createDto.thumbnailUrl, 2048),
+        creatorDisplayName: this.truncate(createDto.creatorDisplayName, 256) || 'Unknown Creator',
+        creatorUsername: this.truncate(createDto.creatorUsername, 128),
+        creatorId: this.truncate(createDto.creatorId, 64),
         publishedAt: createDto.publishedAt ? new Date(createDto.publishedAt) : null,
         durationSeconds: createDto.durationSeconds,
         transcript: createDto.transcript,
@@ -123,12 +131,12 @@ export class TikTokVideosService {
     return this.prisma.tikTokVideo.update({
       where: { id },
       data: {
-        ...(updateDto.title && { title: updateDto.title }),
+        ...(updateDto.title && { title: this.truncate(updateDto.title, 512) }),
         ...(updateDto.description !== undefined && { description: updateDto.description }),
-        ...(updateDto.thumbnailUrl !== undefined && { thumbnailUrl: updateDto.thumbnailUrl }),
-        ...(updateDto.creatorDisplayName && { creatorDisplayName: updateDto.creatorDisplayName }),
-        ...(updateDto.creatorUsername !== undefined && { creatorUsername: updateDto.creatorUsername }),
-        ...(updateDto.creatorId !== undefined && { creatorId: updateDto.creatorId }),
+        ...(updateDto.thumbnailUrl !== undefined && { thumbnailUrl: this.truncate(updateDto.thumbnailUrl, 2048) }),
+        ...(updateDto.creatorDisplayName && { creatorDisplayName: this.truncate(updateDto.creatorDisplayName, 256) }),
+        ...(updateDto.creatorUsername !== undefined && { creatorUsername: this.truncate(updateDto.creatorUsername, 128) }),
+        ...(updateDto.creatorId !== undefined && { creatorId: this.truncate(updateDto.creatorId, 64) }),
         ...(updateDto.publishedAt && { publishedAt: new Date(updateDto.publishedAt) }),
         ...(updateDto.durationSeconds !== undefined && { durationSeconds: updateDto.durationSeconds }),
       },
