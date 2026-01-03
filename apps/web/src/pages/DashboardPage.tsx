@@ -225,9 +225,10 @@ export function DashboardPage() {
           </div>
           <div className="space-y-3">
             {reminders.map((reminder) => (
-              <div
+              <Link
                 key={reminder.reminderId}
-                className="p-4 bg-purple-50 rounded-lg border border-purple-100"
+                to={`/app/memories/${reminder.memoryId}`}
+                className="block p-4 bg-purple-50 rounded-lg border border-purple-100 hover:bg-purple-100 transition-colors"
               >
                 <div className="flex items-start gap-3">
                   <Calendar className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
@@ -242,7 +243,7 @@ export function DashboardPage() {
                     )}
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
