@@ -5,7 +5,6 @@ import {
   updateUserEnabled,
   getSystemStats,
   getAICostTracking,
-  getCircuitBreakerStatus,
   getEnrichmentWorkerStatus,
   triggerEnrichment,
 } from '../api/admin';
