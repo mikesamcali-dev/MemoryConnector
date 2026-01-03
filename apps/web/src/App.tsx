@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppLayout } from './components/AppLayout';
@@ -7,6 +7,7 @@ import { OfflineStatusToast } from './components/SyncToast';
 
 // Lazy load pages for better initial bundle size
 const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
+const DashboardPage = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
 const SynapseReviewPage = lazy(() => import('./pages/SynapseReviewPage').then(m => ({ default: m.SynapseReviewPage })));
 const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
 const SignupPage = lazy(() => import('./pages/SignupPage').then(m => ({ default: m.SignupPage })));
@@ -58,7 +59,9 @@ function App() {
               path="/app/feed"
               element={
                 <ProtectedRoute>
-                  <Navigate to="/app/capture" replace />
+                  <AppLayout>
+                    <DashboardPage />
+                  </AppLayout>
                 </ProtectedRoute>
               }
             />
