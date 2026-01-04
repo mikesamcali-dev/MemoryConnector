@@ -1,4 +1,5 @@
 import { Slide } from '../api/slidedecks';
+import { ExternalLink } from 'lucide-react';
 
 interface SlideCardProps {
   slide: Slide;
@@ -60,18 +61,48 @@ export function SlideCard({ slide }: SlideCardProps) {
           </div>
         )}
 
-      {/* 6. YouTube title - full width */}
+      {/* 6. YouTube video - clickable with thumbnail */}
       {memory.youtubeVideo && (
-        <div className="p-3 md:p-4 bg-blue-100 border-2 border-black rounded">
-          <p className="font-medium text-sm md:text-base">{memory.youtubeVideo.title}</p>
-        </div>
+        <a
+          href={memory.youtubeVideo.canonicalUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block border-2 border-black rounded overflow-hidden hover:shadow-lg transition-shadow"
+        >
+          {memory.youtubeVideo.thumbnailUrl && (
+            <img
+              src={memory.youtubeVideo.thumbnailUrl}
+              alt={memory.youtubeVideo.title}
+              className="w-full h-48 md:h-64 object-cover"
+            />
+          )}
+          <div className="p-3 md:p-4 bg-red-100 flex items-center justify-between gap-2">
+            <p className="font-medium text-sm md:text-base flex-1">{memory.youtubeVideo.title}</p>
+            <ExternalLink className="w-4 h-4 md:w-5 md:h-5 text-red-600 flex-shrink-0" />
+          </div>
+        </a>
       )}
 
-      {/* 7. TikTok title - full width */}
+      {/* 7. TikTok video - clickable with thumbnail */}
       {memory.tiktokVideo && (
-        <div className="p-3 md:p-4 bg-blue-100 border-2 border-black rounded">
-          <p className="font-medium text-sm md:text-base">{memory.tiktokVideo.title}</p>
-        </div>
+        <a
+          href={memory.tiktokVideo.canonicalUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block border-2 border-black rounded overflow-hidden hover:shadow-lg transition-shadow"
+        >
+          {memory.tiktokVideo.thumbnailUrl && (
+            <img
+              src={memory.tiktokVideo.thumbnailUrl}
+              alt={memory.tiktokVideo.title}
+              className="w-full aspect-[9/16] max-h-96 object-cover mx-auto"
+            />
+          )}
+          <div className="p-3 md:p-4 bg-pink-100 flex items-center justify-between gap-2">
+            <p className="font-medium text-sm md:text-base flex-1">{memory.tiktokVideo.title}</p>
+            <ExternalLink className="w-4 h-4 md:w-5 md:h-5 text-pink-600 flex-shrink-0" />
+          </div>
+        </a>
       )}
 
       {/* 8. Location name (left) | Address (right) */}

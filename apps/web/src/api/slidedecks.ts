@@ -51,12 +51,14 @@ export interface SlideMemory {
     id: string;
     title: string;
     thumbnailUrl: string | null;
+    canonicalUrl: string;
   } | null;
 
   tiktokVideo: {
     id: string;
     title: string;
     thumbnailUrl: string | null;
+    canonicalUrl: string;
   } | null;
 
   // Many-to-many relations
