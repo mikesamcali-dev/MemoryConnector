@@ -1,7 +1,7 @@
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getPerson, getPersonRelationships } from '../api/admin';
-import { ArrowLeft, User, Mail, Phone, Calendar, FileText, Users, Video, Film, ExternalLink } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, Calendar, FileText, Users, Video, Film } from 'lucide-react';
 
 export function PersonDetailPage() {
   const { personId } = useParams<{ personId: string }>();
@@ -24,9 +24,9 @@ export function PersonDetailPage() {
   const isLoading = personLoading || relationshipsLoading;
 
   // Extract different types of content from memories
-  const regularMemories = person?.memories?.filter(m => !m.youtubeVideo && !m.tiktokVideo) || [];
-  const youtubeMemories = person?.memories?.filter(m => m.youtubeVideo) || [];
-  const tiktokMemories = person?.memories?.filter(m => m.tiktokVideo) || [];
+  const regularMemories = person?.memories?.filter((m: any) => !m.youtubeVideo && !m.tiktokVideo) || [];
+  const youtubeMemories = person?.memories?.filter((m: any) => m.youtubeVideo) || [];
+  const tiktokMemories = person?.memories?.filter((m: any) => m.tiktokVideo) || [];
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -44,17 +44,9 @@ export function PersonDetailPage() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0">
-                {person.imageUrl ? (
-                  <img
-                    src={person.imageUrl}
-                    alt={person.displayName}
-                    className="h-20 w-20 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="h-20 w-20 rounded-full bg-blue-100 flex items-center justify-center">
-                    <User className="h-10 w-10 text-blue-600" />
-                  </div>
-                )}
+                <div className="h-20 w-20 rounded-full bg-blue-100 flex items-center justify-center">
+                  <User className="h-10 w-10 text-blue-600" />
+                </div>
               </div>
               <div className="flex-1">
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
@@ -78,8 +70,8 @@ export function PersonDetailPage() {
                     </div>
                   )}
                 </div>
-                {person.notes && (
-                  <p className="mt-3 text-gray-700 text-sm md:text-base">{person.notes}</p>
+                {person.bio && (
+                  <p className="mt-3 text-gray-700 text-sm md:text-base">{person.bio}</p>
                 )}
               </div>
             </div>
