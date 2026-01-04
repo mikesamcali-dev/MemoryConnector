@@ -73,6 +73,10 @@ export function CapturePage() {
   const [addingTikTok, setAddingTikTok] = useState(false);
   const [tiktokError, setTiktokError] = useState('');
 
+  // YouTube video state
+  const [addingYouTube, setAddingYouTube] = useState(false);
+  const [youtubeError, setYoutubeError] = useState('');
+
   // Person/Location selection state
   const [showPersonSelector, setShowPersonSelector] = useState(false);
   const [showLocationSelector, setShowLocationSelector] = useState(false);
@@ -339,6 +343,39 @@ export function CapturePage() {
       setTimeout(() => setTiktokError(''), 5000);
     } finally {
       setAddingTikTok(false);
+    }
+  };
+
+  // Handle YouTube video addition
+  const handleAddYouTube = async () => {
+    const url = prompt('Enter YouTube URL:');
+    if (!url || !url.trim()) return;
+
+    setAddingYouTube(true);
+    setYoutubeError('');
+
+    try {
+      // Import the function dynamically
+      const { createYouTubeVideoFromUrl } = await import('../api/admin');
+
+      // Create YouTube video from URL
+      const video = await createYouTubeVideoFromUrl(url.trim());
+
+      // Add to linked entities
+      setLinkedEntities(prev => ({
+        ...prev,
+        youtubeVideos: [...prev.youtubeVideos, video.id],
+      }));
+
+      console.log('YouTube video linked:', video.id);
+      haptic('success');
+    } catch (err: any) {
+      console.error('Add YouTube video error:', err);
+      setYoutubeError(err.message || 'Failed to add YouTube video');
+      haptic('error');
+      setTimeout(() => setYoutubeError(''), 5000);
+    } finally {
+      setAddingYouTube(false);
     }
   };
 
@@ -760,6 +797,28 @@ export function CapturePage() {
         </div>
       )}
 
+      {/* YouTube error indicator */}
+      {youtubeError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-red-600" />
+            <p className="text-sm font-medium text-red-900">{youtubeError}</p>
+          </div>
+        </div>
+      )}
+
+      {/* YouTube linked indicator */}
+      {linkedEntities.youtubeVideos.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center gap-2">
+            <Video className="h-5 w-5 text-red-600" />
+            <p className="text-sm font-medium text-red-900">
+              YouTube video linked to this memory
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Person linked indicator */}
       {linkedEntities.persons.length > 0 && (
         <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
@@ -831,7 +890,7 @@ export function CapturePage() {
         <button
           type="submit"
           form="capture-form"
-          disabled={loading || uploadingImage || addingUrl || addingTikTok}
+          disabled={loading || uploadingImage || addingUrl || addingTikTok || addingYouTube}
           className="w-full h-12 px-6 bg-blue-600 text-white text-base font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 shadow-md transition-all active:scale-95"
         >
           {uploadingImage ? (
@@ -848,6 +907,11 @@ export function CapturePage() {
             <span className="flex items-center justify-center gap-2">
               <Loader className="h-5 w-5 animate-spin" />
               Adding TikTok...
+            </span>
+          ) : addingYouTube ? (
+            <span className="flex items-center justify-center gap-2">
+              <Loader className="h-5 w-5 animate-spin" />
+              Adding YouTube...
             </span>
           ) : loading ? (
             <span className="flex items-center justify-center gap-2">
@@ -1043,17 +1107,16 @@ export function CapturePage() {
           {/* YouTube button */}
           <button
             type="button"
-            onClick={() => {
-              const url = prompt('Enter YouTube URL:');
-              if (url && url.trim()) {
-                setTextValue(prev => prev + (prev ? '\n' : '') + url);
-                setValue('text', textValue + (textValue ? '\n' : '') + url);
-              }
-            }}
-            className="inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border border-gray-300 rounded-md shadow-sm text-base md:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500"
+            onClick={handleAddYouTube}
+            disabled={addingYouTube}
+            className="inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border border-gray-300 rounded-md shadow-sm text-base md:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
             title="Add YouTube video"
           >
-            <Video className="h-5 w-5 md:h-4 md:w-4 text-red-600" />
+            {addingYouTube ? (
+              <Loader className="h-5 w-5 md:h-4 md:w-4 animate-spin" />
+            ) : (
+              <Video className="h-5 w-5 md:h-4 md:w-4 text-red-600" />
+            )}
           </button>
 
           {/* TikTok button */}
@@ -1164,7 +1227,7 @@ export function CapturePage() {
         <div className="hidden md:flex items-center justify-between">
           <button
             type="submit"
-            disabled={loading || uploadingImage || addingUrl || addingTikTok}
+            disabled={loading || uploadingImage || addingUrl || addingTikTok || addingYouTube}
             className="w-full md:w-auto h-10 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           >
             {uploadingImage ? (
@@ -1173,6 +1236,8 @@ export function CapturePage() {
               'Analyzing URL...'
             ) : addingTikTok ? (
               'Adding TikTok...'
+            ) : addingYouTube ? (
+              'Adding YouTube...'
             ) : loading ? (
               'Saving...'
             ) : (
@@ -1290,9 +1355,9 @@ export function CapturePage() {
                       onClick={() => handleSelectPerson(person.id)}
                       className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors"
                     >
-                      <p className="font-medium text-gray-900">{person.name || 'Unnamed'}</p>
-                      {person.relationship && (
-                        <p className="text-sm text-gray-500">{person.relationship}</p>
+                      <p className="font-medium text-gray-900">{person.displayName || 'Unnamed'}</p>
+                      {person.email && (
+                        <p className="text-sm text-gray-500">{person.email}</p>
                       )}
                     </button>
                   ))}

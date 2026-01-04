@@ -112,6 +112,13 @@ export function PersonBuilderPage() {
   };
 
   const handlePersonClick = (personId: string) => {
+    // Navigate to person detail page
+    navigate(`/app/people/${personId}`);
+  };
+
+  const handleLinkClick = (personId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+
     // If no person selected yet, select this one
     if (!selectedPersonForLink) {
       setSelectedPersonForLink(personId);
@@ -465,6 +472,17 @@ export function PersonBuilderPage() {
                         </div>
                       </div>
                       <div className="flex gap-2 ml-4" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={(e) => handleLinkClick(person.id, e)}
+                          className={`p-2 rounded ${
+                            selectedPersonForLink === person.id
+                              ? 'text-blue-600 bg-blue-50'
+                              : 'text-gray-400 hover:text-purple-600 hover:bg-purple-50'
+                          }`}
+                          title="Create relationship"
+                        >
+                          <Link2 className="h-4 w-4" />
+                        </button>
                         <button
                           onClick={() => {
                             setEditingPersonId(person.id);
