@@ -187,10 +187,10 @@ export function TikTokVideosListPage() {
       </div>
 
       {/* Add Video Form */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6 mb-6">
         <form onSubmit={handleAddVideo} className="space-y-4">
           <div>
-            <label htmlFor="url" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="url" className="block text-sm md:text-base font-medium text-gray-700 mb-2">
               Add TikTok Video
             </label>
             {error && (
@@ -198,36 +198,36 @@ export function TikTokVideosListPage() {
                 <p className="text-sm text-red-800">{error}</p>
               </div>
             )}
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <input
                 type="url"
                 id="url"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://www.tiktok.com/@username/video/1234567890"
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                className="flex-1 px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                 disabled={isProcessing}
                 required
               />
               <button
                 type="submit"
                 disabled={isProcessing || !url.trim()}
-                className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap text-base font-medium"
               >
                 {isProcessing ? (
                   <>
                     <Loader className="h-5 w-5 animate-spin" />
-                    Processing...
+                    <span>Processing...</span>
                   </>
                 ) : (
                   <>
                     <Plus className="h-5 w-5" />
-                    Add Video
+                    <span>Add Video</span>
                   </>
                 )}
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs md:text-sm text-gray-500 mt-2">
               <Sparkles className="inline h-3 w-3 mr-1" />
               Paste a TikTok URL - we'll automatically extract all video details using AI
             </p>
@@ -316,32 +316,32 @@ export function TikTokVideosListPage() {
                 <div className="flex items-start justify-between mb-2">
                   <h3
                     onClick={() => navigate(`/app/tiktok-videos/${video.id}`)}
-                    className="font-semibold text-gray-900 line-clamp-2 cursor-pointer hover:text-gray-700 flex-1"
+                    className="text-base md:text-lg font-semibold text-gray-900 line-clamp-2 cursor-pointer hover:text-gray-700 flex-1"
                   >
                     {video.title}
                   </h3>
                   <div className="flex gap-1 ml-2 flex-shrink-0">
                     <button
                       onClick={(e) => handleEditClick(video, e)}
-                      className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors touch-manipulation"
                       title="Edit video"
                     >
-                      <Edit2 className="h-4 w-4" />
+                      <Edit2 className="h-5 w-5" />
                     </button>
                     <button
                       onClick={(e) => handleDeleteClick(video.id, e)}
-                      className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors touch-manipulation"
                       title="Delete video"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-5 w-5" />
                     </button>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm md:text-base text-gray-600 mb-3">
                   <span className="font-medium">{video.creatorDisplayName}</span>
                   {video.creatorUsername && (
-                    <span className="text-gray-400">@{video.creatorUsername}</span>
+                    <span className="text-gray-400 text-sm">@{video.creatorUsername}</span>
                   )}
                 </div>
 

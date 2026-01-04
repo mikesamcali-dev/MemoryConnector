@@ -89,12 +89,12 @@ export function TikTokVideoDetailPage() {
       </div>
 
       {/* Video Details */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-        <div className="flex gap-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6 mb-6">
+        <div className="flex flex-col sm:flex-row gap-4 md:gap-6">
           {/* Thumbnail */}
           {video.thumbnailUrl ? (
-            <div className="flex-shrink-0">
-              <div className="w-48 aspect-[9/16] bg-gray-100 rounded-lg overflow-hidden">
+            <div className="flex-shrink-0 mx-auto sm:mx-0">
+              <div className="w-32 sm:w-40 md:w-48 aspect-[9/16] bg-gray-100 rounded-lg overflow-hidden">
                 <img
                   src={video.thumbnailUrl}
                   alt={video.title}
@@ -103,14 +103,14 @@ export function TikTokVideoDetailPage() {
               </div>
             </div>
           ) : (
-            <div className="flex-shrink-0 w-48 aspect-[9/16] bg-gray-100 rounded-lg flex items-center justify-center">
+            <div className="flex-shrink-0 mx-auto sm:mx-0 w-32 sm:w-40 md:w-48 aspect-[9/16] bg-gray-100 rounded-lg flex items-center justify-center">
               <Video className="h-12 w-12 text-gray-300" />
             </div>
           )}
 
           {/* Details */}
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-bold text-gray-900 mb-3">{video.title}</h1>
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-3">{video.title}</h1>
 
             {/* Creator Info */}
             <div className="flex items-center gap-3 mb-4">
@@ -130,12 +130,12 @@ export function TikTokVideoDetailPage() {
             )}
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4">
               {video.viewCount !== null && (
-                <div className="flex items-center gap-2">
-                  <Eye className="h-5 w-5 text-gray-400" />
-                  <div>
-                    <div className="text-lg font-semibold text-gray-900">
+                <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg">
+                  <Eye className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-base md:text-lg font-semibold text-gray-900 truncate">
                       {formatNumber(video.viewCount)}
                     </div>
                     <div className="text-xs text-gray-500">Views</div>
@@ -144,10 +144,10 @@ export function TikTokVideoDetailPage() {
               )}
 
               {video.likeCount !== null && (
-                <div className="flex items-center gap-2">
-                  <ThumbsUp className="h-5 w-5 text-gray-400" />
-                  <div>
-                    <div className="text-lg font-semibold text-gray-900">
+                <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg">
+                  <ThumbsUp className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-base md:text-lg font-semibold text-gray-900 truncate">
                       {formatNumber(video.likeCount)}
                     </div>
                     <div className="text-xs text-gray-500">Likes</div>
@@ -156,10 +156,10 @@ export function TikTokVideoDetailPage() {
               )}
 
               {video.shareCount !== null && (
-                <div className="flex items-center gap-2">
-                  <Share2 className="h-5 w-5 text-gray-400" />
-                  <div>
-                    <div className="text-lg font-semibold text-gray-900">
+                <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg">
+                  <Share2 className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-base md:text-lg font-semibold text-gray-900 truncate">
                       {formatNumber(video.shareCount)}
                     </div>
                     <div className="text-xs text-gray-500">Shares</div>
@@ -168,10 +168,10 @@ export function TikTokVideoDetailPage() {
               )}
 
               {video.commentCount !== null && (
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="h-5 w-5 text-gray-400" />
-                  <div>
-                    <div className="text-lg font-semibold text-gray-900">
+                <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg">
+                  <MessageCircle className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-base md:text-lg font-semibold text-gray-900 truncate">
                       {formatNumber(video.commentCount)}
                     </div>
                     <div className="text-xs text-gray-500">Comments</div>
@@ -205,37 +205,37 @@ export function TikTokVideoDetailPage() {
               {/* Prominent Add Memory Button */}
               <button
                 onClick={() => navigate('/app/capture', { state: { tiktokVideoId: video.id } })}
-                className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                className="inline-flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-base md:text-lg font-semibold shadow-lg hover:shadow-xl transition-all touch-manipulation"
               >
-                <Plus className="h-6 w-6" />
-                Add Memory & Reminders
+                <Plus className="h-5 w-5 md:h-6 md:w-6" />
+                <span>Add Memory & Reminders</span>
               </button>
 
               {/* Secondary Actions */}
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <a
                   href={video.canonicalUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 text-sm"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-3 bg-black text-white rounded-lg hover:bg-gray-800 text-sm md:text-base font-medium touch-manipulation"
                 >
-                  <ExternalLink className="h-4 w-4" />
-                  View on TikTok
+                  <ExternalLink className="h-4 w-4 md:h-5 md:w-5" />
+                  <span>View on TikTok</span>
                 </a>
                 <button
                   onClick={() => enrichMutation.mutate()}
                   disabled={enrichMutation.isPending}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm md:text-base font-medium disabled:opacity-50 touch-manipulation"
                 >
                   {enrichMutation.isPending ? (
                     <>
-                      <Loader className="h-4 w-4 animate-spin" />
-                      Enriching...
+                      <Loader className="h-4 w-4 md:h-5 md:w-5 animate-spin" />
+                      <span>Enriching...</span>
                     </>
                   ) : (
                     <>
-                      <Sparkles className="h-4 w-4" />
-                      Enrich with Whisper
+                      <Sparkles className="h-4 w-4 md:h-5 md:w-5" />
+                      <span>Enrich with Whisper</span>
                     </>
                   )}
                 </button>

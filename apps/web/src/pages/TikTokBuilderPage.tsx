@@ -70,7 +70,7 @@ export function TikTokBuilderPage() {
       </div>
 
       {/* Form */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Error Message */}
           {error && (
@@ -81,7 +81,7 @@ export function TikTokBuilderPage() {
 
           {/* URL Input */}
           <div>
-            <label htmlFor="url" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="url" className="block text-sm md:text-base font-medium text-gray-700 mb-2">
               TikTok Video URL <span className="text-red-500">*</span>
             </label>
             <input
@@ -90,22 +90,22 @@ export function TikTokBuilderPage() {
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://www.tiktok.com/@username/video/1234567890"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               disabled={isProcessing}
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs md:text-sm text-gray-500 mt-2">
               <Sparkles className="inline h-3 w-3 mr-1" />
               Paste a TikTok URL - we'll automatically extract all video details using AI
             </p>
           </div>
 
           {/* Submit Buttons */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <button
               type="button"
               onClick={() => navigate('/app/tiktok-videos')}
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-base font-medium touch-manipulation"
               disabled={isProcessing}
             >
               Cancel
@@ -113,17 +113,17 @@ export function TikTokBuilderPage() {
             <button
               type="submit"
               disabled={isProcessing || !url.trim()}
-              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-base font-medium touch-manipulation"
             >
               {isProcessing ? (
                 <>
                   <Loader className="h-5 w-5 animate-spin" />
-                  Processing...
+                  <span>Processing...</span>
                 </>
               ) : (
                 <>
                   <Plus className="h-5 w-5" />
-                  Add TikTok Video
+                  <span>Add TikTok Video</span>
                 </>
               )}
             </button>
