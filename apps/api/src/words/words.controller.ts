@@ -10,6 +10,12 @@ import { WordsService } from './words.service';
 export class WordsController {
   constructor(private wordsService: WordsService) {}
 
+  @Get()
+  @ApiOperation({ summary: 'Get all words with counts' })
+  async getAllWords() {
+    return this.wordsService.getWordsWithCounts();
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get word by ID' })
   async getWord(@Param('id') id: string) {

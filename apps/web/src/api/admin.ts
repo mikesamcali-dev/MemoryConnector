@@ -348,6 +348,22 @@ export async function getWord(id: string): Promise<Word> {
   return response.json();
 }
 
+export async function createWord(word: string): Promise<Word> {
+  const response = await fetchWithAuth('/admin/words', {
+    method: 'POST',
+    body: JSON.stringify({ word }),
+  });
+  return response.json();
+}
+
+export async function updateWord(id: string, data: Partial<Word>): Promise<Word> {
+  const response = await fetchWithAuth(`/admin/words/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
+
 export async function enrichWord(id: string): Promise<Word> {
   const response = await fetchWithAuth(`/admin/words/${id}/enrich`, {
     method: 'POST',

@@ -172,6 +172,35 @@ export class WordsService {
   }
 
   /**
+   * Update word details manually (admin only)
+   */
+  async updateWord(id: string, data: any): Promise<any> {
+    const word = await this.prisma.word.findUnique({
+      where: { id },
+    });
+
+    if (!word) {
+      throw new HttpException('Word not found', HttpStatus.NOT_FOUND);
+    }
+
+    const updatedWord = await this.prisma.word.update({
+      where: { id },
+      data: {
+        description: data.description,
+        phonetic: data.phonetic,
+        partOfSpeech: data.partOfSpeech,
+        etymology: data.etymology,
+        examples: data.examples,
+        synonyms: data.synonyms,
+        antonyms: data.antonyms,
+        difficulty: data.difficulty,
+      },
+    });
+
+    return updatedWord;
+  }
+
+  /**
    * Delete a word (admin only)
    * This will cascade delete all memory_word_links
    */

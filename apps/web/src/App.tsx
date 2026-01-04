@@ -37,6 +37,8 @@ const SlideDecksListPage = lazy(() => import('./pages/SlideDecksListPage').then(
 const SlideDeckViewerPage = lazy(() => import('./pages/SlideDeckViewerPage').then(m => ({ default: m.SlideDeckViewerPage })));
 const AtlasPage = lazy(() => import('./pages/AtlasPage').then(m => ({ default: m.AtlasPage })));
 const AdminPanelPage = lazy(() => import('./pages/AdminPanelPage').then(m => ({ default: m.AdminPanelPage })));
+const WordsPage = lazy(() => import('./pages/WordsPage').then(m => ({ default: m.WordsPage })));
+const WordDetailPage = lazy(() => import('./pages/WordDetailPage').then(m => ({ default: m.WordDetailPage })));
 
 function App() {
   return (
@@ -121,6 +123,26 @@ function App() {
                 <ProtectedRoute>
                   <AppLayout>
                     <RemindersPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/words"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <WordsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/words/:id"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <WordDetailPage />
                   </AppLayout>
                 </ProtectedRoute>
               }

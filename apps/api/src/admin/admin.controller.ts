@@ -325,10 +325,23 @@ export class AdminController {
     return this.wordsService.findAll();
   }
 
+  @Post('words')
+  @ApiOperation({ summary: 'Create a new word (will auto-enrich with OpenAI)' })
+  async createWord(@Body() body: { word: string }) {
+    const result = await this.wordsService.createOrFind(body.word);
+    return result.word;
+  }
+
   @Get('words/:id')
   @ApiOperation({ summary: 'Get word by ID' })
   async getWord(@Param('id') id: string) {
     return this.wordsService.findById(id);
+  }
+
+  @Put('words/:id')
+  @ApiOperation({ summary: 'Update word details manually' })
+  async updateWord(@Param('id') id: string, @Body() body: any) {
+    return this.wordsService.updateWord(id, body);
   }
 
   @Post('words/:id/enrich')
