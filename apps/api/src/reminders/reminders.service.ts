@@ -1,9 +1,13 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { UserPreferencesService } from '../user-preferences/user-preferences.service';
 
 @Injectable()
 export class RemindersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private userPreferencesService: UserPreferencesService,
+  ) {}
 
   async getInbox(userId: string) {
     // Get unread count
@@ -224,6 +228,57 @@ export class RemindersService {
     });
 
     return { success: true };
+  }
+
+  async createSRSReminders(userId: string, memoryId: string) {
+    // Verify the memory belongs to the user
+    const memory = await this.prisma.memory.findFirst({
+      where: { id: memoryId, userId },
+    });
+
+    if (!memory) {
+      throw new HttpException('Memory not found', HttpStatus.NOT_FOUND);
+    }
+
+    // Get user's reminder preferences
+    const preferences = await this.userPreferencesService.getReminderPreferences(userId);
+
+    if (!preferences.remindersEnabled) {
+      throw new HttpException('Reminders are disabled for this user', HttpStatus.BAD_REQUEST);
+    }
+
+    const now = new Date();
+    const intervals = [
+      preferences.firstReminderMinutes,
+      preferences.secondReminderMinutes,
+      preferences.thirdReminderMinutes,
+    ];
+
+    // Create three reminders based on user preferences
+    const reminders = await Promise.all(
+      intervals.map((minutes, index) => {
+        const scheduledAt = new Date(now.getTime() + minutes * 60 * 1000);
+        return this.prisma.reminder.create({
+          data: {
+            userId,
+            memoryId,
+            scheduledAt,
+            status: 'pending',
+          },
+        });
+      })
+    );
+
+    console.log(`Created ${reminders.length} SRS reminders for memory ${memoryId}`);
+
+    return {
+      success: true,
+      remindersCreated: reminders.length,
+      reminders: reminders.map((r) => ({
+        id: r.id,
+        scheduledAt: r.scheduledAt,
+      })),
+    };
   }
 
   private truncateText(text: string | null, maxLength: number): string {

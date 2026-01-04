@@ -57,5 +57,11 @@ export class RemindersController {
   async delete(@Param('id') id: string, @User() user: any) {
     return this.remindersService.deleteReminder(user.id, id);
   }
+
+  @Post('memory/:memoryId/srs')
+  @ApiOperation({ summary: 'Create three SRS reminders for a memory based on user preferences' })
+  async createSRSReminders(@Param('memoryId') memoryId: string, @User() user: any) {
+    return this.remindersService.createSRSReminders(user.id, memoryId);
+  }
 }
 

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { motion, PanInfo, useAnimation } from 'framer-motion';
-import { Eye, Trash2, Archive } from 'lucide-react';
+import { Eye, Trash2, Archive, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useHaptics } from '../hooks/useHaptics';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { createSRSReminders } from '../api/reminders';
 
 interface SwipeableMemoryCardProps {
   memory: {
@@ -23,6 +25,20 @@ export function SwipeableMemoryCard({ memory, onDelete, onArchive }: SwipeableMe
   const { haptic } = useHaptics();
   const controls = useAnimation();
   const [dragX, setDragX] = useState(0);
+  const queryClient = useQueryClient();
+
+  const createRemindersMutation = useMutation({
+    mutationFn: (memoryId: string) => createSRSReminders(memoryId),
+    onSuccess: () => {
+      haptic('success');
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      alert('3 reminders created successfully!');
+    },
+    onError: (error: any) => {
+      haptic('error');
+      alert(`Failed to create reminders: ${error.message}`);
+    },
+  });
 
   const handleDragEnd = (_event: any, info: PanInfo) => {
     const { offset, velocity } = info;
@@ -56,6 +72,11 @@ export function SwipeableMemoryCard({ memory, onDelete, onArchive }: SwipeableMe
 
   const handleClick = () => {
     navigate(`/app/memories/${memory.id}`);
+  };
+
+  const handleCreateReminders = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    createRemindersMutation.mutate(memory.id);
   };
 
   // Calculate background color based on drag position
@@ -105,16 +126,26 @@ export function SwipeableMemoryCard({ memory, onDelete, onArchive }: SwipeableMe
           <p className="text-sm md:text-base text-gray-900 flex-1 line-clamp-2">
             {memory.textContent}
           </p>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/app/memories/${memory.id}`);
-            }}
-            className="hidden md:flex flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-gray-100 rounded-full"
-            title="View details"
-          >
-            <Eye className="h-4 w-4 text-gray-600" />
-          </button>
+          <div className="hidden md:flex flex-shrink-0 gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={handleCreateReminders}
+              className="p-2 hover:bg-blue-100 rounded-full"
+              title="Create 3 SRS reminders"
+              disabled={createRemindersMutation.isPending}
+            >
+              <Bell className={`h-4 w-4 ${createRemindersMutation.isPending ? 'text-gray-400' : 'text-blue-600'}`} />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/app/memories/${memory.id}`);
+              }}
+              className="p-2 hover:bg-gray-100 rounded-full"
+              title="View details"
+            >
+              <Eye className="h-4 w-4 text-gray-600" />
+            </button>
+          </div>
         </div>
         <div className="flex items-center gap-2 md:gap-4 mt-2 md:mt-3 text-xs text-gray-500">
           <span>{new Date(memory.createdAt).toLocaleDateString()}</span>

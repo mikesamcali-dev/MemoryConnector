@@ -5,8 +5,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { getMemory, updateMemory, deleteMemory, analyzeText, WordMatch, linkWordsToMemory } from '../api/memories';
-import { getRemindersForMemory, updateReminderSchedule, deleteReminder } from '../api/reminders';
-import { ArrowLeft, Save, MapPin, Calendar, Edit2, X, Clock, Trash2, Plus, Link2, BookOpen, Image as ImageIcon, ExternalLink } from 'lucide-react';
+import { getRemindersForMemory, updateReminderSchedule, deleteReminder, createSRSReminders } from '../api/reminders';
+import { ArrowLeft, Save, MapPin, Calendar, Edit2, X, Clock, Trash2, Plus, Link2, BookOpen, Image as ImageIcon, ExternalLink, Bell } from 'lucide-react';
 import { EntitySuggestionsModal } from '../components/EntitySuggestionsModal';
 
 const updateMemorySchema = z.object({
@@ -126,6 +126,20 @@ export function MemoryDetailPage() {
     onError: (err: any) => {
       setError(err.message || 'Failed to delete memory');
       setShowDeleteConfirm(false);
+    },
+  });
+
+  // Create SRS reminders mutation
+  const createRemindersMutation = useMutation({
+    mutationFn: () => createSRSReminders(id!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reminders', id] });
+      queryClient.invalidateQueries({ queryKey: ['upcoming-reminders'] });
+      setSuccessMessage('3 SRS reminders created successfully!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    },
+    onError: (err: any) => {
+      setError(err.message || 'Failed to create reminders');
     },
   });
 
@@ -304,6 +318,17 @@ export function MemoryDetailPage() {
                   <span className="hidden lg:inline">Add Caption as Word</span>
                   <span className="lg:hidden hidden sm:inline">Add Caption</span>
                   <span className="sm:hidden">+Word</span>
+                </button>
+                <button
+                  onClick={() => createRemindersMutation.mutate()}
+                  disabled={createRemindersMutation.isPending}
+                  className="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm md:text-base disabled:opacity-50"
+                  title="Create 3 SRS reminders"
+                >
+                  <Bell className="h-4 w-4" />
+                  <span className="hidden lg:inline">Create Reminders</span>
+                  <span className="lg:hidden hidden sm:inline">Reminders</span>
+                  <span className="sm:hidden">+R</span>
                 </button>
                 <button
                   onClick={() => setIsEditing(true)}

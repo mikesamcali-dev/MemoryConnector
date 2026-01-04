@@ -92,3 +92,10 @@ export async function deleteReminder(reminderId: string) {
   return response.json();
 }
 
+export async function createSRSReminders(memoryId: string) {
+  const response = await fetchWithAuth(`/reminders/memory/${memoryId}/srs`, {
+    method: 'POST',
+  });
+  return response.json();
+}
+
