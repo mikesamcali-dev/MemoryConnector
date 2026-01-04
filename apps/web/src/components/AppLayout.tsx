@@ -54,10 +54,10 @@ export function AppLayout({ children }: AppLayoutProps) {
   // Primary nav items for desktop
   const desktopPrimaryPaths = ['/app/capture', '/app/slidedecks', '/app/tiktok-videos', '/app/images'];
 
-  // Desktop "More" menu items (excluding settings and admin which go on the right)
+  // Desktop "More" menu items (excluding search and admin which go on the right)
   const desktopMoreItems = navItems.filter(
     item => !desktopPrimaryPaths.includes(item.path) &&
-            item.path !== '/app/settings' &&
+            item.path !== '/app/search' &&
             item.path !== '/app/admin'
   );
 
@@ -144,9 +144,9 @@ export function AppLayout({ children }: AppLayoutProps) {
                 )}
               </div>
 
-              {/* Settings */}
+              {/* Search */}
               {navItems
-                .filter(item => item.path === '/app/settings')
+                .filter(item => item.path === '/app/search')
                 .map((item) => {
                   const Icon = item.icon;
                   const active = isActive(item.path);
@@ -163,7 +163,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                       `}
                     >
                       <Icon className="h-5 w-5" />
-                      <span>Settings</span>
+                      <span>Search</span>
                     </Link>
                   );
                 })}
