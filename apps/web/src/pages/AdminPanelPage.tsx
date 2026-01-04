@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getAllUsers,
   updateUserEnabled,
+  updateUserTier,
   getSystemStats,
   getAICostTracking,
   getEnrichmentWorkerStatus,
@@ -75,11 +76,24 @@ export function AdminPanelPage() {
     },
   });
 
+  // Mutation to update user tier
+  const updateTierMutation = useMutation({
+    mutationFn: ({ userId, tier }: { userId: string; tier: 'free' | 'premium' }) =>
+      updateUserTier(userId, tier),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+  });
+
   const handleToggleUser = (userId: string, currentEnabled: boolean) => {
     const action = currentEnabled ? 'disable' : 'enable';
     if (confirm(`Are you sure you want to ${action} this user?`)) {
       toggleUserMutation.mutate({ userId, isEnabled: !currentEnabled });
     }
+  };
+
+  const handleTierChange = (userId: string, newTier: 'free' | 'premium') => {
+    updateTierMutation.mutate({ userId, tier: newTier });
   };
 
   return (
@@ -263,7 +277,7 @@ export function AdminPanelPage() {
           </p>
         </div>
 
-        <div className="p-6">
+        <div className="overflow-x-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader className="h-8 w-8 animate-spin text-blue-600" />
@@ -274,117 +288,107 @@ export function AdminPanelPage() {
               <p>No users found</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {users.map((user: any) => (
-                <div
-                  key={user.id}
-                  className="bg-gray-50 rounded-lg p-4 border border-gray-200"
-                >
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="flex-shrink-0 h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 font-semibold text-lg">
-                        {user.email.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-semibold text-gray-900 truncate">
-                        {user.email}
-                      </h3>
-                      <p className="text-sm text-gray-500">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Provider</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tier</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Memories</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roles</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {users.map((user: any) => (
+                  <tr key={user.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
+                          <span className="text-blue-600 font-semibold text-sm">
+                            {user.email.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="ml-3">
+                          <div className="text-sm font-medium text-gray-900">{user.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-500">
                         {user.provider === 'google' ? '🔗 Google' : '🔐 Local'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Tier</p>
-                      <span
-                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <select
+                        value={user.tier}
+                        onChange={(e) => handleTierChange(user.id, e.target.value as 'free' | 'premium')}
+                        className={`text-xs font-semibold rounded-full px-3 py-1 border-0 focus:ring-2 focus:ring-blue-500 ${
                           user.tier === 'premium'
                             ? 'bg-purple-100 text-purple-800'
                             : 'bg-gray-100 text-gray-800'
                         }`}
                       >
-                        {user.tier}
-                      </span>
-                    </div>
-
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Status</p>
+                        <option value="free">Free</option>
+                        <option value="premium">Premium</option>
+                      </select>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       {user.isEnabled ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                           <CheckCircle className="h-3 w-3" />
                           Enabled
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
                           <XCircle className="h-3 w-3" />
                           Disabled
                         </span>
                       )}
-                    </div>
-
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Memories</p>
-                      <div className="flex items-center gap-1 text-sm font-medium text-gray-900">
-                        <Activity className="h-4 w-4 text-gray-400" />
-                        {user.memoryCount}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {user.memoryCount}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-wrap gap-1">
+                        {user.roles.map((role: string) => (
+                          <span
+                            key={role}
+                            className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"
+                          >
+                            {role}
+                          </span>
+                        ))}
                       </div>
-                    </div>
-
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Created</p>
-                      <div className="flex items-center gap-1 text-sm text-gray-900">
-                        <Calendar className="h-4 w-4 text-gray-400" />
-                        {new Date(user.createdAt).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mb-3">
-                    <p className="text-xs text-gray-500 mb-2">Roles</p>
-                    <div className="flex flex-wrap gap-1">
-                      {user.roles.map((role: string) => (
-                        <span
-                          key={role}
-                          className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800"
-                        >
-                          {role}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleToggleUser(user.id, user.isEnabled)}
-                    disabled={loadingUserId === user.id}
-                    className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all ${
-                      user.isEnabled
-                        ? 'bg-red-600 text-white hover:bg-red-700'
-                        : 'bg-green-600 text-white hover:bg-green-700'
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    {loadingUserId === user.id ? (
-                      <>
-                        <Loader className="h-4 w-4 animate-spin" />
-                        Processing...
-                      </>
-                    ) : user.isEnabled ? (
-                      <>
-                        <ShieldX className="h-5 w-5" />
-                        Disable User
-                      </>
-                    ) : (
-                      <>
-                        <ShieldCheck className="h-5 w-5" />
-                        Enable User
-                      </>
-                    )}
-                  </button>
-                </div>
-              ))}
-            </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(user.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <button
+                        onClick={() => handleToggleUser(user.id, user.isEnabled)}
+                        disabled={loadingUserId === user.id}
+                        className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                          user.isEnabled
+                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                            : 'bg-green-100 text-green-700 hover:bg-green-200'
+                        } disabled:opacity-50`}
+                      >
+                        {loadingUserId === user.id ? (
+                          <Loader className="h-3 w-3 animate-spin" />
+                        ) : user.isEnabled ? (
+                          <><ShieldX className="h-3 w-3" /> Disable</>
+                        ) : (
+                          <><ShieldCheck className="h-3 w-3" /> Enable</>
+                        )}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       </div>

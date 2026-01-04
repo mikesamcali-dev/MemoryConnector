@@ -235,6 +235,14 @@ export async function updateUserEnabled(userId: string, isEnabled: boolean): Pro
   return response.json();
 }
 
+export async function updateUserTier(userId: string, tier: 'free' | 'premium'): Promise<any> {
+  const response = await fetchWithAuth(`/admin/users/${userId}/tier`, {
+    method: 'PUT',
+    body: JSON.stringify({ tier }),
+  });
+  return response.json();
+}
+
 export async function getAllMemoriesByUser(): Promise<any[]> {
   const response = await fetchWithAuth('/admin/memories-by-user');
   return response.json();
