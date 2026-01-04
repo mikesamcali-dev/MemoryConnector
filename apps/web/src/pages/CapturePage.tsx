@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createMemory, analyzeText, PersonMatch, LocationMatch, YouTubeVideoMatch, WordMatch } from '../api/memories';
-import { lookupWord } from '../api/admin';
+import { lookupWord, getAllPeople, getAllLocationsForUser } from '../api/admin';
 import { getUpcomingReminders } from '../api/reminders';
 import { uploadImage, linkImageToMemory } from '../api/images';
 import { addUrl, linkUrlPageToMemory } from '../api/urlPages';
@@ -72,6 +72,14 @@ export function CapturePage() {
   // TikTok video state
   const [addingTikTok, setAddingTikTok] = useState(false);
   const [tiktokError, setTiktokError] = useState('');
+
+  // Person/Location selection state
+  const [showPersonSelector, setShowPersonSelector] = useState(false);
+  const [showLocationSelector, setShowLocationSelector] = useState(false);
+  const [allPeople, setAllPeople] = useState<any[]>([]);
+  const [allLocations, setAllLocations] = useState<any[]>([]);
+  const [loadingPeople, setLoadingPeople] = useState(false);
+  const [loadingLocations, setLoadingLocations] = useState(false);
 
   // Debounce text input for analysis (1 second delay)
   const debouncedText = useDebounce(textValue, 1000);
@@ -332,6 +340,70 @@ export function CapturePage() {
     } finally {
       setAddingTikTok(false);
     }
+  };
+
+  // Handle person selection
+  const handleAddPerson = async () => {
+    setShowPersonSelector(true);
+    setLoadingPeople(true);
+    try {
+      const people = await getAllPeople();
+      setAllPeople(people);
+    } catch (err) {
+      console.error('Failed to load people:', err);
+    } finally {
+      setLoadingPeople(false);
+    }
+  };
+
+  // Handle location selection
+  const handleAddLocation = async () => {
+    setShowLocationSelector(true);
+    setLoadingLocations(true);
+    try {
+      const locations = await getAllLocationsForUser();
+      setAllLocations(locations);
+    } catch (err) {
+      console.error('Failed to load locations:', err);
+    } finally {
+      setLoadingLocations(false);
+    }
+  };
+
+  // Select a person
+  const handleSelectPerson = (personId: string) => {
+    setLinkedEntities(prev => ({
+      ...prev,
+      persons: [personId], // Only one person per memory for now
+    }));
+    setShowPersonSelector(false);
+    haptic('success');
+  };
+
+  // Select a location
+  const handleSelectLocation = (locationId: string) => {
+    setLinkedEntities(prev => ({
+      ...prev,
+      locations: [locationId], // Only one location per memory for now
+    }));
+    setShowLocationSelector(false);
+    haptic('success');
+  };
+
+  // Remove linked person
+  const handleRemovePerson = () => {
+    setLinkedEntities(prev => ({
+      ...prev,
+      persons: [],
+    }));
+  };
+
+  // Remove linked location
+  const handleRemoveLocation = () => {
+    setLinkedEntities(prev => ({
+      ...prev,
+      locations: [],
+    }));
   };
 
   const onSubmit = async (data: { text: string }) => {
@@ -688,6 +760,48 @@ export function CapturePage() {
         </div>
       )}
 
+      {/* Person linked indicator */}
+      {linkedEntities.persons.length > 0 && (
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-purple-600" />
+              <p className="text-sm font-medium text-purple-900">
+                Person linked to this memory
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleRemovePerson}
+              className="text-purple-600 hover:text-purple-800 focus:outline-none"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Location linked indicator */}
+      {linkedEntities.locations.length > 0 && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <MapPinned className="h-5 w-5 text-green-600" />
+              <p className="text-sm font-medium text-green-900">
+                Location linked to this memory
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleRemoveLocation}
+              className="text-green-600 hover:text-green-800 focus:outline-none"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Pre-linked image indicator */}
       {preLinkedImageId && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
@@ -895,6 +1009,36 @@ export function CapturePage() {
               )}
             </div>
           )}
+
+          {/* Person button */}
+          <button
+            type="button"
+            onClick={handleAddPerson}
+            disabled={linkedEntities.persons.length > 0}
+            className={`inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border rounded-md shadow-sm text-base md:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+              linkedEntities.persons.length > 0
+                ? 'border-purple-300 bg-purple-100 text-purple-400 cursor-not-allowed'
+                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+            title="Link to person"
+          >
+            <Users className="h-5 w-5 md:h-4 md:w-4 text-purple-600" />
+          </button>
+
+          {/* Location button */}
+          <button
+            type="button"
+            onClick={handleAddLocation}
+            disabled={linkedEntities.locations.length > 0}
+            className={`inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border rounded-md shadow-sm text-base md:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-green-500 ${
+              linkedEntities.locations.length > 0
+                ? 'border-green-300 bg-green-100 text-green-400 cursor-not-allowed'
+                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+            title="Link to location"
+          >
+            <MapPinned className="h-5 w-5 md:h-4 md:w-4 text-green-600" />
+          </button>
 
           {/* YouTube button */}
           <button
@@ -1120,6 +1264,98 @@ export function CapturePage() {
           </div>
         )}
       </div>
+
+      {/* Person selection modal */}
+      {showPersonSelector && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Select a Person</h2>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {loadingPeople ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader className="h-8 w-8 animate-spin text-blue-600" />
+                </div>
+              ) : allPeople.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Users className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                  <p>No people found. Create a person memory first!</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {allPeople.map((person) => (
+                    <button
+                      key={person.id}
+                      onClick={() => handleSelectPerson(person.id)}
+                      className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors"
+                    >
+                      <p className="font-medium text-gray-900">{person.name || 'Unnamed'}</p>
+                      {person.relationship && (
+                        <p className="text-sm text-gray-500">{person.relationship}</p>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="p-4 border-t border-gray-200">
+              <button
+                onClick={() => setShowPersonSelector(false)}
+                className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Location selection modal */}
+      {showLocationSelector && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Select a Location</h2>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {loadingLocations ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader className="h-8 w-8 animate-spin text-blue-600" />
+                </div>
+              ) : allLocations.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <MapPinned className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                  <p>No locations found. Create a location memory first!</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {allLocations.map((location) => (
+                    <button
+                      key={location.id}
+                      onClick={() => handleSelectLocation(location.id)}
+                      className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-300 transition-colors"
+                    >
+                      <p className="font-medium text-gray-900">{location.name || 'Unnamed'}</p>
+                      {location.address && (
+                        <p className="text-sm text-gray-500">{location.address}</p>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="p-4 border-t border-gray-200">
+              <button
+                onClick={() => setShowLocationSelector(false)}
+                className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Entity suggestions modal */}
       <EntitySuggestionsModal

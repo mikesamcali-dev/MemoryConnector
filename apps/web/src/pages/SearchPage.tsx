@@ -1,16 +1,20 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { searchMemories } from '../api/search';
-import { getMemories } from '../api/memories';
+import { getMemories, deleteMemory } from '../api/memories';
 import { Eye, Search, RefreshCw, SlidersHorizontal } from 'lucide-react';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { useHaptics } from '../hooks/useHaptics';
 import { BottomSheet } from '../components/mobile/BottomSheet';
+import { SwipeableMemoryCard } from '../components/SwipeableMemoryCard';
 
 export function SearchPage() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { haptic } = useHaptics();
+  const queryClient = useQueryClient();
   const [query, setQuery] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
@@ -51,6 +55,37 @@ export function SearchPage() {
     setQuery('');
     setSearchTerm('');
   };
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: deleteMemory,
+    onSuccess: () => {
+      haptic('success');
+      queryClient.invalidateQueries({ queryKey: ['recent-memories'] });
+      queryClient.invalidateQueries({ queryKey: ['search', searchTerm] });
+    },
+    onError: () => {
+      haptic('error');
+      alert('Failed to delete memory');
+    },
+  });
+
+  // Archive mutation (update memory state to archived)
+  const archiveMutation = useMutation({
+    mutationFn: async (id: string) => {
+      // For now, archive just means delete (can be changed to update state later)
+      await deleteMemory(id);
+    },
+    onSuccess: () => {
+      haptic('success');
+      queryClient.invalidateQueries({ queryKey: ['recent-memories'] });
+      queryClient.invalidateQueries({ queryKey: ['search', searchTerm] });
+    },
+    onError: () => {
+      haptic('error');
+      alert('Failed to archive memory');
+    },
+  });
 
   // Determine what to display
   const data = searchTerm ? searchResults : null;
@@ -157,33 +192,42 @@ export function SearchPage() {
       {!isLoading && memories && memories.length > 0 && (
         <div className="space-y-3 md:space-y-4">
           {memories.map((memory: any) => (
-            <div
-              key={memory.id}
-              className="bg-white border border-gray-200 rounded-lg p-3 md:p-4 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group active:bg-gray-50"
-              onClick={() => navigate(`/app/memories/${memory.id}`)}
-            >
-              <div className="flex items-start justify-between gap-2 md:gap-4">
-                <p className="text-sm md:text-base text-gray-900 flex-1 line-clamp-2">{memory.textContent}</p>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/app/memories/${memory.id}`);
-                  }}
-                  className="hidden md:flex flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-gray-100 rounded-full"
-                  title="View details"
-                >
-                  <Eye className="h-4 w-4 text-gray-600" />
-                </button>
+            isMobile ? (
+              <SwipeableMemoryCard
+                key={memory.id}
+                memory={memory}
+                onDelete={(id) => deleteMutation.mutate(id)}
+                onArchive={(id) => archiveMutation.mutate(id)}
+              />
+            ) : (
+              <div
+                key={memory.id}
+                className="bg-white border border-gray-200 rounded-lg p-3 md:p-4 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group active:bg-gray-50"
+                onClick={() => navigate(`/app/memories/${memory.id}`)}
+              >
+                <div className="flex items-start justify-between gap-2 md:gap-4">
+                  <p className="text-sm md:text-base text-gray-900 flex-1 line-clamp-2">{memory.textContent}</p>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/app/memories/${memory.id}`);
+                    }}
+                    className="hidden md:flex flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-gray-100 rounded-full"
+                    title="View details"
+                  >
+                    <Eye className="h-4 w-4 text-gray-600" />
+                  </button>
+                </div>
+                <div className="flex items-center gap-2 md:gap-4 mt-2 md:mt-3 text-xs text-gray-500">
+                  <span>{new Date(memory.createdAt).toLocaleDateString()}</span>
+                  {memory.type && (
+                    <span className="px-2 py-0.5 bg-gray-100 rounded text-gray-600">
+                      {memory.type}
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2 md:gap-4 mt-2 md:mt-3 text-xs text-gray-500">
-                <span>{new Date(memory.createdAt).toLocaleDateString()}</span>
-                {memory.type && (
-                  <span className="px-2 py-0.5 bg-gray-100 rounded text-gray-600">
-                    {memory.type}
-                  </span>
-                )}
-              </div>
-            </div>
+            )
           ))}
         </div>
       )}

@@ -11,7 +11,7 @@ export function SynapseReviewPage() {
   const { haptic } = useHaptics();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [reviewedCount, setReviewedCount] = useState(0);
+  const [_reviewedCount, setReviewedCount] = useState(0);
 
   const { data, isLoading } = useQuery({
     queryKey: ['due-reviews'],

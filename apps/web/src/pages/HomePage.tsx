@@ -15,7 +15,7 @@ export function HomePage() {
   }
 
   if (user) {
-    return <Navigate to="/app/capture" replace />;
+    return <Navigate to="/app/feed" replace />;
   }
 
   return (

@@ -24,7 +24,7 @@ export function SwipeableMemoryCard({ memory, onDelete, onArchive }: SwipeableMe
   const controls = useAnimation();
   const [dragX, setDragX] = useState(0);
 
-  const handleDragEnd = (event: any, info: PanInfo) => {
+  const handleDragEnd = (_event: any, info: PanInfo) => {
     const { offset, velocity } = info;
     const swipe = offset.x;
     const swipeVelocity = velocity.x;
@@ -93,7 +93,7 @@ export function SwipeableMemoryCard({ memory, onDelete, onArchive }: SwipeableMe
         drag="x"
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.1}
-        onDrag={(event, info) => {
+        onDrag={(_event, info) => {
           setDragX(info.offset.x);
         }}
         onDragEnd={handleDragEnd}
