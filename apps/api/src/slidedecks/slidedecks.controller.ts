@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Param,
   Body,
@@ -19,6 +20,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { User } from '../common/decorators/user.decorator';
 import { SlideDecksService } from './slidedecks.service';
 import { CreateSlideDeckDto } from './dto/create-slidedeck.dto';
+import { UpdateSlideDeckDto } from './dto/update-slidedeck.dto';
 import { SlideDeckResponseDto, SlideResponseDto } from './dto/slidedeck-response.dto';
 
 @ApiTags('slidedecks')
@@ -85,6 +87,25 @@ export class SlideDecksController {
   })
   async getSlides(@Param('id') id: string, @User() user: any) {
     return this.slideDecksService.getSlides(user.id, id);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update a slide deck' })
+  @ApiResponse({
+    status: 200,
+    description: 'Slide deck updated successfully',
+    type: SlideDeckResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Slide deck not found',
+  })
+  async update(
+    @Param('id') id: string,
+    @User() user: any,
+    @Body() dto: UpdateSlideDeckDto,
+  ) {
+    return this.slideDecksService.update(user.id, id, dto);
   }
 
   @Delete(':id')

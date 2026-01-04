@@ -149,6 +149,28 @@ export async function getSlides(slideDeckId: string): Promise<Slide[]> {
 }
 
 /**
+ * Update a slide deck
+ */
+export async function updateSlideDeck(
+  slideDeckId: string,
+  data: { title?: string },
+): Promise<SlideDeck> {
+  const response = await fetchWithAuth(`/slidedecks/${slideDeckId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to update slide deck');
+  }
+
+  return response.json();
+}
+
+/**
  * Delete a slide deck
  */
 export async function deleteSlideDeck(slideDeckId: string): Promise<void> {

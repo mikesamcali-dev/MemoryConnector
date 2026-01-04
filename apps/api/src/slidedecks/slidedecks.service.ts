@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSlideDeckDto } from './dto/create-slidedeck.dto';
+import { UpdateSlideDeckDto } from './dto/update-slidedeck.dto';
 
 @Injectable()
 export class SlideDecksService {
@@ -220,6 +221,50 @@ export class SlideDecksService {
     });
 
     return slides;
+  }
+
+  /**
+   * Update a slide deck
+   */
+  async update(
+    userId: string,
+    slideDeckId: string,
+    dto: UpdateSlideDeckDto,
+  ): Promise<any> {
+    // Verify deck ownership
+    const existingDeck = await this.prisma.slideDeck.findFirst({
+      where: {
+        id: slideDeckId,
+        userId,
+      },
+    });
+
+    if (!existingDeck) {
+      throw new NotFoundException('Slide deck not found');
+    }
+
+    // Update the deck
+    const updatedDeck = await this.prisma.slideDeck.update({
+      where: {
+        id: slideDeckId,
+      },
+      data: {
+        title: dto.title,
+      },
+      include: {
+        _count: {
+          select: {
+            slides: true,
+          },
+        },
+      },
+    });
+
+    return {
+      ...updatedDeck,
+      slideCount: updatedDeck._count.slides,
+      _count: undefined,
+    };
   }
 
   /**
