@@ -138,6 +138,29 @@ export function MemoryDetailPage() {
     });
   };
 
+  // Add caption as word directly
+  const handleAddCaptionAsWord = async () => {
+    if (!memory?.textContent || memory.textContent.trim().length < 2) {
+      setError('Memory text is too short to add as a word (minimum 2 characters)');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+
+    try {
+      const result = await linkWordsToMemory(id!, [memory.textContent.trim()]);
+      const totalWords = result.linked.length + result.created.length;
+
+      if (totalWords > 0) {
+        queryClient.invalidateQueries({ queryKey: ['memory', id] });
+        setSuccessMessage(`Caption added as word successfully!${result.created.length > 0 ? ' (new word created)' : ''}`);
+        setTimeout(() => setSuccessMessage(''), 3000);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to add caption as word');
+      setTimeout(() => setError(''), 3000);
+    }
+  };
+
   // Analyze memory text for words
   const handleAnalyzeForWords = async () => {
     if (!memory?.textContent || memory.textContent.trim().length < 2) {
@@ -269,6 +292,16 @@ export function MemoryDetailPage() {
                   <BookOpen className="h-4 w-4" />
                   <span className="hidden sm:inline">{analyzingWords ? 'Analyzing...' : 'Find Words'}</span>
                   <span className="sm:hidden">Words</span>
+                </button>
+                <button
+                  onClick={handleAddCaptionAsWord}
+                  className="flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 text-sm md:text-base whitespace-nowrap"
+                  title="Add caption as word"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden lg:inline">Add Caption as Word</span>
+                  <span className="lg:hidden hidden sm:inline">Add Caption</span>
+                  <span className="sm:hidden">+Word</span>
                 </button>
                 <button
                   onClick={() => setIsEditing(true)}
