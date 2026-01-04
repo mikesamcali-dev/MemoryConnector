@@ -152,7 +152,9 @@ export function MemoryDetailPage() {
 
       if (totalWords > 0) {
         queryClient.invalidateQueries({ queryKey: ['memory', id] });
-        setSuccessMessage(`Caption added as word successfully!${result.created.length > 0 ? ' (new word created)' : ''}`);
+        // Refetch memory to show the linked word immediately
+        refetch();
+        setSuccessMessage(`Caption added and linked as word!${result.created.length > 0 ? ' (new word created)' : ' (existing word linked)'}`);
         setTimeout(() => setSuccessMessage(''), 3000);
       }
     } catch (err: any) {
