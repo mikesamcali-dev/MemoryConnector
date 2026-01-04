@@ -8,6 +8,7 @@ import {
   getAICostTracking,
   getEnrichmentWorkerStatus,
   triggerEnrichment,
+  getAllWords,
 } from '../api/admin';
 import {
   Users,
@@ -22,6 +23,7 @@ import {
   Zap,
   Play,
   TrendingUp,
+  BookOpen,
 } from 'lucide-react';
 
 export function AdminPanelPage() {
@@ -50,6 +52,12 @@ export function AdminPanelPage() {
   const { data: users, isLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: getAllUsers,
+  });
+
+  // Fetch all words
+  const { data: words, isLoading: wordsLoading } = useQuery({
+    queryKey: ['admin-words'],
+    queryFn: getAllWords,
   });
 
   // Mutation to trigger enrichment
@@ -388,6 +396,107 @@ export function AdminPanelPage() {
                 ))}
               </tbody>
             </table>
+          )}
+        </div>
+      </div>
+
+      {/* Words Management Section */}
+      <div className="mt-6 bg-white rounded-lg shadow-md border border-gray-200">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <BookOpen className="h-6 w-6 text-green-600" />
+            <h2 className="text-xl font-bold text-gray-900">Words Management</h2>
+          </div>
+          <p className="text-sm text-gray-600 mt-1">
+            View all words with user creation details
+          </p>
+        </div>
+
+        <div className="overflow-x-auto">
+          {wordsLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader className="h-8 w-8 animate-spin text-blue-600" />
+            </div>
+          ) : !words || words.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              <BookOpen className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+              <p>No words found</p>
+            </div>
+          ) : (
+            <div className="p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <p className="text-sm text-gray-600">
+                  Total words: <span className="font-semibold">{words.length}</span>
+                </p>
+              </div>
+              <div className="space-y-4">
+                {words.map((word: any) => (
+                  <div
+                    key={word.id}
+                    className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-gray-900">{word.word}</h3>
+                        {word.phonetic && (
+                          <p className="text-sm text-gray-500">{word.phonetic}</p>
+                        )}
+                        {word.description && (
+                          <p className="text-sm text-gray-700 mt-1">{word.description}</p>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        {word.partOfSpeech && (
+                          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                            {word.partOfSpeech}
+                          </span>
+                        )}
+                        {word.difficulty && (
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                            word.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
+                            word.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {word.difficulty}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 mt-3 text-sm text-gray-600">
+                      <div className="flex items-center gap-1">
+                        <Database className="h-4 w-4" />
+                        <span>{word.memoryCount} {word.memoryCount === 1 ? 'memory' : 'memories'}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Users className="h-4 w-4" />
+                        <span>{word.userCount} {word.userCount === 1 ? 'user' : 'users'}</span>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Created {new Date(word.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+
+                    {word.users && word.users.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <p className="text-xs font-semibold text-gray-700 mb-2">Used by:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {word.users.map((user: any) => (
+                            <div
+                              key={user.userId}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded"
+                            >
+                              <span>{user.email}</span>
+                              <span className="text-gray-500">({user.count})</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       </div>

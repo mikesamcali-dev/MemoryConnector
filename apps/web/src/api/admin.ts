@@ -926,3 +926,27 @@ export async function retryAllFailedEnrichments(): Promise<RetryAllResult> {
   });
   return response.json();
 }
+
+export interface WordWithUsers {
+  id: string;
+  word: string;
+  description: string | null;
+  phonetic: string | null;
+  partOfSpeech: string | null;
+  difficulty: string | null;
+  lastEnrichedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  memoryCount: number;
+  userCount: number;
+  users: Array<{
+    userId: string;
+    email: string;
+    count: number;
+  }>;
+}
+
+export async function getAllWords(): Promise<WordWithUsers[]> {
+  const response = await fetchWithAuth('/admin/words');
+  return response.json();
+}

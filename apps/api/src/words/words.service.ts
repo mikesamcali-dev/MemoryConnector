@@ -191,7 +191,7 @@ export class WordsService {
 
   /**
    * Get all words (admin only)
-   * Returns all standalone word entries
+   * Returns all standalone word entries with user information
    */
   async findAll(): Promise<any[]> {
     const words = await this.prisma.word.findMany({
@@ -201,24 +201,59 @@ export class WordsService {
             memoryLinks: true,
           },
         },
+        memoryLinks: {
+          include: {
+            memory: {
+              select: {
+                userId: true,
+                user: {
+                  select: {
+                    email: true,
+                  },
+                },
+                createdAt: true,
+              },
+            },
+          },
+        },
       },
       orderBy: {
-        word: 'asc',
+        createdAt: 'desc', // Most recently created first
       },
     });
 
-    return words.map((word) => ({
-      id: word.id,
-      word: word.word,
-      description: word.description,
-      phonetic: word.phonetic,
-      partOfSpeech: word.partOfSpeech,
-      difficulty: word.difficulty,
-      lastEnrichedAt: word.lastEnrichedAt,
-      createdAt: word.createdAt,
-      updatedAt: word.updatedAt,
-      memoryCount: word._count.memoryLinks,
-    }));
+    return words.map((word) => {
+      // Get unique users who have used this word
+      const userMap = new Map();
+      word.memoryLinks.forEach(link => {
+        const userId = link.memory.userId;
+        if (!userMap.has(userId)) {
+          userMap.set(userId, {
+            userId,
+            email: link.memory.user.email,
+            count: 0,
+          });
+        }
+        userMap.get(userId).count++;
+      });
+
+      const users = Array.from(userMap.values());
+
+      return {
+        id: word.id,
+        word: word.word,
+        description: word.description,
+        phonetic: word.phonetic,
+        partOfSpeech: word.partOfSpeech,
+        difficulty: word.difficulty,
+        lastEnrichedAt: word.lastEnrichedAt,
+        createdAt: word.createdAt,
+        updatedAt: word.updatedAt,
+        memoryCount: word._count.memoryLinks,
+        userCount: users.length,
+        users: users,
+      };
+    });
   }
 
   /**
