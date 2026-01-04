@@ -16,7 +16,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { searchMemories } from '../api/search';
+import { getMemories } from '../api/memories';
 import { getUpcomingReminders } from '../api/reminders';
 import { getUserUrlPages } from '../api/urlPages';
 
@@ -27,15 +27,12 @@ export function DashboardPage() {
   const { data: memoriesData } = useQuery({
     queryKey: ['recent-memories'],
     queryFn: async () => {
-      const result = await searchMemories('');
-      // Use totalCount if it's a valid number, otherwise use memories array length
-      const total = (typeof result.totalCount === 'number' && result.totalCount > 0)
-        ? result.totalCount
-        : result.memories.length;
-      console.log('Dashboard memories data:', { totalCount: result.totalCount, memoriesLength: result.memories.length, calculatedTotal: total });
+      // Fetch a large set to get accurate count (adjust as needed)
+      const memories = await getMemories(0, 100);
+      console.log('Dashboard memories data:', { count: memories.length });
       return {
-        total,
-        recent: result.memories.slice(0, 5),
+        total: memories.length,
+        recent: memories.slice(0, 5),
       };
     },
     // Disable caching so it refetches on page navigation
