@@ -315,6 +315,225 @@ If you see "Do not know how to serialize a BigInt" errors:
 - Convert to numbers before returning: `Number(data.fieldName)`
 - Affects fields like counts, IDs, and storage bytes
 
+## Production Deployment (GoDaddy VPS)
+
+### Production Server Details
+- **Host:** memconnadmin@160.153.184.11
+- **App Directory:** `/var/www/memory-connector`
+- **Database:** PostgreSQL (localhost:5432)
+- **Process Manager:** PM2
+- **Domain:** https://memoryconnect.online
+
+### Standard Deployment Process
+
+Follow these steps in order for a successful deployment:
+
+#### 1. Commit and Push Changes (Local)
+```bash
+# Stage all changes
+git add .
+
+# Create commit with descriptive message
+git commit -m "feat: description of changes
+
+🤖 Generated with Claude Code (https://claude.com/claude-code)
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+
+# Push to main branch
+git push origin main
+```
+
+#### 2. Pull Changes on Production Server
+```bash
+# SSH into server
+ssh memconnadmin@160.153.184.11
+
+# Navigate to app directory
+cd /var/www/memory-connector
+
+# Pull latest changes
+git pull origin main
+```
+
+#### 3. Database Migration (if schema changed)
+```bash
+# Still on production server, in /var/www/memory-connector
+
+# Navigate to API directory
+cd apps/api
+
+# CRITICAL: Always regenerate Prisma client after schema changes
+npx prisma generate
+
+# Apply database migrations
+npx prisma migrate deploy
+
+# Return to root
+cd ../..
+```
+
+#### 4. Rebuild Backend
+```bash
+# In /var/www/memory-connector/apps/api
+cd apps/api
+npm run build
+cd ../..
+```
+
+#### 5. Rebuild Frontend Apps
+```bash
+# In /var/www/memory-connector
+
+# Build web app
+cd apps/web
+npm run build
+cd ../..
+
+# Build admin app
+cd apps/admin
+npm run build
+cd ../..
+```
+
+#### 6. Restart Services
+```bash
+# Restart API with PM2
+pm2 restart memory-connector-api
+
+# Wait a few seconds and verify it's running
+sleep 3
+pm2 list
+
+# Check for errors in logs
+pm2 logs memory-connector-api --lines 50 --nostream
+```
+
+#### 7. Health Check
+```bash
+# Test API health endpoint from server
+curl -s http://localhost:4000/api/v1/health
+
+# Should return: {"status":"ok","timestamp":"...","services":{"database":"ok"}}
+```
+
+### Common Production Issues & Solutions
+
+#### Issue: TypeScript Build Errors
+**Problem:** Prisma client not regenerated after schema changes
+```bash
+# Solution: Always run prisma generate before building
+cd /var/www/memory-connector/apps/api
+npx prisma generate
+npm run build
+```
+
+#### Issue: API Won't Start - "EADDRINUSE"
+**Problem:** Port 4000 already in use
+```bash
+# Solution: PM2 restart will handle this automatically
+pm2 restart memory-connector-api
+
+# If persists, check for orphaned processes
+lsof -ti:4000 | xargs kill -9
+pm2 restart memory-connector-api
+```
+
+#### Issue: Migration Fails
+**Problem:** Migration conflicts or database state issues
+```bash
+# Check migration status
+cd /var/www/memory-connector/apps/api
+npx prisma migrate status
+
+# If needed, reset and re-apply (CAREFUL: data loss)
+# Only use in development or with backup
+npx prisma migrate reset
+```
+
+#### Issue: Frontend Build Timeout
+**Problem:** Vite build takes too long
+```bash
+# Run build without timeout or in background
+cd /var/www/memory-connector/apps/web
+nohup npm run build > build.log 2>&1 &
+
+# Check progress
+tail -f build.log
+```
+
+### Production Verification Checklist
+
+After deployment, verify:
+- [ ] API health endpoint responds: `curl http://localhost:4000/api/v1/health`
+- [ ] PM2 shows process is online: `pm2 list`
+- [ ] No errors in PM2 logs: `pm2 logs --lines 50 --nostream`
+- [ ] Frontend is accessible: Visit https://memoryconnect.online
+- [ ] New features work as expected
+
+### Rollback Procedure
+
+If deployment fails:
+```bash
+# 1. SSH into server
+ssh memconnadmin@160.153.184.11
+cd /var/www/memory-connector
+
+# 2. Revert to previous commit
+git log --oneline -5  # Find previous commit hash
+git reset --hard <previous-commit-hash>
+
+# 3. Regenerate Prisma client
+cd apps/api
+npx prisma generate
+
+# 4. Rebuild
+npm run build
+cd ../..
+
+# 5. Restart
+pm2 restart memory-connector-api
+```
+
+### Database Backup (Critical!)
+
+**Automated backups are configured:**
+- Script: `/home/memconnadmin/backup-db.sh`
+- Schedule: Daily at 2 AM (cron)
+- Location: `/home/memconnadmin/backups/`
+- Retention: 7 days
+
+**Manual backup:**
+```bash
+ssh memconnadmin@160.153.184.11
+/home/memconnadmin/backup-db.sh
+```
+
+### Quick Reference Commands
+
+```bash
+# View PM2 processes
+pm2 list
+
+# View API logs (real-time)
+pm2 logs memory-connector-api
+
+# View API logs (last 100 lines)
+pm2 logs memory-connector-api --lines 100 --nostream
+
+# Restart API
+pm2 restart memory-connector-api
+
+# Check API health
+curl http://localhost:4000/api/v1/health
+
+# View database migrations
+cd /var/www/memory-connector/apps/api && npx prisma migrate status
+
+# Generate Prisma client
+cd /var/www/memory-connector/apps/api && npx prisma generate
+```
+
 ## Additional Documentation
 
 For more details, see:

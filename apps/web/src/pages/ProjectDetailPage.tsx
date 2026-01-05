@@ -174,24 +174,24 @@ export function ProjectDetailPage() {
         {/* Project Card */}
         <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
           {/* Header Section */}
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <h1 className="text-4xl font-bold mb-2">{project.name}</h1>
-                <div className="flex flex-wrap gap-4 text-blue-100 text-sm">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 sm:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl sm:text-3xl lg:text-4xl font-bold mb-2 break-words">{project.name}</h1>
+                <div className="flex flex-wrap gap-2 sm:gap-4 text-blue-100 text-xs sm:text-sm">
                   <span>{project._count?.memoryLinks || 0} memories</span>
                   <span>{project._count?.imageLinks || 0} images</span>
                   <span>{project._count?.urlPageLinks || 0} URLs</span>
-                  <span>{project._count?.youtubeVideoLinks || 0} YouTube</span>
+                  <span>{project._count?.youtubeVideoLinks || 0} YT</span>
                   <span>{project._count?.tiktokVideoLinks || 0} TikTok</span>
                 </div>
               </div>
-              <FolderKanban className="h-12 w-12 text-blue-200" />
+              <FolderKanban className="h-8 w-8 sm:h-12 sm:w-12 text-blue-200 flex-shrink-0" />
             </div>
           </div>
 
           {/* Content */}
-          <div className="p-6 space-y-6">
+          <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
             {/* Description */}
             {project.description && (
               <div>
@@ -225,71 +225,80 @@ export function ProjectDetailPage() {
             )}
 
             {/* Tab Navigation */}
-            <div className="border-b border-gray-200">
-              <nav className="flex gap-2 overflow-x-auto" aria-label="Tabs">
+            <div className="border-b border-gray-200 -mx-6 px-6 sm:mx-0 sm:px-0">
+              <nav className="flex gap-1 overflow-x-auto scrollbar-hide" aria-label="Tabs">
                 <button
                   onClick={() => setActiveTab('memories')}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  className={`px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                     activeTab === 'memories'
                       ? 'border-blue-600 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  <span className="flex items-center gap-2">
-                    <ExternalLink className="h-4 w-4" />
-                    Memories ({project._count?.memoryLinks || 0})
+                  <span className="flex items-center gap-1 sm:gap-2">
+                    <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline">Memories</span>
+                    <span className="sm:hidden">Mem</span>
+                    <span className="text-xs">({project._count?.memoryLinks || 0})</span>
                   </span>
                 </button>
                 <button
                   onClick={() => setActiveTab('images')}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  className={`px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                     activeTab === 'images'
                       ? 'border-purple-600 text-purple-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  <span className="flex items-center gap-2">
-                    <ImageIcon className="h-4 w-4" />
-                    Images ({project._count?.imageLinks || 0})
+                  <span className="flex items-center gap-1 sm:gap-2">
+                    <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline">Images</span>
+                    <span className="sm:hidden">Img</span>
+                    <span className="text-xs">({project._count?.imageLinks || 0})</span>
                   </span>
                 </button>
                 <button
                   onClick={() => setActiveTab('urls')}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  className={`px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                     activeTab === 'urls'
                       ? 'border-blue-600 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  <span className="flex items-center gap-2">
-                    <Link2 className="h-4 w-4" />
-                    URLs ({project._count?.urlPageLinks || 0})
+                  <span className="flex items-center gap-1 sm:gap-2">
+                    <Link2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span>URLs</span>
+                    <span className="text-xs">({project._count?.urlPageLinks || 0})</span>
                   </span>
                 </button>
                 <button
                   onClick={() => setActiveTab('youtube')}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  className={`px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                     activeTab === 'youtube'
                       ? 'border-red-600 text-red-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  <span className="flex items-center gap-2">
-                    <Video className="h-4 w-4" />
-                    YouTube ({project._count?.youtubeVideoLinks || 0})
+                  <span className="flex items-center gap-1 sm:gap-2">
+                    <Video className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline">YouTube</span>
+                    <span className="sm:hidden">YT</span>
+                    <span className="text-xs">({project._count?.youtubeVideoLinks || 0})</span>
                   </span>
                 </button>
                 <button
                   onClick={() => setActiveTab('tiktok')}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  className={`px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                     activeTab === 'tiktok'
                       ? 'border-pink-600 text-pink-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  <span className="flex items-center gap-2">
-                    <Film className="h-4 w-4" />
-                    TikTok ({project._count?.tiktokVideoLinks || 0})
+                  <span className="flex items-center gap-1 sm:gap-2">
+                    <Film className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline">TikTok</span>
+                    <span className="sm:hidden">TT</span>
+                    <span className="text-xs">({project._count?.tiktokVideoLinks || 0})</span>
                   </span>
                 </button>
               </nav>
@@ -298,22 +307,22 @@ export function ProjectDetailPage() {
             {/* Tab Content - Memories */}
             {activeTab === 'memories' && (
               <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-gray-900">Linked Memories</h3>
-                  <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Linked Memories</h3>
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <button
                       onClick={() => setIsAddMemoryModalOpen(true)}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+                      className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-xs sm:text-sm font-medium"
                     >
-                      <Plus className="h-4 w-4" />
-                      Add Memory
+                      <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span>Add</span>
                     </button>
                     <button
                       onClick={() => setIsLinkModalOpen(true)}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                      className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs sm:text-sm font-medium"
                     >
-                      <LinkIcon className="h-4 w-4" />
-                      Link Memory
+                      <LinkIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span>Link</span>
                     </button>
                   </div>
                 </div>
@@ -355,22 +364,22 @@ export function ProjectDetailPage() {
             {/* Tab Content - Images */}
             {activeTab === 'images' && (
               <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-gray-900">Linked Images</h3>
-                  <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Linked Images</h3>
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <button
                       onClick={() => setIsAddImageModalOpen(true)}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+                      className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-xs sm:text-sm font-medium"
                     >
-                      <Plus className="h-4 w-4" />
-                      Add Image
+                      <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span>Add</span>
                     </button>
                     <button
                       onClick={() => setIsLinkImageModalOpen(true)}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium"
+                      className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-xs sm:text-sm font-medium"
                     >
-                      <LinkIcon className="h-4 w-4" />
-                      Link Existing
+                      <LinkIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span>Link</span>
                     </button>
                   </div>
                 </div>
@@ -407,22 +416,22 @@ export function ProjectDetailPage() {
             {/* Tab Content - URLs */}
             {activeTab === 'urls' && (
               <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-gray-900">Linked URLs</h3>
-                  <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Linked URLs</h3>
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <button
                       onClick={() => setIsAddUrlModalOpen(true)}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+                      className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-xs sm:text-sm font-medium"
                     >
-                      <Plus className="h-4 w-4" />
-                      Add URL
+                      <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span>Add</span>
                     </button>
                     <button
                       onClick={() => setIsLinkUrlPageModalOpen(true)}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                      className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs sm:text-sm font-medium"
                     >
-                      <LinkIcon className="h-4 w-4" />
-                      Link Existing
+                      <LinkIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span>Link</span>
                     </button>
                   </div>
                 </div>
@@ -474,22 +483,22 @@ export function ProjectDetailPage() {
             {/* Tab Content - YouTube */}
             {activeTab === 'youtube' && (
               <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-gray-900">Linked YouTube Videos</h3>
-                  <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Linked YouTube Videos</h3>
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <button
                       onClick={() => setIsAddYouTubeModalOpen(true)}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+                      className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-xs sm:text-sm font-medium"
                     >
-                      <Plus className="h-4 w-4" />
-                      Add Video
+                      <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span>Add</span>
                     </button>
                     <button
                       onClick={() => setIsLinkYouTubeVideoModalOpen(true)}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium"
+                      className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 text-xs sm:text-sm font-medium"
                     >
-                      <LinkIcon className="h-4 w-4" />
-                      Link Existing
+                      <LinkIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span>Link</span>
                     </button>
                   </div>
                 </div>
@@ -534,22 +543,22 @@ export function ProjectDetailPage() {
             {/* Tab Content - TikTok */}
             {activeTab === 'tiktok' && (
               <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-gray-900">Linked TikTok Videos</h3>
-                  <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Linked TikTok Videos</h3>
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <button
                       onClick={() => setIsAddTikTokModalOpen(true)}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+                      className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-xs sm:text-sm font-medium"
                     >
-                      <Plus className="h-4 w-4" />
-                      Add Video
+                      <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span>Add</span>
                     </button>
                     <button
                       onClick={() => setIsLinkTikTokVideoModalOpen(true)}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-pink-600 text-white rounded-lg hover:bg-pink-700 text-sm font-medium"
+                      className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-pink-600 text-white rounded-lg hover:bg-pink-700 text-xs sm:text-sm font-medium"
                     >
-                      <LinkIcon className="h-4 w-4" />
-                      Link Existing
+                      <LinkIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span>Link</span>
                     </button>
                   </div>
                 </div>
