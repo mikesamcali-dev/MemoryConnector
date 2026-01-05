@@ -39,6 +39,8 @@ const AtlasPage = lazy(() => import('./pages/AtlasPage').then(m => ({ default: m
 const AdminPanelPage = lazy(() => import('./pages/AdminPanelPage').then(m => ({ default: m.AdminPanelPage })));
 const WordsPage = lazy(() => import('./pages/WordsPage').then(m => ({ default: m.WordsPage })));
 const WordDetailPage = lazy(() => import('./pages/WordDetailPage').then(m => ({ default: m.WordDetailPage })));
+const ProjectsPage = lazy(() => import('./pages/ProjectsPage').then(m => ({ default: m.ProjectsPage })));
+const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage').then(m => ({ default: m.ProjectDetailPage })));
 
 function App() {
   return (
@@ -143,6 +145,26 @@ function App() {
                 <ProtectedRoute>
                   <AppLayout>
                     <WordDetailPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/projects"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ProjectsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/projects/:id"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ProjectDetailPage />
                   </AppLayout>
                 </ProtectedRoute>
               }

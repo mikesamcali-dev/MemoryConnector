@@ -1,0 +1,1 @@
+Just like the word/phrase module. I would like to create a project table. With this we will create a page that will show all your projects. you will be able to link memories and everything else. Since this is a major modification, plan it out like a major modifcation and don't pause for testing. I'll test at the end. 

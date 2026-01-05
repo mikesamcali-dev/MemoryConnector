@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-import { Brain, Plus, Calendar, TrendingUp, Award, ChevronRight, Sparkles, RefreshCw } from 'lucide-react';
+import { Brain, Plus, Calendar, TrendingUp, Award, ChevronRight, Sparkles, RefreshCw, FolderKanban } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getDueReviews, getReviewStats, getDueCount } from '../api/reviews';
 import { searchMemories } from '../api/search';
 import { deleteMemory } from '../api/memories';
+import { getAllProjects } from '../api/projects';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { useHaptics } from '../hooks/useHaptics';
@@ -79,6 +80,12 @@ export function MindFeedPage() {
     },
   });
 
+  // Fetch projects
+  const { data: projects } = useQuery({
+    queryKey: ['projects'],
+    queryFn: getAllProjects,
+  });
+
   // Get "On This Day" memories from past years
   const { data: onThisDayMemories } = useQuery({
     queryKey: ['on-this-day'],
@@ -106,6 +113,7 @@ export function MindFeedPage() {
           queryClient.invalidateQueries({ queryKey: ['due-reviews-preview'] }),
           queryClient.invalidateQueries({ queryKey: ['recent-memories'] }),
           queryClient.invalidateQueries({ queryKey: ['on-this-day'] }),
+          queryClient.invalidateQueries({ queryKey: ['projects'] }),
         ]);
         haptic('success');
       },
@@ -290,6 +298,65 @@ export function MindFeedPage() {
           </div>
         </div>
       )}
+
+      {/* Projects Section */}
+      <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <FolderKanban className="h-5 w-5 text-blue-600" />
+            Projects
+          </h2>
+          <Link
+            to="/app/projects"
+            className="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
+          >
+            See All
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </div>
+
+        {projects && projects.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {projects.slice(0, 4).map((project) => (
+              <Link
+                key={project.id}
+                to={`/app/projects/${project.id}`}
+                className="group p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg hover:shadow-lg transition-all border border-gray-200 hover:border-blue-300"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-semibold text-gray-900 line-clamp-1">{project.name}</h3>
+                  <FolderKanban className="h-5 w-5 text-blue-600 flex-shrink-0 ml-2" />
+                </div>
+                {project.description && (
+                  <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                    {project.description}
+                  </p>
+                )}
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>{project._count?.memoryLinks || 0} memories</span>
+                  {project.tags && project.tags.length > 0 && (
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">
+                      {project.tags[0]}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <FolderKanban className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+            <p className="text-gray-500 mb-4">No projects yet</p>
+            <Link
+              to="/app/projects"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
+            >
+              <Plus className="h-4 w-4" />
+              Create Your First Project
+            </Link>
+          </div>
+        )}
+      </div>
 
       {/* Recent Memories Grid */}
       <div className="bg-white rounded-xl shadow-md p-6">

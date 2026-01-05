@@ -8,7 +8,8 @@ import {
   deleteMemoryRelationship,
 } from '../api/memoryRelationships';
 import { getAllWords } from '../api/words';
-import { ArrowLeft, Save, Link as LinkIcon, Plus, X, Trash2, MapPin, Video, BookOpen } from 'lucide-react';
+import { getAllProjects, linkMemoryToProject } from '../api/projects';
+import { ArrowLeft, Save, Link as LinkIcon, Plus, X, Trash2, MapPin, Video, BookOpen, FolderKanban } from 'lucide-react';
 
 export function LinkMemoryPage() {
   const { id } = useParams<{ id: string }>();
@@ -17,7 +18,7 @@ export function LinkMemoryPage() {
 
   const [textContent, setTextContent] = useState('');
   const [originalTextContent, setOriginalTextContent] = useState('');
-  const [linkType, setLinkType] = useState<'person' | 'event' | 'location' | 'video' | 'word' | null>(null);
+  const [linkType, setLinkType] = useState<'person' | 'event' | 'location' | 'video' | 'word' | 'project' | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [newLocationName, setNewLocationName] = useState('');
   const [latitude, setLatitude] = useState<string>('');
@@ -71,6 +72,12 @@ export function LinkMemoryPage() {
     queryKey: ['words'],
     queryFn: getAllWords,
     enabled: linkType === 'word',
+  });
+
+  const { data: projects } = useQuery({
+    queryKey: ['projects'],
+    queryFn: getAllProjects,
+    enabled: linkType === 'project',
   });
 
   // Fetch relationships
@@ -130,6 +137,15 @@ export function LinkMemoryPage() {
   const linkWordMutation = useMutation({
     mutationFn: (word: string) =>
       linkWordsToMemory(id!, [word]),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['memory', id] });
+      navigate(`/app/memories/${id}`);
+    },
+  });
+
+  const linkProjectMutation = useMutation({
+    mutationFn: (projectId: string) =>
+      linkMemoryToProject(projectId, id!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['memory', id] });
       navigate(`/app/memories/${id}`);
@@ -221,6 +237,12 @@ export function LinkMemoryPage() {
         ? words?.filter((w) => w.word.toLowerCase().includes(term)) || []
         : words || [];
     }
+    if (linkType === 'project') {
+      // Show all projects when no search term, or filter when searching
+      return searchTerm
+        ? projects?.filter((p) => p.name.toLowerCase().includes(term)) || []
+        : projects || [];
+    }
 
     return [];
   };
@@ -236,6 +258,8 @@ export function LinkMemoryPage() {
       linkVideoMutation.mutate(itemId);
     } else if (linkType === 'word') {
       linkWordMutation.mutate(itemId);
+    } else if (linkType === 'project') {
+      linkProjectMutation.mutate(itemId);
     }
   };
 
@@ -437,6 +461,24 @@ export function LinkMemoryPage() {
             </div>
             <div className="text-xs text-gray-500 mt-1">Link to a word/phrase</div>
           </button>
+
+          <button
+            onClick={() => {
+              setLinkType('project');
+              setSearchTerm('');
+            }}
+            className={`p-4 border-2 rounded-lg text-center transition-all ${
+              linkType === 'project'
+                ? 'border-blue-600 bg-blue-50 text-blue-700'
+                : 'border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <div className="font-semibold flex items-center justify-center gap-2">
+              <FolderKanban className="h-4 w-4" />
+              Project
+            </div>
+            <div className="text-xs text-gray-500 mt-1">Link to a project</div>
+          </button>
         </div>
 
         {/* Link Search */}
@@ -539,7 +581,7 @@ export function LinkMemoryPage() {
             )}
 
             {/* Search Results */}
-            {(searchTerm || linkType === 'location') && (
+            {linkType && (
               <div className="space-y-3">
                 {/* Create New Button - Show for events and locations */}
                 {linkType === 'event' && (
@@ -591,6 +633,7 @@ export function LinkMemoryPage() {
                             {linkType === 'location' && item.name}
                             {linkType === 'video' && item.title}
                             {linkType === 'word' && item.word}
+                            {linkType === 'project' && item.name}
                           </div>
                           {linkType === 'person' && item.email && (
                             <div className="text-xs text-gray-500 mt-1">{item.email}</div>
@@ -613,6 +656,11 @@ export function LinkMemoryPage() {
                           {linkType === 'location' && item.placeType && (
                             <div className="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded">
                               {item.placeType}
+                            </div>
+                          )}
+                          {linkType === 'project' && item._count?.memoryLinks && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              {item._count.memoryLinks} memories
                             </div>
                           )}
                           {item.description && linkType !== 'location' && (

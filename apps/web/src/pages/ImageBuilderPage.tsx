@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Upload, Loader, Image as ImageIcon, MapPin, Calendar, Tag } from 'lucide-react';
+import { ArrowLeft, Upload, Loader, Image as ImageIcon, MapPin, Calendar, Tag, FolderKanban } from 'lucide-react';
 import { uploadImage, getUserImages } from '../api/images';
+import { ImageLinkProjectModal } from '../components/ImageLinkProjectModal';
 
 export function ImageBuilderPage() {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ export function ImageBuilderPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [extractedMetadata, setExtractedMetadata] = useState<any>(null);
+  const [isLinkProjectModalOpen, setIsLinkProjectModalOpen] = useState(false);
 
   // Fetch user images
   const { data: images, isLoading: loadingImages, refetch } = useQuery({
@@ -314,12 +316,19 @@ export function ImageBuilderPage() {
             )}
 
             {/* Actions */}
-            <div className="col-span-full flex gap-3 pt-4 border-t border-gray-200">
+            <div className="col-span-full flex flex-wrap gap-3 pt-4 border-t border-gray-200">
               <button
                 onClick={() => navigate(`/app/capture?imageId=${extractedMetadata.id}`)}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
               >
                 Create Memory with this Image
+              </button>
+              <button
+                onClick={() => setIsLinkProjectModalOpen(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              >
+                <FolderKanban className="h-4 w-4" />
+                Link to Project
               </button>
               <button
                 onClick={() => {
@@ -381,6 +390,15 @@ export function ImageBuilderPage() {
           </div>
         )}
       </div>
+
+      {/* Link to Project Modal */}
+      {extractedMetadata && (
+        <ImageLinkProjectModal
+          imageUrl={extractedMetadata.storageUrl}
+          isOpen={isLinkProjectModalOpen}
+          onClose={() => setIsLinkProjectModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

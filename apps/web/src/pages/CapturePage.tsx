@@ -9,11 +9,12 @@ import { getUpcomingReminders } from '../api/reminders';
 import { uploadImage, linkImageToMemory } from '../api/images';
 import { addUrl, linkUrlPageToMemory } from '../api/urlPages';
 import { extractTikTokMetadata, createTikTokVideo } from '../api/tiktok';
+import { getAllProjects, linkMemoryToProject } from '../api/projects';
 import { createDraft } from '../utils/idempotency';
 import { compressImage, getSizeReduction } from '../utils/imageCompression';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Clock, AlertCircle, Calendar, Loader, Users, MapPinned, Video, BookOpen, Image as ImageIcon, Link as LinkIcon, X, Mic } from 'lucide-react';
+import { Clock, AlertCircle, Calendar, Loader, Users, MapPinned, Video, BookOpen, Image as ImageIcon, Link as LinkIcon, X, Mic, FolderKanban } from 'lucide-react';
 import { useDebounce } from '../hooks/useDebounce';
 import { useHaptics } from '../hooks/useHaptics';
 import { EntitySuggestionsModal } from '../components/EntitySuggestionsModal';
@@ -52,7 +53,8 @@ export function CapturePage() {
     locations: string[];
     youtubeVideos: string[];
     tiktokVideos: string[];
-  }>({ persons: [], locations: [], youtubeVideos: [], tiktokVideos: [] });
+    projects: string[];
+  }>({ persons: [], locations: [], youtubeVideos: [], tiktokVideos: [], projects: [] });
 
   // Image upload state
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -77,13 +79,16 @@ export function CapturePage() {
   const [addingYouTube, setAddingYouTube] = useState(false);
   const [youtubeError, setYoutubeError] = useState('');
 
-  // Person/Location selection state
+  // Person/Location/Project selection state
   const [showPersonSelector, setShowPersonSelector] = useState(false);
   const [showLocationSelector, setShowLocationSelector] = useState(false);
+  const [showProjectSelector, setShowProjectSelector] = useState(false);
   const [allPeople, setAllPeople] = useState<any[]>([]);
   const [allLocations, setAllLocations] = useState<any[]>([]);
+  const [allProjects, setAllProjects] = useState<any[]>([]);
   const [loadingPeople, setLoadingPeople] = useState(false);
   const [loadingLocations, setLoadingLocations] = useState(false);
+  const [loadingProjects, setLoadingProjects] = useState(false);
 
   // Debounce text input for analysis (1 second delay)
   const debouncedText = useDebounce(textValue, 1000);
@@ -443,6 +448,38 @@ export function CapturePage() {
     }));
   };
 
+  // Add project handler
+  const handleAddProject = async () => {
+    setShowProjectSelector(true);
+    setLoadingProjects(true);
+    try {
+      const projects = await getAllProjects();
+      setAllProjects(projects);
+    } catch (err) {
+      console.error('Failed to load projects:', err);
+    } finally {
+      setLoadingProjects(false);
+    }
+  };
+
+  // Select a project
+  const handleSelectProject = (projectId: string) => {
+    setLinkedEntities(prev => ({
+      ...prev,
+      projects: [projectId], // Only one project per memory for now
+    }));
+    setShowProjectSelector(false);
+    haptic('success');
+  };
+
+  // Remove linked project
+  const handleRemoveProject = () => {
+    setLinkedEntities(prev => ({
+      ...prev,
+      projects: [],
+    }));
+  };
+
   const onSubmit = async (data: { text: string }) => {
     haptic('light'); // Haptic feedback on submit
     setError('');
@@ -534,10 +571,21 @@ export function CapturePage() {
         }
       }
 
+      // Link to project if selected
+      if (linkedEntities.projects.length > 0) {
+        try {
+          await linkMemoryToProject(linkedEntities.projects[0], createdMemory.id);
+          console.log('Memory linked to project:', linkedEntities.projects[0]);
+        } catch (projectError) {
+          console.error('Failed to link memory to project:', projectError);
+          // Don't fail the whole operation if project linking fails
+        }
+      }
+
       // Clear draft, linked entities, image, and URL
       localStorage.removeItem('memoryDraft');
       setDraft(createDraft());
-      setLinkedEntities({ persons: [], locations: [], youtubeVideos: [], tiktokVideos: [] });
+      setLinkedEntities({ persons: [], locations: [], youtubeVideos: [], tiktokVideos: [], projects: [] });
       setSelectedImage(null);
       setImagePreview(null);
       setPreLinkedImageId(null);
@@ -861,6 +909,27 @@ export function CapturePage() {
         </div>
       )}
 
+      {/* Project linked indicator */}
+      {linkedEntities.projects.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <FolderKanban className="h-5 w-5 text-blue-600" />
+              <p className="text-sm font-medium text-blue-900">
+                Project linked to this memory
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleRemoveProject}
+              className="text-blue-600 hover:text-blue-800 focus:outline-none"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Pre-linked image indicator */}
       {preLinkedImageId && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
@@ -1102,6 +1171,21 @@ export function CapturePage() {
             title="Link to location"
           >
             <MapPinned className="h-5 w-5 md:h-4 md:w-4 text-green-600" />
+          </button>
+
+          {/* Project button */}
+          <button
+            type="button"
+            onClick={handleAddProject}
+            disabled={linkedEntities.projects.length > 0}
+            className={`inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border rounded-md shadow-sm text-base md:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              linkedEntities.projects.length > 0
+                ? 'border-blue-300 bg-blue-100 text-blue-400 cursor-not-allowed'
+                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+            title="Link to project"
+          >
+            <FolderKanban className="h-5 w-5 md:h-4 md:w-4 text-blue-600" />
           </button>
 
           {/* YouTube button */}
@@ -1413,6 +1497,57 @@ export function CapturePage() {
             <div className="p-4 border-t border-gray-200">
               <button
                 onClick={() => setShowLocationSelector(false)}
+                className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Project selection modal */}
+      {showProjectSelector && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Select a Project</h2>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {loadingProjects ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader className="h-8 w-8 animate-spin text-blue-600" />
+                </div>
+              ) : allProjects.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <FolderKanban className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                  <p>No projects found. Create a project first!</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {allProjects.map((project) => (
+                    <button
+                      key={project.id}
+                      onClick={() => handleSelectProject(project.id)}
+                      className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                    >
+                      <p className="font-medium text-gray-900">{project.name || 'Unnamed'}</p>
+                      {project.description && (
+                        <p className="text-sm text-gray-500 line-clamp-1">{project.description}</p>
+                      )}
+                      {project._count?.memoryLinks !== undefined && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          {project._count.memoryLinks} {project._count.memoryLinks === 1 ? 'memory' : 'memories'}
+                        </p>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="p-4 border-t border-gray-200">
+              <button
+                onClick={() => setShowProjectSelector(false)}
                 className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
               >
                 Cancel

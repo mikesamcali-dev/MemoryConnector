@@ -109,6 +109,7 @@ model User {
   images              Image[]
   urlPages            UrlPage[]
   slideDecks          SlideDeck[]
+  projects            Project[]
 
   @@map("users")
 }
@@ -281,6 +282,7 @@ model Memory {
   wordLinks           MemoryWordLink[]
   imageLinks          MemoryImageLink[]
   urlPageLinks        MemoryUrlPageLink[]
+  projectLinks        MemoryProjectLink[]
   slides              Slide[]
 
   @@index([userId, state])
@@ -414,6 +416,40 @@ model Word {
 
   @@index([word])
   @@map("words")
+}
+
+// Projects - user-specific project organization entity
+model Project {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  name        String   @db.VarChar(200)
+  description String?  @db.Text
+  tags        Json?    @default("[]")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memoryLinks MemoryProjectLink[]
+
+  @@index([userId])
+  @@index([userId, name])
+  @@map("projects")
+}
+
+// Memory-Project Links (Many-to-Many)
+model MemoryProjectLink {
+  id        String   @id @default(uuid()) @db.Uuid
+  memoryId  String   @map("memory_id") @db.Uuid
+  projectId String   @map("project_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  memory  Memory  @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([memoryId, projectId])
+  @@index([memoryId])
+  @@index([projectId])
+  @@map("memory_project_links")
 }
 
 // Images - standalone entity for photos/images with face detection

@@ -12,6 +12,7 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { GamificationModule } from './gamification/gamification.module';
 import { SlideDecksModule } from './slidedecks/slidedecks.module';
 import { WordsModule } from './words/words.module';
+import { ProjectsModule } from './projects/projects.module';
 import { EventsModule } from './events/events.module';
 import { LocationsModule } from './locations/locations.module';
 import { PeopleModule } from './people/people.module';
@@ -72,6 +73,7 @@ import { AuditLoggingInterceptor } from './audit-trail/interceptors/audit-loggin
     GamificationModule,
     SlideDecksModule,
     WordsModule,
+    ProjectsModule,
     EventsModule,
     LocationsModule,
     PeopleModule,

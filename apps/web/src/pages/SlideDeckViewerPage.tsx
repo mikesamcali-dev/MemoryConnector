@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 import { getSlides } from '../api/slidedecks';
 import { SlideCard } from '../components/SlideCard';
 import { useIsMobile } from '../hooks/useIsMobile';
@@ -92,21 +92,32 @@ export function SlideDeckViewerPage() {
     );
   }
 
+  const currentSlide = slides[currentIndex];
+
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col">
-      {/* Top bar - Desktop with Exit button, Mobile without */}
+      {/* Top bar - Desktop with View Memory and Exit buttons, Mobile with counter only */}
       <div className="p-3 md:p-4 flex justify-between items-center bg-gray-800 border-b border-gray-700">
         <div className="text-white font-medium text-sm md:text-base">
           Slide {currentIndex + 1} of {slides.length}
         </div>
         {!isMobile && (
-          <button
-            onClick={handleExit}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
-          >
-            <X className="w-5 h-5" />
-            <span>Exit</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate(`/app/memories/${currentSlide.memory.id}`)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span>View Memory</span>
+            </button>
+            <button
+              onClick={handleExit}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            >
+              <X className="w-5 h-5" />
+              <span>Exit</span>
+            </button>
+          </div>
         )}
       </div>
 
@@ -157,12 +168,19 @@ export function SlideDeckViewerPage() {
           </button>
         </div>
 
-        {/* Mobile: Exit button row */}
+        {/* Mobile: View Memory and Exit buttons */}
         {isMobile && (
-          <div className="px-3 pb-3 pt-0">
+          <div className="px-3 pb-3 pt-0 flex gap-2">
+            <button
+              onClick={() => navigate(`/app/memories/${currentSlide.memory.id}`)}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span>View Memory</span>
+            </button>
             <button
               onClick={handleExit}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-700 text-white rounded-lg hover:bg-red-600 transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-700 text-white rounded-lg hover:bg-red-600 transition-colors"
             >
               <X className="w-5 h-5" />
               <span>Close</span>
