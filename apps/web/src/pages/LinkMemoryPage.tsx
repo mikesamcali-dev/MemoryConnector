@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getMemory, updateMemory } from '../api/memories';
+import { getMemory, updateMemory, linkWordsToMemory } from '../api/memories';
 import { getAllEvents, getAllLocationsForUser, getAllPeople, createEvent, createLocation, getAllYouTubeVideos } from '../api/admin';
 import {
   getMemoryRelationships,
   deleteMemoryRelationship,
 } from '../api/memoryRelationships';
-import { ArrowLeft, Save, Link as LinkIcon, Plus, X, Trash2, MapPin, Video } from 'lucide-react';
+import { getAllWords } from '../api/words';
+import { ArrowLeft, Save, Link as LinkIcon, Plus, X, Trash2, MapPin, Video, BookOpen } from 'lucide-react';
 
 export function LinkMemoryPage() {
   const { id } = useParams<{ id: string }>();
@@ -16,7 +17,7 @@ export function LinkMemoryPage() {
 
   const [textContent, setTextContent] = useState('');
   const [originalTextContent, setOriginalTextContent] = useState('');
-  const [linkType, setLinkType] = useState<'person' | 'event' | 'location' | 'video' | null>(null);
+  const [linkType, setLinkType] = useState<'person' | 'event' | 'location' | 'video' | 'word' | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [newLocationName, setNewLocationName] = useState('');
   const [latitude, setLatitude] = useState<string>('');
@@ -64,6 +65,12 @@ export function LinkMemoryPage() {
     queryKey: ['youtube-videos'],
     queryFn: () => getAllYouTubeVideos(0, 100),
     enabled: linkType === 'video',
+  });
+
+  const { data: words } = useQuery({
+    queryKey: ['words'],
+    queryFn: getAllWords,
+    enabled: linkType === 'word',
   });
 
   // Fetch relationships
@@ -114,6 +121,15 @@ export function LinkMemoryPage() {
   const linkVideoMutation = useMutation({
     mutationFn: (youtubeVideoId: string) =>
       updateMemory(id!, { youtubeVideoId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['memory', id] });
+      navigate(`/app/memories/${id}`);
+    },
+  });
+
+  const linkWordMutation = useMutation({
+    mutationFn: (word: string) =>
+      linkWordsToMemory(id!, [word]),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['memory', id] });
       navigate(`/app/memories/${id}`);
@@ -199,6 +215,12 @@ export function LinkMemoryPage() {
         ? videos?.filter((v) => v.title.toLowerCase().includes(term) || v.description?.toLowerCase().includes(term)) || []
         : videos || [];
     }
+    if (linkType === 'word') {
+      // Show all words when no search term, or filter when searching
+      return searchTerm
+        ? words?.filter((w) => w.word.toLowerCase().includes(term)) || []
+        : words || [];
+    }
 
     return [];
   };
@@ -212,6 +234,8 @@ export function LinkMemoryPage() {
       linkLocationMutation.mutate(itemId);
     } else if (linkType === 'video') {
       linkVideoMutation.mutate(itemId);
+    } else if (linkType === 'word') {
+      linkWordMutation.mutate(itemId);
     }
   };
 
@@ -297,7 +321,7 @@ export function LinkMemoryPage() {
 
         <h1 className="text-3xl font-bold text-gray-900">Link Your Memory</h1>
         <p className="text-gray-600 mt-2">
-          Connect this memory to people, events, locations, or videos
+          Connect this memory to people, events, locations, videos, or words
         </p>
       </div>
 
@@ -394,6 +418,24 @@ export function LinkMemoryPage() {
               Video
             </div>
             <div className="text-xs text-gray-500 mt-1">Link to a YouTube video</div>
+          </button>
+
+          <button
+            onClick={() => {
+              setLinkType('word');
+              setSearchTerm('');
+            }}
+            className={`p-4 border-2 rounded-lg text-center transition-all ${
+              linkType === 'word'
+                ? 'border-blue-600 bg-blue-50 text-blue-700'
+                : 'border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <div className="font-semibold flex items-center justify-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Word
+            </div>
+            <div className="text-xs text-gray-500 mt-1">Link to a word/phrase</div>
           </button>
         </div>
 
@@ -540,7 +582,7 @@ export function LinkMemoryPage() {
                       <div
                         key={item.id}
                         className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
-                        onClick={() => handleLinkClick(item.id)}
+                        onClick={() => handleLinkClick(linkType === 'word' ? item.word : item.id)}
                       >
                         <div className="flex-1">
                           <div className="font-medium text-gray-900">
@@ -548,6 +590,7 @@ export function LinkMemoryPage() {
                             {linkType === 'person' && item.displayName}
                             {linkType === 'location' && item.name}
                             {linkType === 'video' && item.title}
+                            {linkType === 'word' && item.word}
                           </div>
                           {linkType === 'person' && item.email && (
                             <div className="text-xs text-gray-500 mt-1">{item.email}</div>
@@ -582,7 +625,7 @@ export function LinkMemoryPage() {
                           className="ml-3 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleLinkClick(item.id);
+                            handleLinkClick(linkType === 'word' ? item.word : item.id);
                           }}
                         >
                           Link

@@ -195,12 +195,15 @@ export function WordDetailPage() {
 
             {/* Link Memory Button */}
             <div className="pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-600 mb-3 text-center">
+                To link a memory to this word, search for the memory and click "Link" from its detail page, then select "Word" and choose "{word.word}".
+              </p>
               <button
-                onClick={() => navigate(`/app/memories/link?word=${word.id}`)}
+                onClick={() => navigate('/app/search')}
                 className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center justify-center gap-2"
               >
                 <ExternalLink className="h-5 w-5" />
-                Link Memory to this Word
+                Go to Search
               </button>
             </div>
 
