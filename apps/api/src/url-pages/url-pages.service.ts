@@ -55,7 +55,9 @@ export class UrlPagesService {
         timeout: 10000,
         maxRedirects: 5,
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
         },
       });
 
@@ -91,10 +93,32 @@ export class UrlPagesService {
         content,
         html,
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error({ error, url }, 'Failed to fetch webpage');
+
+      // Provide more specific error messages
+      let errorMessage = 'Failed to fetch URL content';
+
+      if (error.code === 'ENOTFOUND') {
+        errorMessage = 'URL not found. Please check the URL and try again.';
+      } else if (error.code === 'ECONNREFUSED') {
+        errorMessage = 'Connection refused. The server is not accepting connections.';
+      } else if (error.code === 'ETIMEDOUT' || error.message?.includes('timeout')) {
+        errorMessage = 'Request timed out. The website took too long to respond.';
+      } else if (error.response?.status === 403) {
+        errorMessage = 'Access forbidden. The website is blocking automated requests.';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Page not found (404). Please check the URL.';
+      } else if (error.response?.status === 500 || error.response?.status === 502 || error.response?.status === 503) {
+        errorMessage = `Server error (${error.response.status}). The website is experiencing issues.`;
+      } else if (error.response?.status) {
+        errorMessage = `HTTP ${error.response.status}: ${error.response.statusText || 'Failed to fetch URL'}`;
+      } else if (error.message) {
+        errorMessage = `Failed to fetch URL: ${error.message}`;
+      }
+
       throw new HttpException(
-        { code: 'FETCH_FAILED', message: 'Failed to fetch URL content' },
+        { code: 'FETCH_FAILED', message: errorMessage },
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -185,11 +209,41 @@ Please provide:
         };
       }
 
-      // Fetch webpage content
-      const pageData = await this.fetchWebpage(normalizedUrl);
+      // Try to fetch webpage content
+      let pageData: any;
+      let fetchFailed = false;
+      let fetchError: string | null = null;
 
-      // Analyze with AI
-      const aiAnalysis = await this.analyzeWithAI(pageData.content, pageData.title);
+      try {
+        pageData = await this.fetchWebpage(normalizedUrl);
+      } catch (error: any) {
+        // If fetch fails (403, timeout, etc.), use fallback minimal data
+        fetchFailed = true;
+        fetchError = error.response?.data?.message || error.message || 'Failed to fetch content';
+
+        logger.warn({ userId, url: normalizedUrl, error: fetchError }, 'Failed to fetch webpage, using fallback');
+
+        // Extract domain name from URL for title
+        const urlObj = new URL(normalizedUrl);
+        const domain = urlObj.hostname.replace(/^www\./, '');
+
+        pageData = {
+          title: domain,
+          description: null,
+          author: null,
+          publishedAt: null,
+          siteName: domain,
+          imageUrl: null,
+          content: '',
+          html: '',
+        };
+      }
+
+      // Try to analyze with AI (only if we have content)
+      let aiAnalysis = null;
+      if (!fetchFailed && pageData.content) {
+        aiAnalysis = await this.analyzeWithAI(pageData.content, pageData.title);
+      }
 
       // Prepare summary (use AI summary if available, otherwise use description)
       const summary = aiAnalysis?.summary || pageData.description;
@@ -227,13 +281,17 @@ Please provide:
         },
       });
 
-      logger.info({ userId, urlPageId: urlPage.id, urlHash }, 'URL page created successfully');
+      logger.info({ userId, urlPageId: urlPage.id, urlHash, fetchFailed }, 'URL page created successfully');
 
       return {
         ...urlPage,
         aiAnalysis,
         isDuplicate: false,
-        message: 'URL analyzed successfully',
+        fetchFailed,
+        fetchError,
+        message: fetchFailed
+          ? 'URL saved (content could not be fetched - website may be blocking automated requests)'
+          : 'URL analyzed successfully',
       };
     } catch (error) {
       logger.error({ error, userId }, 'Failed to add URL');

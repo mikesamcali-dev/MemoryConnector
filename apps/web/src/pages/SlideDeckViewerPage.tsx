@@ -124,7 +124,7 @@ export function SlideDeckViewerPage() {
       {/* Slide content - Scrollable on mobile, centered on desktop */}
       <div
         className="flex-1 overflow-y-auto p-4 md:p-8 md:flex md:items-center md:justify-center"
-        {...(isMobile ? swipeHandlers : {})}
+        {...swipeHandlers}
       >
         <div className="w-full md:max-w-4xl">
           <SlideCard slide={slides[currentIndex]} />
@@ -192,7 +192,7 @@ export function SlideDeckViewerPage() {
         {!isMobile && (
           <div className="px-4 pb-2">
             <p className="text-xs text-gray-400 text-center">
-              Use arrow keys to navigate • Press ESC to exit
+              Use arrow keys or swipe to navigate • Press ESC to exit
             </p>
           </div>
         )}

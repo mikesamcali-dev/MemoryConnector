@@ -20,6 +20,8 @@ export function AddUrlToProjectModal({
   const queryClient = useQueryClient();
   const [url, setUrl] = useState('');
 
+  const [successMessage, setSuccessMessage] = useState('');
+
   const createAndLinkMutation = useMutation({
     mutationFn: async (urlInput: string) => {
       // Create the URL page
@@ -30,10 +32,21 @@ export function AddUrlToProjectModal({
 
       return urlPage;
     },
-    onSuccess: () => {
+    onSuccess: (urlPage) => {
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       setUrl('');
-      onClose();
+
+      // Show success message with warning if fetch failed
+      if (urlPage.fetchFailed) {
+        setSuccessMessage(urlPage.message || 'URL saved, but content could not be fetched');
+        // Close after showing message briefly
+        setTimeout(() => {
+          setSuccessMessage('');
+          onClose();
+        }, 3000);
+      } else {
+        onClose();
+      }
     },
   });
 
@@ -88,10 +101,23 @@ export function AddUrlToProjectModal({
             />
           </div>
 
+          {successMessage && (
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-sm text-yellow-700 font-medium">
+                {successMessage}
+              </p>
+            </div>
+          )}
+
           {createAndLinkMutation.isError && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-700">
-                Error adding URL. Please try again.
+              <p className="text-sm text-red-700 font-medium mb-1">
+                Error adding URL
+              </p>
+              <p className="text-xs text-red-600">
+                {createAndLinkMutation.error instanceof Error
+                  ? createAndLinkMutation.error.message
+                  : 'Please try again.'}
               </p>
             </div>
           )}

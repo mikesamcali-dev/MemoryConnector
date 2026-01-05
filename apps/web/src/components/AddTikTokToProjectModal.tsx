@@ -96,8 +96,13 @@ export function AddTikTokToProjectModal({
 
           {createAndLinkMutation.isError && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-700">
-                Error adding TikTok video. Please check the URL and try again.
+              <p className="text-sm text-red-700 font-medium mb-1">
+                Error adding TikTok video
+              </p>
+              <p className="text-xs text-red-600">
+                {createAndLinkMutation.error instanceof Error
+                  ? createAndLinkMutation.error.message
+                  : 'Please check the URL and try again.'}
               </p>
             </div>
           )}

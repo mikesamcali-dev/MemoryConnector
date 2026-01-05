@@ -101,10 +101,6 @@ export interface TikTokMetadata {
   creatorId?: string;
   publishedAt?: string;
   durationSeconds?: number;
-  viewCount?: number;
-  likeCount?: number;
-  shareCount?: number;
-  commentCount?: number;
   transcript?: string;
 }
 

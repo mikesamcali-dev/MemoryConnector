@@ -283,6 +283,7 @@ model Memory {
   imageLinks          MemoryImageLink[]
   urlPageLinks        MemoryUrlPageLink[]
   projectLinks        MemoryProjectLink[]
+  personLinks         MemoryPersonLink[]
   slides              Slide[]
 
   @@index([userId, state])
@@ -374,6 +375,10 @@ model Person {
   relationshipsFrom     PersonRelationship[] @relation("RelationshipSource")
   relationshipsTo       PersonRelationship[] @relation("RelationshipTarget")
   imageLinks            ImagePersonLink[]
+  memoryLinks           MemoryPersonLink[]
+  urlPageLinks          PersonUrlPageLink[]
+  youtubeVideoLinks     PersonYouTubeVideoLink[]
+  tiktokVideoLinks      PersonTikTokVideoLink[]
 
   @@map("people")
 }
@@ -394,6 +399,70 @@ model PersonRelationship {
   @@index([sourcePersonId])
   @@index([targetPersonId])
   @@map("person_relationships")
+}
+
+// Memory-Person Links (Many-to-Many)
+model MemoryPersonLink {
+  id        String   @id @default(uuid()) @db.Uuid
+  memoryId  String   @map("memory_id") @db.Uuid
+  personId  String   @map("person_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@unique([memoryId, personId])
+  @@index([memoryId])
+  @@index([personId])
+  @@map("memory_person_links")
+}
+
+// Person-UrlPage Links (Many-to-Many)
+model PersonUrlPageLink {
+  id        String   @id @default(uuid()) @db.Uuid
+  personId  String   @map("person_id") @db.Uuid
+  urlPageId String   @map("url_page_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  person  Person  @relation(fields: [personId], references: [id], onDelete: Cascade)
+  urlPage UrlPage @relation(fields: [urlPageId], references: [id], onDelete: Cascade)
+
+  @@unique([personId, urlPageId])
+  @@index([personId])
+  @@index([urlPageId])
+  @@map("person_url_page_links")
+}
+
+// Person-YouTubeVideo Links (Many-to-Many)
+model PersonYouTubeVideoLink {
+  id             String       @id @default(uuid()) @db.Uuid
+  personId       String       @map("person_id") @db.Uuid
+  youtubeVideoId String       @map("youtube_video_id") @db.Uuid
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  person       Person       @relation(fields: [personId], references: [id], onDelete: Cascade)
+  youtubeVideo YouTubeVideo @relation(fields: [youtubeVideoId], references: [id], onDelete: Cascade)
+
+  @@unique([personId, youtubeVideoId])
+  @@index([personId])
+  @@index([youtubeVideoId])
+  @@map("person_youtube_video_links")
+}
+
+// Person-TikTokVideo Links (Many-to-Many)
+model PersonTikTokVideoLink {
+  id            String      @id @default(uuid()) @db.Uuid
+  personId      String      @map("person_id") @db.Uuid
+  tiktokVideoId String      @map("tiktok_video_id") @db.Uuid
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  person      Person      @relation(fields: [personId], references: [id], onDelete: Cascade)
+  tiktokVideo TikTokVideo @relation(fields: [tiktokVideoId], references: [id], onDelete: Cascade)
+
+  @@unique([personId, tiktokVideoId])
+  @@index([personId])
+  @@index([tiktokVideoId])
+  @@map("person_tiktok_video_links")
 }
 
 // Words - now a shared/reusable entity (like Location and Person)
@@ -645,6 +714,7 @@ model UrlPage {
   user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   memoryLinks  MemoryUrlPageLink[]
   projectLinks ProjectUrlPageLink[]
+  personLinks  PersonUrlPageLink[]
 
   @@unique([userId, urlHash])
   @@index([userId])
@@ -751,6 +821,7 @@ model YouTubeVideo {
   // Relations
   memories     Memory[]
   projectLinks ProjectYouTubeVideoLink[]
+  personLinks  PersonYouTubeVideoLink[]
 
   @@unique([platform, youtubeVideoId])
   @@unique([canonicalUrl])
@@ -823,6 +894,7 @@ model TikTokVideo {
   // Relations
   memories     Memory[]
   projectLinks ProjectTikTokVideoLink[]
+  personLinks  PersonTikTokVideoLink[]
 
   @@unique([platform, tiktokVideoId])
   @@unique([canonicalUrl])

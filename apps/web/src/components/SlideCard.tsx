@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Slide } from '../api/slidedecks';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, X } from 'lucide-react';
 
 interface SlideCardProps {
   slide: Slide;
@@ -7,6 +8,7 @@ interface SlideCardProps {
 
 export function SlideCard({ slide }: SlideCardProps) {
   const { memory } = slide;
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   return (
     <div className="bg-white rounded-lg shadow-2xl w-full p-4 md:p-8 space-y-3 md:space-y-4">
@@ -29,9 +31,12 @@ export function SlideCard({ slide }: SlideCardProps) {
         </div>
       )}
 
-      {/* 3. Image - full width */}
+      {/* 3. Image - full width, clickable */}
       {memory.imageLinks && memory.imageLinks.length > 0 && (
-        <div className="border-2 border-black rounded overflow-hidden">
+        <div
+          className="border-2 border-black rounded overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={() => setLightboxImage(memory.imageLinks![0].image.storageUrl)}
+        >
           <img
             src={
               memory.imageLinks[0].image.thumbnailUrl1024 ||
@@ -137,6 +142,28 @@ export function SlideCard({ slide }: SlideCardProps) {
             <p>No data available for this memory</p>
           </div>
         )}
+
+      {/* Image Lightbox Modal */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button
+            onClick={() => setLightboxImage(null)}
+            className="absolute top-4 right-4 p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full text-white transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <img
+            src={lightboxImage}
+            alt="Enlarged view"
+            className="max-w-full max-h-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }

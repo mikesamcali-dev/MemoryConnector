@@ -56,6 +56,8 @@ export interface UrlPage {
     sentiment?: string;
   };
   isDuplicate?: boolean;
+  fetchFailed?: boolean;
+  fetchError?: string;
   message?: string;
 }
 

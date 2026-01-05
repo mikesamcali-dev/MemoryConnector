@@ -148,23 +148,61 @@ export class TikTokVideosService {
    */
   async extractMetadata(url: string): Promise<TikTokMetadata> {
     try {
+      // Validate URL format
+      if (!url || typeof url !== 'string') {
+        throw new HttpException(
+          'Invalid URL: URL must be a non-empty string',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      // Basic TikTok URL validation
+      const isTikTokUrl = url.includes('tiktok.com') || url.includes('vm.tiktok.com');
+      if (!isTikTokUrl) {
+        throw new HttpException(
+          'Invalid URL: Must be a TikTok URL (tiktok.com or vm.tiktok.com)',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
       // Extract video ID from URL
       // TikTok URLs: https://www.tiktok.com/@username/video/1234567890
       // or: https://vm.tiktok.com/XXXXX (short links)
       const videoIdMatch = url.match(/\/video\/(\d+)/);
       const tiktokVideoId = videoIdMatch ? videoIdMatch[1] : url.split('/').pop() || 'unknown';
 
-      // Call TikTok's official oEmbed API
+      // Call TikTok's official oEmbed API with proper headers
       const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`;
 
       logger.info({ url, oembedUrl }, 'Fetching TikTok metadata from oEmbed API');
 
-      const response = await fetch(oembedUrl);
+      const response = await fetch(oembedUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'application/json',
+          'Accept-Language': 'en-US,en;q=0.9',
+        },
+      });
 
       if (!response.ok) {
-        logger.warn({ status: response.status, url }, 'oEmbed API request failed');
+        // Try to get detailed error from response body
+        let errorDetail = response.statusText;
+        try {
+          const errorBody = await response.text();
+          if (errorBody) {
+            errorDetail = errorBody.substring(0, 200); // Limit error message length
+          }
+        } catch (e) {
+          // Ignore if we can't read the error body
+        }
+
+        logger.warn(
+          { status: response.status, statusText: response.statusText, url, errorDetail },
+          'oEmbed API request failed'
+        );
+
         throw new HttpException(
-          `Failed to fetch TikTok metadata: ${response.statusText}`,
+          `TikTok API returned ${response.status}: ${response.statusText}. The video may be private, deleted, or the URL may be invalid.`,
           HttpStatus.BAD_REQUEST,
         );
       }
@@ -189,10 +227,6 @@ export class TikTokVideosService {
         creatorId: null, // Not available from oEmbed
         publishedAt: null, // Not available from oEmbed
         durationSeconds: null, // Not available from oEmbed
-        viewCount: null,
-        likeCount: null,
-        shareCount: null,
-        commentCount: null,
       };
 
       logger.info({ url, metadata }, 'TikTok metadata extracted from oEmbed API');
