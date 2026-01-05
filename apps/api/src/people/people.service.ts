@@ -548,13 +548,12 @@ export class PeopleService {
       );
     }
 
-    // Check if link already exists
-    const existingLink = await this.prisma.imagePersonLink.findUnique({
+    // Check if link already exists (for manual links without faceId)
+    const existingLink = await this.prisma.imagePersonLink.findFirst({
       where: {
-        imageId_personId: {
-          imageId,
-          personId,
-        },
+        imageId,
+        personId,
+        faceId: null,
       },
     });
 
@@ -570,6 +569,8 @@ export class PeopleService {
       data: {
         imageId,
         personId,
+        faceId: null,
+        linkMethod: 'manual',
       },
     });
 
@@ -609,13 +610,12 @@ export class PeopleService {
       );
     }
 
-    // Find the link
-    const link = await this.prisma.imagePersonLink.findUnique({
+    // Find the link (manual link without faceId)
+    const link = await this.prisma.imagePersonLink.findFirst({
       where: {
-        imageId_personId: {
-          imageId,
-          personId,
-        },
+        imageId,
+        personId,
+        faceId: null,
       },
     });
 
