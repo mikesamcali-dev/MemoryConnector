@@ -45,5 +45,31 @@ export class SearchController {
 
     return results;
   }
+
+  @Get('all')
+  @ApiOperation({ summary: 'Search across all entity types' })
+  async searchAll(
+    @Query('q') query: string,
+    @Query('limit') limit?: string,
+    @User() user?: any
+  ) {
+    if (!query || typeof query !== 'string') {
+      throw new BadRequestException({
+        error: 'MISSING_QUERY',
+        message: 'Query parameter q is required',
+      });
+    }
+
+    const results = await this.searchService.searchAll(
+      user.id,
+      query,
+      limit ? Math.min(parseInt(limit), 10) : 5
+    );
+
+    // Increment usage
+    await this.usageService.incrementUsage(user.id, 'searches');
+
+    return results;
+  }
 }
 
