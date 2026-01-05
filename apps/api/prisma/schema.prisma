@@ -428,8 +428,12 @@ model Project {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  memoryLinks MemoryProjectLink[]
+  user              User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memoryLinks       MemoryProjectLink[]
+  imageLinks        ProjectImageLink[]
+  urlPageLinks      ProjectUrlPageLink[]
+  youtubeVideoLinks ProjectYouTubeVideoLink[]
+  tiktokVideoLinks  ProjectTikTokVideoLink[]
 
   @@index([userId])
   @@index([userId, name])
@@ -450,6 +454,70 @@ model MemoryProjectLink {
   @@index([memoryId])
   @@index([projectId])
   @@map("memory_project_links")
+}
+
+// Project-Image Links (Many-to-Many)
+model ProjectImageLink {
+  id        String   @id @default(uuid()) @db.Uuid
+  projectId String   @map("project_id") @db.Uuid
+  imageId   String   @map("image_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  image   Image   @relation(fields: [imageId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, imageId])
+  @@index([projectId])
+  @@index([imageId])
+  @@map("project_image_links")
+}
+
+// Project-UrlPage Links (Many-to-Many)
+model ProjectUrlPageLink {
+  id        String   @id @default(uuid()) @db.Uuid
+  projectId String   @map("project_id") @db.Uuid
+  urlPageId String   @map("url_page_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  urlPage UrlPage @relation(fields: [urlPageId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, urlPageId])
+  @@index([projectId])
+  @@index([urlPageId])
+  @@map("project_url_page_links")
+}
+
+// Project-YouTubeVideo Links (Many-to-Many)
+model ProjectYouTubeVideoLink {
+  id             String       @id @default(uuid()) @db.Uuid
+  projectId      String       @map("project_id") @db.Uuid
+  youtubeVideoId String       @map("youtube_video_id") @db.Uuid
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  youtubeVideo YouTubeVideo @relation(fields: [youtubeVideoId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, youtubeVideoId])
+  @@index([projectId])
+  @@index([youtubeVideoId])
+  @@map("project_youtube_video_links")
+}
+
+// Project-TikTokVideo Links (Many-to-Many)
+model ProjectTikTokVideoLink {
+  id            String      @id @default(uuid()) @db.Uuid
+  projectId     String      @map("project_id") @db.Uuid
+  tiktokVideoId String      @map("tiktok_video_id") @db.Uuid
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tiktokVideo TikTokVideo @relation(fields: [tiktokVideoId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, tiktokVideoId])
+  @@index([projectId])
+  @@index([tiktokVideoId])
+  @@map("project_tiktok_video_links")
 }
 
 // Images - standalone entity for photos/images with face detection
@@ -480,6 +548,7 @@ model Image {
   faces        ImageFace[]
   memoryLinks  MemoryImageLink[]
   personLinks  ImagePersonLink[]
+  projectLinks ProjectImageLink[]
 
   @@unique([userId, sha256])
   @@index([userId])
@@ -573,8 +642,9 @@ model UrlPage {
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  memoryLinks MemoryUrlPageLink[]
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memoryLinks  MemoryUrlPageLink[]
+  projectLinks ProjectUrlPageLink[]
 
   @@unique([userId, urlHash])
   @@index([userId])
@@ -679,7 +749,8 @@ model YouTubeVideo {
   updatedAt          DateTime          @updatedAt @map("updated_at")
 
   // Relations
-  memories           Memory[]
+  memories     Memory[]
+  projectLinks ProjectYouTubeVideoLink[]
 
   @@unique([platform, youtubeVideoId])
   @@unique([canonicalUrl])
@@ -750,7 +821,8 @@ model TikTokVideo {
   updatedAt          DateTime          @updatedAt @map("updated_at")
 
   // Relations
-  memories           Memory[]
+  memories     Memory[]
+  projectLinks ProjectTikTokVideoLink[]
 
   @@unique([platform, tiktokVideoId])
   @@unique([canonicalUrl])

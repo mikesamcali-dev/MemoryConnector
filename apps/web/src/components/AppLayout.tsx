@@ -34,7 +34,6 @@ export function AppLayout({ children }: AppLayoutProps) {
     { path: '/app/tiktok-videos', icon: Film, label: 'TikTok' },
     { path: '/app/words', icon: BookOpen, label: 'Words' },
     { path: '/app/projects', icon: FolderKanban, label: 'Projects' },
-    { path: '/app/atlas', icon: Map, label: 'Atlas' },
     { path: '/app/locations', icon: MapPin, label: 'Locations' },
     { path: '/app/people', icon: User, label: 'People' },
     { path: '/app/images', icon: Image, label: 'Images' },

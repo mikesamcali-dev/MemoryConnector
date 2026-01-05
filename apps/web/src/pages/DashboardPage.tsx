@@ -13,7 +13,8 @@ import {
   Clock,
   TrendingUp,
   Plus,
-  ChevronRight
+  ChevronRight,
+  FolderKanban
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getMemories } from '../api/memories';
@@ -103,7 +104,7 @@ export function DashboardPage() {
     { label: 'YouTube Videos', icon: Video, link: '/app/youtube-videos', color: 'orange' },
     { label: 'Locations', icon: MapPin, link: '/app/locations', color: 'green' },
     { label: 'People', icon: User, link: '/app/people', color: 'indigo' },
-    { label: 'Atlas', icon: MapPin, link: '/app/atlas', color: 'teal' },
+    { label: 'Projects', icon: FolderKanban, link: '/app/projects', color: 'teal' },
   ];
 
   return (

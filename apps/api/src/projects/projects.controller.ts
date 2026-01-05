@@ -97,4 +97,136 @@ export class ProjectsController {
       req.user.id,
     );
   }
+
+  @Post(':id/images/:imageId')
+  @ApiOperation({ summary: 'Link an image to a project' })
+  @ApiResponse({ status: 201, description: 'Image linked successfully' })
+  @ApiResponse({ status: 404, description: 'Project or image not found' })
+  @ApiResponse({ status: 409, description: 'Image already linked to project' })
+  async linkImage(
+    @Param('id') projectId: string,
+    @Param('imageId') imageId: string,
+    @Req() req: any,
+  ) {
+    return this.projectsService.linkImageToProject(
+      imageId,
+      projectId,
+      req.user.id,
+    );
+  }
+
+  @Delete(':id/images/:imageId')
+  @ApiOperation({ summary: 'Unlink an image from a project' })
+  @ApiResponse({ status: 200, description: 'Image unlinked successfully' })
+  @ApiResponse({ status: 404, description: 'Project, image, or link not found' })
+  async unlinkImage(
+    @Param('id') projectId: string,
+    @Param('imageId') imageId: string,
+    @Req() req: any,
+  ) {
+    return this.projectsService.unlinkImageFromProject(
+      imageId,
+      projectId,
+      req.user.id,
+    );
+  }
+
+  @Post(':id/url-pages/:urlPageId')
+  @ApiOperation({ summary: 'Link a URL page to a project' })
+  @ApiResponse({ status: 201, description: 'URL page linked successfully' })
+  @ApiResponse({ status: 404, description: 'Project or URL page not found' })
+  @ApiResponse({ status: 409, description: 'URL page already linked to project' })
+  async linkUrlPage(
+    @Param('id') projectId: string,
+    @Param('urlPageId') urlPageId: string,
+    @Req() req: any,
+  ) {
+    return this.projectsService.linkUrlPageToProject(
+      urlPageId,
+      projectId,
+      req.user.id,
+    );
+  }
+
+  @Delete(':id/url-pages/:urlPageId')
+  @ApiOperation({ summary: 'Unlink a URL page from a project' })
+  @ApiResponse({ status: 200, description: 'URL page unlinked successfully' })
+  @ApiResponse({ status: 404, description: 'Project, URL page, or link not found' })
+  async unlinkUrlPage(
+    @Param('id') projectId: string,
+    @Param('urlPageId') urlPageId: string,
+    @Req() req: any,
+  ) {
+    return this.projectsService.unlinkUrlPageFromProject(
+      urlPageId,
+      projectId,
+      req.user.id,
+    );
+  }
+
+  @Post(':id/youtube-videos/:youtubeVideoId')
+  @ApiOperation({ summary: 'Link a YouTube video to a project' })
+  @ApiResponse({ status: 201, description: 'YouTube video linked successfully' })
+  @ApiResponse({ status: 404, description: 'Project or YouTube video not found' })
+  @ApiResponse({ status: 409, description: 'YouTube video already linked to project' })
+  async linkYouTubeVideo(
+    @Param('id') projectId: string,
+    @Param('youtubeVideoId') youtubeVideoId: string,
+    @Req() req: any,
+  ) {
+    return this.projectsService.linkYouTubeVideoToProject(
+      youtubeVideoId,
+      projectId,
+      req.user.id,
+    );
+  }
+
+  @Delete(':id/youtube-videos/:youtubeVideoId')
+  @ApiOperation({ summary: 'Unlink a YouTube video from a project' })
+  @ApiResponse({ status: 200, description: 'YouTube video unlinked successfully' })
+  @ApiResponse({ status: 404, description: 'Project, YouTube video, or link not found' })
+  async unlinkYouTubeVideo(
+    @Param('id') projectId: string,
+    @Param('youtubeVideoId') youtubeVideoId: string,
+    @Req() req: any,
+  ) {
+    return this.projectsService.unlinkYouTubeVideoFromProject(
+      youtubeVideoId,
+      projectId,
+      req.user.id,
+    );
+  }
+
+  @Post(':id/tiktok-videos/:tiktokVideoId')
+  @ApiOperation({ summary: 'Link a TikTok video to a project' })
+  @ApiResponse({ status: 201, description: 'TikTok video linked successfully' })
+  @ApiResponse({ status: 404, description: 'Project or TikTok video not found' })
+  @ApiResponse({ status: 409, description: 'TikTok video already linked to project' })
+  async linkTikTokVideo(
+    @Param('id') projectId: string,
+    @Param('tiktokVideoId') tiktokVideoId: string,
+    @Req() req: any,
+  ) {
+    return this.projectsService.linkTikTokVideoToProject(
+      tiktokVideoId,
+      projectId,
+      req.user.id,
+    );
+  }
+
+  @Delete(':id/tiktok-videos/:tiktokVideoId')
+  @ApiOperation({ summary: 'Unlink a TikTok video from a project' })
+  @ApiResponse({ status: 200, description: 'TikTok video unlinked successfully' })
+  @ApiResponse({ status: 404, description: 'Project, TikTok video, or link not found' })
+  async unlinkTikTokVideo(
+    @Param('id') projectId: string,
+    @Param('tiktokVideoId') tiktokVideoId: string,
+    @Req() req: any,
+  ) {
+    return this.projectsService.unlinkTikTokVideoFromProject(
+      tiktokVideoId,
+      projectId,
+      req.user.id,
+    );
+  }
 }
