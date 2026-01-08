@@ -3,9 +3,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { createMemory, analyzeText, PersonMatch, LocationMatch, YouTubeVideoMatch, WordMatch } from '../api/memories';
-import { lookupWord, getAllPeople, getAllLocationsForUser } from '../api/admin';
+import { createMemory } from '../api/memories';
+import { getAllPeople, getAllLocationsForUser } from '../api/admin';
 import { getUpcomingReminders } from '../api/reminders';
+import { processMemoryPhrase } from '../api/words';
 import { uploadImage, linkImageToMemory } from '../api/images';
 import { addUrl, linkUrlPageToMemory } from '../api/urlPages';
 import { extractTikTokMetadata, createTikTokVideo } from '../api/tiktok';
@@ -14,10 +15,8 @@ import { createDraft } from '../utils/idempotency';
 import { compressImage, getSizeReduction } from '../utils/imageCompression';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Clock, AlertCircle, Calendar, Loader, Users, MapPinned, Video, BookOpen, Image as ImageIcon, Link as LinkIcon, X, Mic, FolderKanban } from 'lucide-react';
-import { useDebounce } from '../hooks/useDebounce';
+import { Clock, AlertCircle, Calendar, Loader, Users, MapPinned, Video, Image as ImageIcon, Link as LinkIcon, X, Mic, FolderKanban } from 'lucide-react';
 import { useHaptics } from '../hooks/useHaptics';
-import { EntitySuggestionsModal } from '../components/EntitySuggestionsModal';
 
 const memorySchema = z.object({
   text: z.string().min(1, 'Memory text is required'),
@@ -40,14 +39,8 @@ export function CapturePage() {
     return createDraft();
   });
 
-  // Text analysis state
+  // Text input state
   const [textValue, setTextValue] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [detectedPersons, setDetectedPersons] = useState<PersonMatch[]>([]);
-  const [detectedLocations, setDetectedLocations] = useState<LocationMatch[]>([]);
-  const [detectedYouTubeVideos, setDetectedYouTubeVideos] = useState<YouTubeVideoMatch[]>([]);
-  const [detectedWords, setDetectedWords] = useState<WordMatch[]>([]);
-  const [showEntityModal, setShowEntityModal] = useState(false);
   const [linkedEntities, setLinkedEntities] = useState<{
     persons: string[];
     locations: string[];
@@ -89,9 +82,6 @@ export function CapturePage() {
   const [loadingPeople, setLoadingPeople] = useState(false);
   const [loadingLocations, setLoadingLocations] = useState(false);
   const [loadingProjects, setLoadingProjects] = useState(false);
-
-  // Debounce text input for analysis (1 second delay)
-  const debouncedText = useDebounce(textValue, 1000);
 
   // Voice input state
   const [isListening, setIsListening] = useState(false);
@@ -162,40 +152,6 @@ export function CapturePage() {
       console.log('Pre-linking URL page:', urlPageId);
     }
   }, [location.search]);
-
-  // Analyze text when debounced value changes
-  useEffect(() => {
-    const performAnalysis = async () => {
-      // Only analyze if text is substantial (>2 characters)
-      if (debouncedText.trim().length < 2) {
-        setDetectedPersons([]);
-        setDetectedLocations([]);
-        setDetectedYouTubeVideos([]);
-        setDetectedWords([]);
-        return;
-      }
-
-      setIsAnalyzing(true);
-      try {
-        const result = await analyzeText(debouncedText);
-        setDetectedPersons(result.persons);
-        setDetectedLocations(result.locations);
-        setDetectedYouTubeVideos(result.youtubeVideos);
-        setDetectedWords(result.words);
-
-        // Auto-show modal if entities detected (excluding words)
-        if (result.persons.length > 0 || result.locations.length > 0 || result.youtubeVideos.length > 0) {
-          setShowEntityModal(true);
-        }
-      } catch (error) {
-        console.error('Text analysis failed:', error);
-      } finally {
-        setIsAnalyzing(false);
-      }
-    };
-
-    performAnalysis();
-  }, [debouncedText]);
 
   const {
     handleSubmit,
@@ -582,6 +538,13 @@ export function CapturePage() {
         }
       }
 
+      // Process phrase/word linking in background (fire and forget)
+      // This handles 1-3 word memories, creating word entries and linking them
+      processMemoryPhrase(createdMemory.id, data.text).catch(error => {
+        console.error('Failed to process phrase linking:', error);
+        // Don't fail the whole operation if phrase linking fails
+      });
+
       // Clear draft, linked entities, image, and URL
       localStorage.removeItem('memoryDraft');
       setDraft(createDraft());
@@ -644,110 +607,6 @@ export function CapturePage() {
     setTextValue(newValue);
     setValue('text', newValue); // Update form value
   };
-
-  // Handle person confirmation
-  const handleConfirmPerson = (person: PersonMatch, selectedExisting?: string) => {
-    console.log('Person confirmed:', person.extractedName, selectedExisting);
-
-    // Store the person ID for linking when creating memory
-    if (selectedExisting) {
-      setLinkedEntities(prev => ({
-        ...prev,
-        persons: [...prev.persons, selectedExisting],
-      }));
-    }
-
-    // Remove this person from detectedPersons
-    setDetectedPersons(prev => prev.filter(p => p.extractedName !== person.extractedName));
-  };
-
-  // Handle location confirmation
-  const handleConfirmLocation = (location: LocationMatch, selectedExisting?: string) => {
-    console.log('Location confirmed:', location.extractedName, selectedExisting);
-
-    // Store the location ID for linking when creating memory
-    if (selectedExisting) {
-      setLinkedEntities(prev => ({
-        ...prev,
-        locations: [...prev.locations, selectedExisting],
-      }));
-    }
-
-    // Remove this location from detectedLocations
-    setDetectedLocations(prev => prev.filter(l => l.extractedName !== location.extractedName));
-  };
-
-  // Handle YouTube video confirmation
-  const handleConfirmYouTubeVideo = async (video: YouTubeVideoMatch, selectedExisting?: string) => {
-    console.log('YouTube video confirmed:', video.url, selectedExisting);
-
-    try {
-      let videoId = selectedExisting;
-
-      // If it's a new video, create it first
-      if (video.isNewVideo && !selectedExisting) {
-        const { createYouTubeVideoFromUrl } = await import('../api/admin');
-        const createdVideo = await createYouTubeVideoFromUrl(video.url);
-        videoId = createdVideo.id;
-      }
-
-      // Store the video ID for linking when creating memory
-      if (videoId) {
-        setLinkedEntities(prev => ({
-          ...prev,
-          youtubeVideos: [...prev.youtubeVideos, videoId],
-        }));
-      }
-
-      // Remove this video from detectedYouTubeVideos
-      setDetectedYouTubeVideos(prev => prev.filter(v => v.videoId !== video.videoId));
-    } catch (error) {
-      console.error('Failed to create YouTube video:', error);
-    }
-  };
-
-  const handleConfirmWord = async (wordMatch: WordMatch) => {
-    console.log('Word confirmed:', wordMatch.word);
-
-    // If it's a new word, create a vocabulary entry for it
-    if (wordMatch.isNewWord) {
-      try {
-        // Check if word already exists
-        const existingWords = await lookupWord(wordMatch.word.toLowerCase().trim());
-
-        if (existingWords && existingWords.length > 0) {
-          setError(`Word "${wordMatch.word}" already exists in vocabulary`);
-          setTimeout(() => setError(''), 3000);
-          setDetectedWords(prev => prev.filter(w => w.word !== wordMatch.word));
-          return;
-        }
-
-        const wordDraft = createDraft(wordMatch.word);
-
-        // Create a separate memory for this word (vocabulary entry)
-        // Set typeId to 'word' type to ensure proper word table creation
-        await createMemory({
-          ...wordDraft,
-          text: wordMatch.word,
-          typeId: 'b172102f-836a-45f7-9d87-cb192bacca6a', // Word memory type
-        });
-
-        // Remove this word from detected words
-        setDetectedWords(prev => prev.filter(w => w.word !== wordMatch.word));
-
-        setError(''); // Clear any errors
-        // Show brief success indication (no message, just removal from list indicates success)
-      } catch (error) {
-        console.error('Failed to add word:', error);
-        setError('Failed to add word to vocabulary');
-        setTimeout(() => setError(''), 3000);
-      }
-    } else {
-      // Word already exists - just remove from list
-      setDetectedWords(prev => prev.filter(w => w.word !== wordMatch.word));
-    }
-  };
-
 
   // Voice input handler
   const handleVoiceInput = () => {
@@ -1009,12 +868,6 @@ export function CapturePage() {
               className="w-full px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               placeholder="Write your memory here..."
             />
-            {isAnalyzing && (
-              <div className="absolute top-2 right-2 flex items-center gap-2 text-sm text-gray-500">
-                <Loader className="h-4 w-4 animate-spin" />
-                <span className="hidden sm:inline">Analyzing...</span>
-              </div>
-            )}
             {/* Voice input button (mobile only) */}
             <button
               type="button"
@@ -1031,56 +884,6 @@ export function CapturePage() {
           )}
           {errors.text?.message && (
             <p className="mt-1 text-sm text-red-600">{String(errors.text.message)}</p>
-          )}
-
-          {/* Entity detection badges */}
-          {(detectedPersons.length > 0 || detectedLocations.length > 0 || detectedYouTubeVideos.length > 0 || detectedWords.length > 0) && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              {detectedPersons.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowEntityModal(true)}
-                  className="inline-flex items-center gap-1 h-12 md:h-10 px-4 md:px-3 py-2 bg-purple-50 border border-purple-200 text-purple-700 rounded-md text-base md:text-sm hover:bg-purple-100 transition-colors"
-                >
-                  <Users className="h-5 w-5 md:h-4 md:w-4" />
-                  <span className="hidden md:inline">{detectedPersons.length} {detectedPersons.length === 1 ? 'person' : 'people'} detected</span>
-                  <span className="md:hidden">{detectedPersons.length} {detectedPersons.length === 1 ? 'person' : 'people'}</span>
-                </button>
-              )}
-              {detectedLocations.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowEntityModal(true)}
-                  className="inline-flex items-center gap-1 h-12 md:h-10 px-4 md:px-3 py-2 bg-green-50 border border-green-200 text-green-700 rounded-md text-base md:text-sm hover:bg-green-100 transition-colors"
-                >
-                  <MapPinned className="h-5 w-5 md:h-4 md:w-4" />
-                  <span className="hidden md:inline">{detectedLocations.length} {detectedLocations.length === 1 ? 'location' : 'locations'} detected</span>
-                  <span className="md:hidden">{detectedLocations.length} {detectedLocations.length === 1 ? 'location' : 'locations'}</span>
-                </button>
-              )}
-              {detectedYouTubeVideos.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowEntityModal(true)}
-                  className="inline-flex items-center gap-1 h-12 md:h-10 px-4 md:px-3 py-2 bg-red-50 border border-red-200 text-red-700 rounded-md text-base md:text-sm hover:bg-red-100 transition-colors"
-                >
-                  <Video className="h-5 w-5 md:h-4 md:w-4" />
-                  <span className="hidden md:inline">{detectedYouTubeVideos.length} {detectedYouTubeVideos.length === 1 ? 'video' : 'videos'} detected</span>
-                  <span className="md:hidden">{detectedYouTubeVideos.length} {detectedYouTubeVideos.length === 1 ? 'video' : 'videos'}</span>
-                </button>
-              )}
-              {detectedWords.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowEntityModal(true)}
-                  className="inline-flex items-center gap-1 h-12 md:h-10 px-4 md:px-3 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-md text-base md:text-sm hover:bg-indigo-100 transition-colors"
-                >
-                  <BookOpen className="h-5 w-5 md:h-4 md:w-4" />
-                  <span className="hidden md:inline">Words/Phrases ({detectedWords.length})</span>
-                  <span className="md:hidden">Words ({detectedWords.length})</span>
-                </button>
-              )}
-            </div>
           )}
         </div>
 
@@ -1556,27 +1359,6 @@ export function CapturePage() {
           </div>
         </div>
       )}
-
-      {/* Entity suggestions modal */}
-      <EntitySuggestionsModal
-        isOpen={showEntityModal}
-        onClose={() => setShowEntityModal(false)}
-        persons={detectedPersons}
-        locations={detectedLocations}
-        youtubeVideos={detectedYouTubeVideos}
-        words={detectedWords}
-        onConfirmPerson={handleConfirmPerson}
-        onConfirmLocation={handleConfirmLocation}
-        onConfirmYouTubeVideo={handleConfirmYouTubeVideo}
-        onConfirmWord={handleConfirmWord}
-        onSkip={() => {
-          setDetectedPersons([]);
-          setDetectedLocations([]);
-          setDetectedYouTubeVideos([]);
-          setDetectedWords([]);
-          setShowEntityModal(false);
-        }}
-      />
 
     </div>
   );

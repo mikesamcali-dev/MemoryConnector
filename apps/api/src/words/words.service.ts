@@ -374,4 +374,110 @@ Return ONLY valid JSON, no additional text.`;
       };
     }
   }
+
+  /**
+   * Process phrase/word linking after memory creation
+   * Follows the logic from word phrase logic.md:
+   * - 1 word: Look up word, create if needed, link to memory
+   * - 2 words: Look up phrase and individual words, create if needed, link to memory
+   * - 3 words: Look up phrase and individual words, create if needed, link to memory
+   * - More than 3 words: Do nothing
+   */
+  async processMemoryPhraseLinking(memoryId: string, text: string): Promise<void> {
+    // Normalize and split text into words
+    const normalizedText = text.trim();
+    const words = normalizedText.split(/\s+/);
+    const wordCount = words.length;
+
+    console.log(`[PHRASE LINKING] Processing memory ${memoryId} with ${wordCount} word(s): "${normalizedText}"`);
+
+    // More than 3 words: do nothing
+    if (wordCount > 3) {
+      console.log('[PHRASE LINKING] Text has more than 3 words, skipping');
+      return;
+    }
+
+    // Process based on word count
+    if (wordCount === 1) {
+      // Single word: look up and link
+      await this.processAndLinkWord(memoryId, words[0]);
+    } else if (wordCount === 2) {
+      // Two words: process phrase + individual words
+      await this.processAndLinkPhrase(memoryId, normalizedText);
+      await this.processAndLinkWord(memoryId, words[0]);
+      await this.processAndLinkWord(memoryId, words[1]);
+    } else if (wordCount === 3) {
+      // Three words: process phrase + individual words
+      await this.processAndLinkPhrase(memoryId, normalizedText);
+      await this.processAndLinkWord(memoryId, words[0]);
+      await this.processAndLinkWord(memoryId, words[1]);
+      await this.processAndLinkWord(memoryId, words[2]);
+    }
+
+    console.log('[PHRASE LINKING] Processing complete');
+  }
+
+  /**
+   * Process and link a single word to a memory
+   */
+  private async processAndLinkWord(memoryId: string, wordText: string): Promise<void> {
+    try {
+      // Use createOrFind which handles lookup and OpenAI enrichment if needed
+      const { word, status } = await this.createOrFind(wordText);
+
+      console.log(`[PHRASE LINKING] Word "${wordText}" ${status === 'existing' ? 'found' : 'created'} (ID: ${word.id})`);
+
+      // Link word to memory (using upsert to avoid duplicates)
+      await this.prisma.memoryWordLink.upsert({
+        where: {
+          memoryId_wordId: {
+            memoryId,
+            wordId: word.id,
+          },
+        },
+        create: {
+          memoryId,
+          wordId: word.id,
+        },
+        update: {}, // No update needed if already exists
+      });
+
+      console.log(`[PHRASE LINKING] Linked word "${wordText}" to memory ${memoryId}`);
+    } catch (error) {
+      console.error(`[PHRASE LINKING] Error processing word "${wordText}":`, error);
+      // Don't throw - continue processing other words
+    }
+  }
+
+  /**
+   * Process and link a phrase (multiple words) to a memory
+   */
+  private async processAndLinkPhrase(memoryId: string, phraseText: string): Promise<void> {
+    try {
+      // Use createOrFind which handles lookup and OpenAI enrichment if needed
+      const { word: phrase, status } = await this.createOrFind(phraseText);
+
+      console.log(`[PHRASE LINKING] Phrase "${phraseText}" ${status === 'existing' ? 'found' : 'created'} (ID: ${phrase.id})`);
+
+      // Link phrase to memory (using upsert to avoid duplicates)
+      await this.prisma.memoryWordLink.upsert({
+        where: {
+          memoryId_wordId: {
+            memoryId,
+            wordId: phrase.id,
+          },
+        },
+        create: {
+          memoryId,
+          wordId: phrase.id,
+        },
+        update: {}, // No update needed if already exists
+      });
+
+      console.log(`[PHRASE LINKING] Linked phrase "${phraseText}" to memory ${memoryId}`);
+    } catch (error) {
+      console.error(`[PHRASE LINKING] Error processing phrase "${phraseText}":`, error);
+      // Don't throw - continue processing
+    }
+  }
 }

@@ -84,3 +84,11 @@ export async function lookupWordByText(word: string): Promise<WordDetail | null>
   const response = await fetchWithAuth(`/words/lookup/${encodeURIComponent(word)}`);
   return response.json();
 }
+
+export async function processMemoryPhrase(memoryId: string, text: string): Promise<{ success: boolean; message: string }> {
+  const response = await fetchWithAuth('/words/process-memory-phrase', {
+    method: 'POST',
+    body: JSON.stringify({ memoryId, text }),
+  });
+  return response.json();
+}

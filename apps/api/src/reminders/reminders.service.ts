@@ -178,12 +178,13 @@ export class RemindersService {
       throw new HttpException('Memory not found', HttpStatus.NOT_FOUND);
     }
 
-    // Get all reminders for this memory
+    // Get all reminders for this memory, excluding those in slide decks
     const reminders = await this.prisma.reminder.findMany({
       where: {
         memoryId,
         userId,
         dismissedAt: null,
+        slide: null, // Exclude reminders that are part of a slide deck
       },
       orderBy: {
         scheduledAt: 'asc',
