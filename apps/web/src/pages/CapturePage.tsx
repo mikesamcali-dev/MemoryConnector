@@ -41,6 +41,7 @@ export function CapturePage() {
 
   // Text input state
   const [textValue, setTextValue] = useState('');
+  const [topicInput, setTopicInput] = useState('');
   const [linkedEntities, setLinkedEntities] = useState<{
     persons: string[];
     locations: string[];
@@ -58,11 +59,9 @@ export function CapturePage() {
   const [preLinkedImageId, setPreLinkedImageId] = useState<string | null>(null);
   const [preLinkedUrlPageId, setPreLinkedUrlPageId] = useState<string | null>(null);
 
-  // URL input state
-  const [urlInput, setUrlInput] = useState('');
+  // URL state
   const [addingUrl, setAddingUrl] = useState(false);
   const [addedUrlPage, setAddedUrlPage] = useState<any>(null);
-  const [urlError, setUrlError] = useState('');
 
   // TikTok video state
   const [addingTikTok, setAddingTikTok] = useState(false);
@@ -227,30 +226,30 @@ export function CapturePage() {
 
   // Handle URL addition
   const handleAddUrl = async () => {
-    if (!urlInput.trim()) {
-      setUrlError('Please enter a URL');
+    const url = prompt('Enter URL:');
+    if (!url || !url.trim()) {
       return;
     }
 
     // Basic URL validation
     try {
-      new URL(urlInput);
+      new URL(url.trim());
     } catch (err) {
-      setUrlError('Please enter a valid URL');
+      alert('Please enter a valid URL');
       return;
     }
 
     setAddingUrl(true);
-    setUrlError('');
 
     try {
-      const result = await addUrl({ url: urlInput.trim() });
+      const result = await addUrl({ url: url.trim() });
       setAddedUrlPage(result);
-      setUrlInput('');
       console.log('URL added successfully:', result);
+      haptic('success');
     } catch (err: any) {
       console.error('Add URL error:', err);
-      setUrlError(err.message || 'Failed to analyze URL');
+      alert(err.message || 'Failed to analyze URL');
+      haptic('error');
     } finally {
       setAddingUrl(false);
     }
@@ -259,7 +258,6 @@ export function CapturePage() {
   // Remove added URL
   const handleRemoveUrl = () => {
     setAddedUrlPage(null);
-    setUrlError('');
   };
 
   // Handle TikTok video addition
@@ -527,7 +525,43 @@ export function CapturePage() {
         }
       }
 
-      // Link to project if selected
+      // Handle topic input - create or find topic by name
+      if (topicInput.trim()) {
+        try {
+          const { createProject, getAllProjects, linkMemoryToProject } = await import('../api/projects');
+
+          // Get all projects to check if topic already exists
+          const allProjects = await getAllProjects();
+          let topicId: string | null = null;
+
+          // Check if a topic with this name already exists (case-insensitive)
+          const existingTopic = allProjects.find(
+            p => p.name.toLowerCase() === topicInput.trim().toLowerCase()
+          );
+
+          if (existingTopic) {
+            // Topic exists, use its ID
+            topicId = existingTopic.id;
+            console.log('Found existing topic:', existingTopic.name);
+          } else {
+            // Topic doesn't exist, create it
+            const newTopic = await createProject({ name: topicInput.trim() });
+            topicId = newTopic.id;
+            console.log('Created new topic:', newTopic.name);
+          }
+
+          // Link memory to topic
+          if (topicId) {
+            await linkMemoryToProject(topicId, createdMemory.id);
+            console.log('Memory linked to topic:', topicId);
+          }
+        } catch (topicError) {
+          console.error('Failed to create/link topic:', topicError);
+          // Don't fail the whole operation if topic creation/linking fails
+        }
+      }
+
+      // Link to project if selected (from project selector button)
       if (linkedEntities.projects.length > 0) {
         try {
           await linkMemoryToProject(linkedEntities.projects[0], createdMemory.id);
@@ -545,7 +579,7 @@ export function CapturePage() {
         // Don't fail the whole operation if phrase linking fails
       });
 
-      // Clear draft, linked entities, image, and URL
+      // Clear draft, linked entities, image, URL, and topic
       localStorage.removeItem('memoryDraft');
       setDraft(createDraft());
       setLinkedEntities({ persons: [], locations: [], youtubeVideos: [], tiktokVideos: [], projects: [] });
@@ -554,7 +588,7 @@ export function CapturePage() {
       setPreLinkedImageId(null);
       setPreLinkedUrlPageId(null);
       setAddedUrlPage(null);
-      setUrlInput('');
+      setTopicInput('');
       reset();
 
       // Success haptic feedback
@@ -887,6 +921,24 @@ export function CapturePage() {
           )}
         </div>
 
+        {/* Topic input field */}
+        <div>
+          <label htmlFor="topic" className="block text-sm font-medium text-gray-700 mb-1">
+            Topic (optional)
+          </label>
+          <input
+            id="topic"
+            type="text"
+            value={topicInput}
+            onChange={(e) => setTopicInput(e.target.value)}
+            placeholder="Enter topic name..."
+            className="w-full h-12 md:h-10 px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            Topic will be created if it doesn't exist, or linked if it does
+          </p>
+        </div>
+
         {/* Media buttons - Voice (desktop only), Image, YouTube, TikTok, URL */}
         <div className="flex gap-2">
           {/* Voice input button (desktop only) */}
@@ -1020,95 +1072,72 @@ export function CapturePage() {
               <Video className="h-5 w-5 md:h-4 md:w-4" />
             )}
           </button>
+
+          {/* URL button */}
+          <button
+            type="button"
+            onClick={handleAddUrl}
+            disabled={addingUrl}
+            className="inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border border-gray-300 rounded-md shadow-sm text-base md:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            title="Add URL"
+          >
+            {addingUrl ? (
+              <Loader className="h-5 w-5 md:h-4 md:w-4 animate-spin" />
+            ) : (
+              <LinkIcon className="h-5 w-5 md:h-4 md:w-4" />
+            )}
+          </button>
         </div>
 
-        {/* URL input field */}
-        <div>
-          {!addedUrlPage ? (
-            <div className="mt-1">
-              <div className="flex gap-2">
-                <input
-                  id="url"
-                  type="url"
-                  value={urlInput}
-                  onChange={(e) => setUrlInput(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddUrl();
-                    }
-                  }}
-                  placeholder="https://example.com"
-                  className="flex-1 h-12 md:h-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  disabled={addingUrl}
-                />
-                <button
-                  type="button"
-                  onClick={handleAddUrl}
-                  disabled={addingUrl || !urlInput.trim()}
-                  className="inline-flex items-center justify-center gap-2 h-12 md:h-10 px-4 md:px-3 py-2 border border-transparent rounded-md shadow-sm text-base md:text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
-                  title="Add URL"
+        {/* URL added preview */}
+        {addedUrlPage && (
+          <div className="border border-purple-200 rounded-md p-3 bg-purple-50">
+            <div className="flex items-start justify-between">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {addedUrlPage.title || 'Untitled'}
+                </p>
+                <a
+                  href={addedUrlPage.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-purple-600 hover:underline truncate block"
                 >
-                  {addingUrl ? (
-                    <Loader className="h-5 w-5 md:h-4 md:w-4 animate-spin" />
-                  ) : (
-                    <LinkIcon className="h-5 w-5 md:h-4 md:w-4" />
-                  )}
-                </button>
-              </div>
-              {urlError && (
-                <p className="mt-1 text-xs text-red-600">{urlError}</p>
-              )}
-            </div>
-          ) : (
-            <div className="mt-1 border border-purple-200 rounded-md p-3 bg-purple-50">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {addedUrlPage.title || 'Untitled'}
+                  {addedUrlPage.url}
+                </a>
+                {addedUrlPage.summary && (
+                  <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                    {addedUrlPage.summary}
                   </p>
-                  <a
-                    href={addedUrlPage.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-purple-600 hover:underline truncate block"
-                  >
-                    {addedUrlPage.url}
-                  </a>
-                  {addedUrlPage.summary && (
-                    <p className="text-xs text-gray-600 mt-1 line-clamp-2">
-                      {addedUrlPage.summary}
-                    </p>
-                  )}
-                  {addedUrlPage.tags && addedUrlPage.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {addedUrlPage.tags.slice(0, 3).map((tag: string, idx: number) => (
-                        <span
-                          key={idx}
-                          className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                      {addedUrlPage.tags.length > 3 && (
-                        <span className="text-xs text-gray-500">
-                          +{addedUrlPage.tags.length - 3} more
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={handleRemoveUrl}
-                  className="ml-2 min-w-[48px] min-h-[48px] md:min-w-[40px] md:min-h-[40px] p-2 md:p-1 text-red-600 hover:text-red-800 focus:outline-none flex items-center justify-center"
-                >
-                  <X className="h-5 w-5 md:h-4 md:w-4" />
-                </button>
+                )}
+                {addedUrlPage.tags && addedUrlPage.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {addedUrlPage.tags.slice(0, 3).map((tag: string, idx: number) => (
+                      <span
+                        key={idx}
+                        className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                    {addedUrlPage.tags.length > 3 && (
+                      <span className="text-xs text-gray-500">
+                        +{addedUrlPage.tags.length - 3} more
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
+              <button
+                type="button"
+                onClick={handleRemoveUrl}
+                className="ml-2 min-w-[48px] min-h-[48px] md:min-w-[40px] md:min-h-[40px] p-2 md:p-1 text-red-600 hover:text-red-800 focus:outline-none flex items-center justify-center"
+              >
+                <X className="h-5 w-5 md:h-4 md:w-4" />
+              </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Desktop submit button */}
         <div className="hidden md:flex items-center justify-between">
