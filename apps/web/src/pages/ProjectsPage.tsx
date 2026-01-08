@@ -48,7 +48,7 @@ export function ProjectsPage() {
   const handleDeleteProject = (id: string, name: string) => {
     if (
       confirm(
-        `Are you sure you want to delete "${name}"? This will unlink all memories from this project.`,
+        `Are you sure you want to delete "${name}"? This will unlink all memories from this topic.`,
       )
     ) {
       deleteMutation.mutate(id);
@@ -60,7 +60,7 @@ export function ProjectsPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading projects...</p>
+          <p className="text-gray-600">Loading topics...</p>
         </div>
       </div>
     );
@@ -70,7 +70,7 @@ export function ProjectsPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-md p-6 max-w-md w-full">
-          <p className="text-red-600 text-center">Error loading projects</p>
+          <p className="text-red-600 text-center">Error loading topics</p>
         </div>
       </div>
     );
@@ -82,13 +82,13 @@ export function ProjectsPage() {
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Topics</h1>
             <button
               onClick={() => setIsModalOpen(true)}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
               <Plus className="h-5 w-5" />
-              <span className="hidden sm:inline">New Project</span>
+              <span className="hidden sm:inline">New Topic</span>
             </button>
           </div>
 
@@ -99,7 +99,7 @@ export function ProjectsPage() {
                 <p className="text-2xl font-bold text-gray-900">
                   {Array.isArray(projects) ? projects.length : 0}
                 </p>
-                <p className="text-sm text-gray-600">Total Projects</p>
+                <p className="text-sm text-gray-600">Total Topics</p>
               </div>
               <div className="border-l border-gray-200 pl-4">
                 <p className="text-2xl font-bold text-gray-900">
@@ -122,7 +122,7 @@ export function ProjectsPage() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search projects..."
+              placeholder="Search topics..."
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -206,13 +206,13 @@ export function ProjectsPage() {
             <FolderKanban className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               {searchTerm
-                ? 'No projects found'
-                : 'No projects yet'}
+                ? 'No topics found'
+                : 'No topics yet'}
             </h3>
             <p className="text-gray-600 mb-4">
               {searchTerm
                 ? 'Try a different search term'
-                : 'Create your first project to organize your memories'}
+                : 'Create your first topic to organize your memories'}
             </p>
             {!searchTerm && (
               <button
@@ -220,7 +220,7 @@ export function ProjectsPage() {
                 className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
                 <Plus className="h-5 w-5" />
-                Create Project
+                Create Topic
               </button>
             )}
           </div>

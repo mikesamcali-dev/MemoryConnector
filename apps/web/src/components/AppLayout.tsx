@@ -31,14 +31,14 @@ export function AppLayout({ children }: AppLayoutProps) {
     { path: '/app/capture', icon: Plus, label: 'Capture' },
     { path: '/app/slidedecks', icon: Presentation, label: 'Slides' },
     { path: '/app/search', icon: Search, label: 'Search' },
-    { path: '/app/tiktok-videos', icon: Film, label: 'TikTok' },
+    { path: '/app/projects', icon: FolderKanban, label: 'Topics' },
     { path: '/app/words', icon: BookOpen, label: 'Words' },
-    { path: '/app/projects', icon: FolderKanban, label: 'Projects' },
     { path: '/app/locations', icon: MapPin, label: 'Locations' },
     { path: '/app/people', icon: User, label: 'People' },
     { path: '/app/images', icon: Image, label: 'Images' },
     { path: '/app/urls', icon: LinkIcon, label: 'URLs' },
     { path: '/app/youtube-videos', icon: Video, label: 'YouTube' },
+    { path: '/app/tiktok-videos', icon: Film, label: 'TikTok' },
     { path: '/app/relationships', icon: Network, label: 'Network' },
     { path: '/app/reminders', icon: Bell, label: 'Reminders' },
     { path: '/app/settings', icon: Settings, label: 'Settings' },
@@ -50,10 +50,10 @@ export function AppLayout({ children }: AppLayoutProps) {
     : baseNavItems;
 
   // Items shown in bottom nav (mobile) - defined in BottomNav component
-  const bottomNavPaths = ['/app/capture', '/app/slidedecks', '/app/search', '/app/tiktok-videos'];
+  const bottomNavPaths = ['/app/capture', '/app/slidedecks', '/app/search', '/app/projects'];
 
   // Primary nav items for desktop
-  const desktopPrimaryPaths = ['/app/capture', '/app/slidedecks', '/app/tiktok-videos', '/app/images'];
+  const desktopPrimaryPaths = ['/app/capture', '/app/slidedecks', '/app/projects', '/app/images'];
 
   // Desktop "More" menu items (excluding search and admin which go on the right)
   const desktopMoreItems = navItems.filter(

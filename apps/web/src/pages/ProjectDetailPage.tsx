@@ -117,7 +117,7 @@ export function ProjectDetailPage() {
   const handleDelete = () => {
     if (
       confirm(
-        `Are you sure you want to delete "${project?.name}"? This will unlink all memories from this project.`,
+        `Are you sure you want to delete "${project?.name}"? This will unlink all memories from this topic.`,
       )
     ) {
       deleteMutation.mutate();
@@ -125,7 +125,7 @@ export function ProjectDetailPage() {
   };
 
   const handleUnlink = (memoryId: string) => {
-    if (confirm('Are you sure you want to unlink this memory from the project?')) {
+    if (confirm('Are you sure you want to unlink this memory from the topic?')) {
       unlinkMutation.mutate(memoryId);
     }
   };
@@ -135,7 +135,7 @@ export function ProjectDetailPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading project...</p>
+          <p className="text-gray-600">Loading topic...</p>
         </div>
       </div>
     );
@@ -145,12 +145,12 @@ export function ProjectDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-md p-6 max-w-md w-full">
-          <p className="text-red-600 text-center mb-4">Project not found</p>
+          <p className="text-red-600 text-center mb-4">Topic not found</p>
           <button
             onClick={() => navigate('/app/projects')}
             className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
-            Back to Projects
+            Back to Topics
           </button>
         </div>
       </div>

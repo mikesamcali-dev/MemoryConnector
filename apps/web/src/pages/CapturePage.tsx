@@ -768,14 +768,14 @@ export function CapturePage() {
         </div>
       )}
 
-      {/* Project linked indicator */}
+      {/* Topic linked indicator */}
       {linkedEntities.projects.length > 0 && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <FolderKanban className="h-5 w-5 text-blue-600" />
               <p className="text-sm font-medium text-blue-900">
-                Project linked to this memory
+                Topic linked to this memory
               </p>
             </div>
             <button
@@ -976,7 +976,7 @@ export function CapturePage() {
             <MapPinned className="h-5 w-5 md:h-4 md:w-4 text-green-600" />
           </button>
 
-          {/* Project button */}
+          {/* Topic button */}
           <button
             type="button"
             onClick={handleAddProject}
@@ -986,7 +986,7 @@ export function CapturePage() {
                 ? 'border-blue-300 bg-blue-100 text-blue-400 cursor-not-allowed'
                 : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
             }`}
-            title="Link to project"
+            title="Link to topic"
           >
             <FolderKanban className="h-5 w-5 md:h-4 md:w-4 text-blue-600" />
           </button>

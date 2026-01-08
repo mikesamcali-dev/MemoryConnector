@@ -71,7 +71,7 @@ export function ProjectEditModal({
         {/* Header */}
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900">
-            {project ? 'Edit Project' : 'Create Project'}
+            {project ? 'Edit Topic' : 'Create Topic'}
           </h2>
           <button
             onClick={onClose}
@@ -90,7 +90,7 @@ export function ProjectEditModal({
           {/* Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Project Name <span className="text-red-500">*</span>
+              Topic Name <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -99,7 +99,7 @@ export function ProjectEditModal({
                 setFormData({ ...formData, name: e.target.value })
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter project name"
+              placeholder="Enter topic name"
               required
               disabled={isSaving}
             />
@@ -117,7 +117,7 @@ export function ProjectEditModal({
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               rows={3}
-              placeholder="Enter project description (optional)"
+              placeholder="Enter topic description (optional)"
               disabled={isSaving}
             />
           </div>
@@ -164,7 +164,7 @@ export function ProjectEditModal({
             ) : (
               <>
                 <Save className="h-4 w-4" />
-                {project ? 'Update Project' : 'Create Project'}
+                {project ? 'Update Topic' : 'Create Topic'}
               </>
             )}
           </button>
