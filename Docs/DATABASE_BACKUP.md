@@ -1,6 +1,6 @@
 # Database Backup Guide
 
-This document describes the automated database backup system for Memory Connector running on the GoDaddy VPS (memoryconnect.online).
+This document describes the automated database backup system for Memory Connector running on the GoDaddy VPS (memoryconnector.com).
 
 ## Overview
 
@@ -356,7 +356,7 @@ nano /home/memconnadmin/backup-db.sh
 - **VPS Provider**: GoDaddy (account: memconnadmin@160.153.184.11)
 - **Database**: PostgreSQL 16
 - **Server IP**: 160.153.184.11
-- **Domain**: https://memoryconnect.online
+- **Domain**: https://memoryconnector.com
 
 ---
 

@@ -322,7 +322,7 @@ If you see "Do not know how to serialize a BigInt" errors:
 - **App Directory:** `/var/www/memory-connector`
 - **Database:** PostgreSQL (localhost:5432)
 - **Process Manager:** PM2
-- **Domain:** https://memoryconnect.online
+- **Domain:** https://memoryconnector.com
 
 ### Standard Deployment Process
 
@@ -468,7 +468,7 @@ After deployment, verify:
 - [ ] API health endpoint responds: `curl http://localhost:4000/api/v1/health`
 - [ ] PM2 shows process is online: `pm2 list`
 - [ ] No errors in PM2 logs: `pm2 logs --lines 50 --nostream`
-- [ ] Frontend is accessible: Visit https://memoryconnect.online
+- [ ] Frontend is accessible: Visit https://memoryconnector.com
 - [ ] New features work as expected
 
 ### Rollback Procedure
