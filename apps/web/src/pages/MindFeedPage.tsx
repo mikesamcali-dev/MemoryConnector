@@ -299,12 +299,12 @@ export function MindFeedPage() {
         </div>
       )}
 
-      {/* Projects Section */}
+      {/* Topics Section */}
       <div className="bg-white rounded-xl shadow-md p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <FolderKanban className="h-5 w-5 text-blue-600" />
-            Projects
+            Topics
           </h2>
           <Link
             to="/app/projects"
@@ -346,13 +346,13 @@ export function MindFeedPage() {
         ) : (
           <div className="text-center py-8">
             <FolderKanban className="h-12 w-12 text-gray-300 mx-auto mb-2" />
-            <p className="text-gray-500 mb-4">No projects yet</p>
+            <p className="text-gray-500 mb-4">No topics yet</p>
             <Link
               to="/app/projects"
               className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
             >
               <Plus className="h-4 w-4" />
-              Create Your First Project
+              Create Your First Topic
             </Link>
           </div>
         )}

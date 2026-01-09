@@ -345,7 +345,7 @@ export function LinkMemoryPage() {
 
         <h1 className="text-3xl font-bold text-gray-900">Link Your Memory</h1>
         <p className="text-gray-600 mt-2">
-          Connect this memory to people, events, locations, videos, or words
+          Connect this memory to people, events, locations, videos, words, or topics
         </p>
       </div>
 
@@ -475,9 +475,9 @@ export function LinkMemoryPage() {
           >
             <div className="font-semibold flex items-center justify-center gap-2">
               <FolderKanban className="h-4 w-4" />
-              Project
+              Topic
             </div>
-            <div className="text-xs text-gray-500 mt-1">Link to a project</div>
+            <div className="text-xs text-gray-500 mt-1">Link to a topic</div>
           </button>
         </div>
 

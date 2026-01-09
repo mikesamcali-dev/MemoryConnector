@@ -64,10 +64,10 @@ export function ImageLinkProjectModal({
           <div>
             <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
               <FolderKanban className="h-6 w-6 text-blue-600" />
-              Link Image to Project
+              Link Image to Topic
             </h2>
             <p className="text-sm text-gray-600 mt-1">
-              Select a project to create a memory and link this image
+              Select a topic to create a memory and link this image
             </p>
           </div>
           <button
@@ -93,15 +93,15 @@ export function ImageLinkProjectModal({
           {isLoading && (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
-              <p className="text-gray-600">Loading projects...</p>
+              <p className="text-gray-600">Loading topics...</p>
             </div>
           )}
 
           {!isLoading && (!projects || projects.length === 0) && (
             <div className="text-center py-12">
               <FolderKanban className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-600">No projects found</p>
-              <p className="text-sm text-gray-500 mt-2">Create a project first to link images</p>
+              <p className="text-gray-600">No topics found</p>
+              <p className="text-sm text-gray-500 mt-2">Create a topic first to link images</p>
             </div>
           )}
 
