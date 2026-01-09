@@ -42,6 +42,7 @@ export function CapturePage() {
   // Text input state
   const [textValue, setTextValue] = useState('');
   const [topicInput, setTopicInput] = useState('');
+  const [suggestedTopic, setSuggestedTopic] = useState<{ id: string; name: string } | null>(null);
   const [linkedEntities, setLinkedEntities] = useState<{
     persons: string[];
     locations: string[];
@@ -90,6 +91,12 @@ export function CapturePage() {
   const { data: upcomingReminders, isLoading: loadingReminders, error: remindersError } = useQuery({
     queryKey: ['upcoming-reminders'],
     queryFn: getUpcomingReminders,
+  });
+
+  // Fetch all topics for suggestion matching
+  const { data: allTopics } = useQuery({
+    queryKey: ['projects'],
+    queryFn: getAllProjects,
   });
 
   // Debug: Log reminders data
@@ -589,6 +596,7 @@ export function CapturePage() {
       setPreLinkedUrlPageId(null);
       setAddedUrlPage(null);
       setTopicInput('');
+      setSuggestedTopic(null);
       reset();
 
       // Success haptic feedback
@@ -640,6 +648,49 @@ export function CapturePage() {
     const newValue = e.target.value;
     setTextValue(newValue);
     setValue('text', newValue); // Update form value
+  };
+
+  // Topic input handler with smart suggestions
+  const handleTopicInputChange = (value: string) => {
+    setTopicInput(value);
+    setSuggestedTopic(null);
+
+    if (!value.trim() || !allTopics || allTopics.length === 0) {
+      return;
+    }
+
+    const inputLower = value.trim().toLowerCase();
+
+    // Find similar topics using fuzzy matching
+    const similarTopic = allTopics.find((topic: any) => {
+      const topicNameLower = topic.name.toLowerCase();
+
+      // Don't suggest if exact match (case-insensitive)
+      if (topicNameLower === inputLower) {
+        return false;
+      }
+
+      // Check if the existing topic contains the input or vice versa
+      return topicNameLower.includes(inputLower) || inputLower.includes(topicNameLower);
+    });
+
+    if (similarTopic) {
+      setSuggestedTopic({ id: similarTopic.id, name: similarTopic.name });
+    }
+  };
+
+  // Accept suggested topic
+  const acceptSuggestedTopic = () => {
+    if (suggestedTopic) {
+      setTopicInput(suggestedTopic.name);
+      setSuggestedTopic(null);
+      haptic('success');
+    }
+  };
+
+  // Dismiss suggested topic
+  const dismissSuggestedTopic = () => {
+    setSuggestedTopic(null);
   };
 
   // Voice input handler
@@ -922,7 +973,7 @@ export function CapturePage() {
         </div>
 
         {/* Topic input field */}
-        <div>
+        <div className="relative">
           <label htmlFor="topic" className="block text-sm font-medium text-gray-700 mb-1">
             Topic (optional)
           </label>
@@ -930,10 +981,40 @@ export function CapturePage() {
             id="topic"
             type="text"
             value={topicInput}
-            onChange={(e) => setTopicInput(e.target.value)}
+            onChange={(e) => handleTopicInputChange(e.target.value)}
             placeholder="Enter topic name..."
             className="w-full h-12 md:h-10 px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           />
+
+          {/* Topic suggestion popup */}
+          {suggestedTopic && (
+            <div className="absolute left-0 right-0 mt-1 p-3 bg-blue-50 border border-blue-200 rounded-md shadow-sm z-10">
+              <div className="flex items-start gap-2">
+                <div className="flex-1">
+                  <p className="text-sm text-gray-700 mb-1">
+                    Did you mean <span className="font-semibold text-blue-700">{suggestedTopic.name}</span>?
+                  </p>
+                </div>
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={acceptSuggestedTopic}
+                    className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded transition-colors"
+                  >
+                    Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={dismissSuggestedTopic}
+                    className="px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+                  >
+                    No
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <p className="mt-1 text-xs text-gray-500">
             Topic will be created if it doesn't exist, or linked if it does
           </p>
