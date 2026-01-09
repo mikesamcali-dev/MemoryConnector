@@ -82,6 +82,7 @@ export function CapturePage() {
   const [loadingPeople, setLoadingPeople] = useState(false);
   const [loadingLocations, setLoadingLocations] = useState(false);
   const [loadingProjects, setLoadingProjects] = useState(false);
+  const [projectSearchTerm, setProjectSearchTerm] = useState('');
 
   // Voice input state
   const [isListening, setIsListening] = useState(false);
@@ -412,6 +413,7 @@ export function CapturePage() {
   // Add project handler
   const handleAddProject = async () => {
     setShowProjectSelector(true);
+    setProjectSearchTerm('');
     setLoadingProjects(true);
     try {
       const projects = await getAllProjects();
@@ -1419,12 +1421,20 @@ export function CapturePage() {
         </div>
       )}
 
-      {/* Project selection modal */}
+      {/* Topic selection modal */}
       {showProjectSelector && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
             <div className="p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Select a Project</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">Select a Topic</h2>
+              <input
+                type="text"
+                value={projectSearchTerm}
+                onChange={(e) => setProjectSearchTerm(e.target.value)}
+                placeholder="Search topics..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                autoFocus
+              />
             </div>
             <div className="flex-1 overflow-y-auto p-4">
               {loadingProjects ? (
@@ -1434,27 +1444,38 @@ export function CapturePage() {
               ) : allProjects.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <FolderKanban className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                  <p>No projects found. Create a project first!</p>
+                  <p>No topics found. Create a topic first!</p>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {allProjects.map((project) => (
-                    <button
-                      key={project.id}
-                      onClick={() => handleSelectProject(project.id)}
-                      className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
-                    >
-                      <p className="font-medium text-gray-900">{project.name || 'Unnamed'}</p>
-                      {project.description && (
-                        <p className="text-sm text-gray-500 line-clamp-1">{project.description}</p>
-                      )}
-                      {project._count?.memoryLinks !== undefined && (
-                        <p className="text-xs text-gray-400 mt-1">
-                          {project._count.memoryLinks} {project._count.memoryLinks === 1 ? 'memory' : 'memories'}
-                        </p>
-                      )}
-                    </button>
-                  ))}
+                  {allProjects
+                    .filter((project) =>
+                      project.name.toLowerCase().includes(projectSearchTerm.toLowerCase())
+                    )
+                    .map((project) => (
+                      <button
+                        key={project.id}
+                        onClick={() => handleSelectProject(project.id)}
+                        className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                      >
+                        <p className="font-medium text-gray-900">{project.name || 'Unnamed'}</p>
+                        {project.description && (
+                          <p className="text-sm text-gray-500 line-clamp-1">{project.description}</p>
+                        )}
+                        {project._count?.memoryLinks !== undefined && (
+                          <p className="text-xs text-gray-400 mt-1">
+                            {project._count.memoryLinks} {project._count.memoryLinks === 1 ? 'memory' : 'memories'}
+                          </p>
+                        )}
+                      </button>
+                    ))}
+                  {allProjects.filter((project) =>
+                    project.name.toLowerCase().includes(projectSearchTerm.toLowerCase())
+                  ).length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>No topics match your search</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

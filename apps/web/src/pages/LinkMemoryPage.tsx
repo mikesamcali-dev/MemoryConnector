@@ -9,6 +9,7 @@ import {
 } from '../api/memoryRelationships';
 import { getAllWords } from '../api/words';
 import { getAllProjects, linkMemoryToProject } from '../api/projects';
+import { getAllTikTokVideos } from '../api/tiktok';
 import { ArrowLeft, Save, Link as LinkIcon, Plus, X, Trash2, MapPin, Video, BookOpen, FolderKanban } from 'lucide-react';
 
 export function LinkMemoryPage() {
@@ -18,7 +19,7 @@ export function LinkMemoryPage() {
 
   const [textContent, setTextContent] = useState('');
   const [originalTextContent, setOriginalTextContent] = useState('');
-  const [linkType, setLinkType] = useState<'person' | 'event' | 'location' | 'video' | 'word' | 'project' | null>(null);
+  const [linkType, setLinkType] = useState<'person' | 'event' | 'location' | 'video' | 'word' | 'project' | 'tiktok' | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [newLocationName, setNewLocationName] = useState('');
   const [latitude, setLatitude] = useState<string>('');
@@ -78,6 +79,12 @@ export function LinkMemoryPage() {
     queryKey: ['projects'],
     queryFn: getAllProjects,
     enabled: linkType === 'project',
+  });
+
+  const { data: tiktokVideos } = useQuery({
+    queryKey: ['tiktok-videos'],
+    queryFn: () => getAllTikTokVideos(0, 100),
+    enabled: linkType === 'tiktok',
   });
 
   // Fetch relationships
@@ -146,6 +153,15 @@ export function LinkMemoryPage() {
   const linkProjectMutation = useMutation({
     mutationFn: (projectId: string) =>
       linkMemoryToProject(projectId, id!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['memory', id] });
+      navigate(`/app/memories/${id}`);
+    },
+  });
+
+  const linkTikTokMutation = useMutation({
+    mutationFn: (tiktokVideoId: string) =>
+      updateMemory(id!, { tiktokVideoId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['memory', id] });
       navigate(`/app/memories/${id}`);
@@ -243,6 +259,16 @@ export function LinkMemoryPage() {
         ? projects?.filter((p) => p.name.toLowerCase().includes(term)) || []
         : projects || [];
     }
+    if (linkType === 'tiktok') {
+      // Show all TikTok videos when no search term, or filter when searching
+      return searchTerm
+        ? tiktokVideos?.filter((v) =>
+            v.title?.toLowerCase().includes(term) ||
+            v.creatorDisplayName?.toLowerCase().includes(term) ||
+            v.creatorUsername?.toLowerCase().includes(term)
+          ) || []
+        : tiktokVideos || [];
+    }
 
     return [];
   };
@@ -260,6 +286,8 @@ export function LinkMemoryPage() {
       linkWordMutation.mutate(itemId);
     } else if (linkType === 'project') {
       linkProjectMutation.mutate(itemId);
+    } else if (linkType === 'tiktok') {
+      linkTikTokMutation.mutate(itemId);
     }
   };
 
@@ -479,6 +507,24 @@ export function LinkMemoryPage() {
             </div>
             <div className="text-xs text-gray-500 mt-1">Link to a topic</div>
           </button>
+
+          <button
+            onClick={() => {
+              setLinkType('tiktok');
+              setSearchTerm('');
+            }}
+            className={`p-4 border-2 rounded-lg text-center transition-all ${
+              linkType === 'tiktok'
+                ? 'border-blue-600 bg-blue-50 text-blue-700'
+                : 'border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <div className="font-semibold flex items-center justify-center gap-2">
+              <Video className="h-4 w-4" />
+              TikTok
+            </div>
+            <div className="text-xs text-gray-500 mt-1">Link to a TikTok video</div>
+          </button>
         </div>
 
         {/* Link Search */}
@@ -634,12 +680,18 @@ export function LinkMemoryPage() {
                             {linkType === 'video' && item.title}
                             {linkType === 'word' && item.word}
                             {linkType === 'project' && item.name}
+                            {linkType === 'tiktok' && item.title}
                           </div>
                           {linkType === 'person' && item.email && (
                             <div className="text-xs text-gray-500 mt-1">{item.email}</div>
                           )}
                           {linkType === 'video' && item.creatorDisplayName && (
                             <div className="text-xs text-gray-500 mt-1">{item.creatorDisplayName}</div>
+                          )}
+                          {linkType === 'tiktok' && (item.creatorUsername || item.creatorDisplayName) && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              {item.creatorUsername ? `@${item.creatorUsername}` : item.creatorDisplayName}
+                            </div>
                           )}
                           {linkType === 'location' && (item.address || item.city || item.state) && (
                             <div className="text-xs text-gray-500 mt-1">
