@@ -47,7 +47,6 @@ export function CapturePage() {
   const [trainingInput, setTrainingInput] = useState('');
   const [suggestedTraining, setSuggestedTraining] = useState<{ id: string; name: string } | null>(null);
   const [reminderButtonEnabled, setReminderButtonEnabled] = useState(false);
-  const [createReminder, setCreateReminder] = useState(false);
   const [linkedEntities, setLinkedEntities] = useState<{
     persons: string[];
     locations: string[];
@@ -587,7 +586,7 @@ export function CapturePage() {
       setImagePreview(null);
       setCompressionInfo('');
       setAddedUrlPage(null);
-      setLinkedEntities({ persons: [], locations: [], youtubeVideos: [], tiktokVideos: [], projects: [] });
+      setLinkedEntities({ persons: [], locations: [], youtubeVideos: [], tiktokVideos: [], projects: [], trainings: [] });
       setReminderButtonEnabled(false);
       localStorage.removeItem('memoryDraft');
 
@@ -1233,7 +1232,6 @@ export function CapturePage() {
               id="text"
               value={textValue}
               onChange={handleTextChange}
-              onBlur={handleTextBlur}
               rows={window.innerWidth < 768 ? 4 : 6}
               autoFocus
               className="w-full px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"

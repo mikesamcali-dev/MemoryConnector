@@ -19,7 +19,6 @@ import {
   Trash2,
   ExternalLink,
   Tag,
-  Plus,
   Presentation,
   X,
 } from 'lucide-react';
