@@ -41,6 +41,10 @@ const WordsPage = lazy(() => import('./pages/WordsPage').then(m => ({ default: m
 const WordDetailPage = lazy(() => import('./pages/WordDetailPage').then(m => ({ default: m.WordDetailPage })));
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage').then(m => ({ default: m.ProjectsPage })));
 const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage').then(m => ({ default: m.ProjectDetailPage })));
+const TrainingsPage = lazy(() => import('./pages/TrainingsPage').then(m => ({ default: m.TrainingsPage })));
+const TrainingDetailPage = lazy(() => import('./pages/TrainingDetailPage').then(m => ({ default: m.TrainingDetailPage })));
+const TrainingDecksListPage = lazy(() => import('./pages/TrainingDecksListPage').then(m => ({ default: m.TrainingDecksListPage })));
+const TrainingDeckViewerPage = lazy(() => import('./pages/TrainingDeckViewerPage').then(m => ({ default: m.TrainingDeckViewerPage })));
 
 function App() {
   return (
@@ -166,6 +170,44 @@ function App() {
                   <AppLayout>
                     <ProjectDetailPage />
                   </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/trainings"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <TrainingsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/trainings/:id"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <TrainingDetailPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/training-decks"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <TrainingDecksListPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/training-decks/:id/view"
+              element={
+                <ProtectedRoute>
+                  <TrainingDeckViewerPage />
                 </ProtectedRoute>
               }
             />

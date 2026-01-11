@@ -110,6 +110,8 @@ model User {
   urlPages            UrlPage[]
   slideDecks          SlideDeck[]
   projects            Project[]
+  trainings           Training[]
+  trainingDecks       TrainingDeck[]
 
   @@map("users")
 }
@@ -284,7 +286,9 @@ model Memory {
   urlPageLinks        MemoryUrlPageLink[]
   projectLinks        MemoryProjectLink[]
   personLinks         MemoryPersonLink[]
+  trainingLinks       MemoryTrainingLink[]
   slides              Slide[]
+  trainingLessons     TrainingLesson[]
 
   @@index([userId, state])
   @@index([userId, contentHash, createdAt])
@@ -613,11 +617,13 @@ model Image {
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
-  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  faces        ImageFace[]
-  memoryLinks  MemoryImageLink[]
-  personLinks  ImagePersonLink[]
-  projectLinks ProjectImageLink[]
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  faces         ImageFace[]
+  memoryLinks   MemoryImageLink[]
+  personLinks   ImagePersonLink[]
+  projectLinks  ProjectImageLink[]
+  trainingLinks TrainingImageLink[]
+  trainingLessons TrainingLesson[]
 
   @@unique([userId, sha256])
   @@index([userId])
@@ -711,10 +717,12 @@ model UrlPage {
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  memoryLinks  MemoryUrlPageLink[]
-  projectLinks ProjectUrlPageLink[]
-  personLinks  PersonUrlPageLink[]
+  user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memoryLinks     MemoryUrlPageLink[]
+  projectLinks    ProjectUrlPageLink[]
+  personLinks     PersonUrlPageLink[]
+  trainingLinks   TrainingUrlPageLink[]
+  trainingLessons TrainingLesson[]
 
   @@unique([userId, urlHash])
   @@index([userId])
@@ -819,9 +827,11 @@ model YouTubeVideo {
   updatedAt          DateTime          @updatedAt @map("updated_at")
 
   // Relations
-  memories     Memory[]
-  projectLinks ProjectYouTubeVideoLink[]
-  personLinks  PersonYouTubeVideoLink[]
+  memories        Memory[]
+  projectLinks    ProjectYouTubeVideoLink[]
+  personLinks     PersonYouTubeVideoLink[]
+  trainingLinks   TrainingYouTubeVideoLink[]
+  trainingLessons TrainingLesson[]
 
   @@unique([platform, youtubeVideoId])
   @@unique([canonicalUrl])
@@ -892,9 +902,11 @@ model TikTokVideo {
   updatedAt          DateTime          @updatedAt @map("updated_at")
 
   // Relations
-  memories     Memory[]
-  projectLinks ProjectTikTokVideoLink[]
-  personLinks  PersonTikTokVideoLink[]
+  memories        Memory[]
+  projectLinks    ProjectTikTokVideoLink[]
+  personLinks     PersonTikTokVideoLink[]
+  trainingLinks   TrainingTikTokVideoLink[]
+  trainingLessons TrainingLesson[]
 
   @@unique([platform, tiktokVideoId])
   @@unique([canonicalUrl])
@@ -1145,4 +1157,152 @@ model Slide {
   @@index([slideDeckId, sortOrder])
   @@index([memoryId])
   @@map("slides")
+}
+
+// ============================================================================
+// TRAINING & TRAINING DECKS
+// ============================================================================
+
+// Trainings - user-specific training organization entity
+model Training {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  name        String   @db.VarChar(200)
+  description String?  @db.Text
+  tags        Json?    @default("[]")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user              User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memoryLinks       MemoryTrainingLink[]
+  imageLinks        TrainingImageLink[]
+  urlPageLinks      TrainingUrlPageLink[]
+  youtubeVideoLinks TrainingYouTubeVideoLink[]
+  tiktokVideoLinks  TrainingTikTokVideoLink[]
+  trainingDecks     TrainingDeck[]
+
+  @@index([userId])
+  @@index([userId, name])
+  @@map("trainings")
+}
+
+// Memory-Training Links (Many-to-Many)
+model MemoryTrainingLink {
+  id         String   @id @default(uuid()) @db.Uuid
+  memoryId   String   @map("memory_id") @db.Uuid
+  trainingId String   @map("training_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  memory   Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  training Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+
+  @@unique([memoryId, trainingId])
+  @@index([memoryId])
+  @@index([trainingId])
+  @@map("memory_training_links")
+}
+
+// Training-Image Links (Many-to-Many)
+model TrainingImageLink {
+  id         String   @id @default(uuid()) @db.Uuid
+  trainingId String   @map("training_id") @db.Uuid
+  imageId    String   @map("image_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  training Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  image    Image    @relation(fields: [imageId], references: [id], onDelete: Cascade)
+
+  @@unique([trainingId, imageId])
+  @@index([trainingId])
+  @@index([imageId])
+  @@map("training_image_links")
+}
+
+// Training-UrlPage Links (Many-to-Many)
+model TrainingUrlPageLink {
+  id         String   @id @default(uuid()) @db.Uuid
+  trainingId String   @map("training_id") @db.Uuid
+  urlPageId  String   @map("url_page_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  training Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  urlPage  UrlPage  @relation(fields: [urlPageId], references: [id], onDelete: Cascade)
+
+  @@unique([trainingId, urlPageId])
+  @@index([trainingId])
+  @@index([urlPageId])
+  @@map("training_url_page_links")
+}
+
+// Training-YouTubeVideo Links (Many-to-Many)
+model TrainingYouTubeVideoLink {
+  id             String       @id @default(uuid()) @db.Uuid
+  trainingId     String       @map("training_id") @db.Uuid
+  youtubeVideoId String       @map("youtube_video_id") @db.Uuid
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  training     Training     @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  youtubeVideo YouTubeVideo @relation(fields: [youtubeVideoId], references: [id], onDelete: Cascade)
+
+  @@unique([trainingId, youtubeVideoId])
+  @@index([trainingId])
+  @@index([youtubeVideoId])
+  @@map("training_youtube_video_links")
+}
+
+// Training-TikTokVideo Links (Many-to-Many)
+model TrainingTikTokVideoLink {
+  id            String      @id @default(uuid()) @db.Uuid
+  trainingId    String      @map("training_id") @db.Uuid
+  tiktokVideoId String      @map("tiktok_video_id") @db.Uuid
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  training    Training    @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  tiktokVideo TikTokVideo @relation(fields: [tiktokVideoId], references: [id], onDelete: Cascade)
+
+  @@unique([trainingId, tiktokVideoId])
+  @@index([trainingId])
+  @@index([tiktokVideoId])
+  @@map("training_tiktok_video_links")
+}
+
+// Training Decks - sequential presentation of training content
+model TrainingDeck {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  trainingId  String   @map("training_id") @db.Uuid
+  title       String?  @db.VarChar(200)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  training        Training         @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  trainingLessons TrainingLesson[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([trainingId])
+  @@map("training_decks")
+}
+
+// Training Lessons - polymorphic content items in a training deck
+model TrainingLesson {
+  id             String   @id @default(uuid()) @db.Uuid
+  trainingDeckId String   @map("training_deck_id") @db.Uuid
+  memoryId       String?  @map("memory_id") @db.Uuid
+  imageId        String?  @map("image_id") @db.Uuid
+  urlPageId      String?  @map("url_page_id") @db.Uuid
+  youtubeVideoId String?  @map("youtube_video_id") @db.Uuid
+  tiktokVideoId  String?  @map("tiktok_video_id") @db.Uuid
+  sortOrder      Int      @map("sort_order")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  trainingDeck TrainingDeck  @relation(fields: [trainingDeckId], references: [id], onDelete: Cascade)
+  memory       Memory?       @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  image        Image?        @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  urlPage      UrlPage?      @relation(fields: [urlPageId], references: [id], onDelete: Cascade)
+  youtubeVideo YouTubeVideo? @relation(fields: [youtubeVideoId], references: [id], onDelete: Cascade)
+  tiktokVideo  TikTokVideo?  @relation(fields: [tiktokVideoId], references: [id], onDelete: Cascade)
+
+  @@index([trainingDeckId, sortOrder])
+  @@map("training_lessons")
 }

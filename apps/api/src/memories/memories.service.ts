@@ -27,7 +27,7 @@ export class MemoriesService {
   ) {}
 
   async create(userId: string, createMemoryDto: CreateMemoryDto) {
-    const { textContent, imageUrl, typeId, latitude, longitude, locationId, personId, youtubeVideoId, tiktokVideoId } = createMemoryDto;
+    const { textContent, imageUrl, typeId, latitude, longitude, locationId, personId, youtubeVideoId, tiktokVideoId, createReminder } = createMemoryDto;
 
     // Check for content-based duplicate
     const contentHash = this.duplicateDetection.computeContentHash(
@@ -119,33 +119,35 @@ export class MemoriesService {
     // Increment usage
     await this.usageService.incrementUsage(userId, 'memories');
 
-    // Create reminders based on user preferences
-    const prefs = await this.userPreferencesService.getReminderPreferences(userId);
+    // Create reminders only if explicitly requested
+    if (createMemoryDto.createReminder) {
+      const prefs = await this.userPreferencesService.getReminderPreferences(userId);
 
-    if (prefs.remindersEnabled) {
-      console.log('Creating reminders for memory:', memory.id);
-      const now = new Date();
+      if (prefs.remindersEnabled) {
+        console.log('Creating reminders for memory:', memory.id);
+        const now = new Date();
 
-      const reminderTimes = [
-        new Date(now.getTime() + prefs.firstReminderMinutes * 60 * 1000),
-        new Date(now.getTime() + prefs.secondReminderMinutes * 60 * 1000),
-        new Date(now.getTime() + prefs.thirdReminderMinutes * 60 * 1000),
-      ];
+        const reminderTimes = [
+          new Date(now.getTime() + prefs.firstReminderMinutes * 60 * 1000),
+          new Date(now.getTime() + prefs.secondReminderMinutes * 60 * 1000),
+          new Date(now.getTime() + prefs.thirdReminderMinutes * 60 * 1000),
+        ];
 
-      const createdReminders = await Promise.all(
-        reminderTimes.map((scheduledAt) =>
-          this.prisma.reminder.create({
-            data: {
-              userId,
-              memoryId: memory.id,
-              scheduledAt,
-              status: 'pending',
-            },
-          })
-        )
-      );
+        const createdReminders = await Promise.all(
+          reminderTimes.map((scheduledAt) =>
+            this.prisma.reminder.create({
+              data: {
+                userId,
+                memoryId: memory.id,
+                scheduledAt,
+                status: 'pending',
+              },
+            })
+          )
+        );
 
-      console.log(`Created ${createdReminders.length} reminders for memory`);
+        console.log(`Created ${createdReminders.length} reminders for memory`);
+      }
     }
 
     // Queue for enrichment (handles circuit breaker internally)

@@ -236,6 +236,7 @@ export interface CreateMemoryDto {
   textContent?: string;
   imageUrl?: string;
   typeId?: string;
+  createReminder?: boolean;
 }
 
 export async function createMemory(draft: {
@@ -248,6 +249,7 @@ export async function createMemory(draft: {
   personId?: string;
   youtubeVideoId?: string;
   tiktokVideoId?: string;
+  createReminder?: boolean;
   idempotencyKey: string
 }): Promise<Memory> {
   const response = await fetchWithAuth('/memories', {
@@ -265,6 +267,7 @@ export async function createMemory(draft: {
       personId: draft.personId,
       youtubeVideoId: draft.youtubeVideoId,
       tiktokVideoId: draft.tiktokVideoId,
+      createReminder: draft.createReminder,
     }),
   });
 

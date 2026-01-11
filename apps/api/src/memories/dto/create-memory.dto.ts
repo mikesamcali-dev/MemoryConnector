@@ -50,5 +50,9 @@ export class CreateMemoryDto {
   @IsOptional()
   @IsUUID()
   tiktokVideoId?: string;
+
+  @ApiProperty({ required: false, description: 'Whether to create reminders for this memory' })
+  @IsOptional()
+  createReminder?: boolean;
 }
 

@@ -11,11 +11,12 @@ import { uploadImage, linkImageToMemory } from '../api/images';
 import { addUrl, linkUrlPageToMemory } from '../api/urlPages';
 import { extractTikTokMetadata, createTikTokVideo } from '../api/tiktok';
 import { getAllProjects, linkMemoryToProject } from '../api/projects';
+import { getAllTrainings, linkMemoryToTraining } from '../api/trainings';
 import { createDraft } from '../utils/idempotency';
 import { compressImage, getSizeReduction } from '../utils/imageCompression';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Clock, AlertCircle, Calendar, Loader, Users, MapPinned, Video, Image as ImageIcon, Link as LinkIcon, X, Mic, FolderKanban } from 'lucide-react';
+import { Clock, AlertCircle, Calendar, Loader, Users, MapPinned, Video, Image as ImageIcon, Link as LinkIcon, X, Mic, FolderKanban, GraduationCap } from 'lucide-react';
 import { useHaptics } from '../hooks/useHaptics';
 
 const memorySchema = z.object({
@@ -43,13 +44,18 @@ export function CapturePage() {
   const [textValue, setTextValue] = useState('');
   const [topicInput, setTopicInput] = useState('');
   const [suggestedTopic, setSuggestedTopic] = useState<{ id: string; name: string } | null>(null);
+  const [trainingInput, setTrainingInput] = useState('');
+  const [suggestedTraining, setSuggestedTraining] = useState<{ id: string; name: string } | null>(null);
+  const [reminderButtonEnabled, setReminderButtonEnabled] = useState(false);
+  const [createReminder, setCreateReminder] = useState(false);
   const [linkedEntities, setLinkedEntities] = useState<{
     persons: string[];
     locations: string[];
     youtubeVideos: string[];
     tiktokVideos: string[];
     projects: string[];
-  }>({ persons: [], locations: [], youtubeVideos: [], tiktokVideos: [], projects: [] });
+    trainings: string[];
+  }>({ persons: [], locations: [], youtubeVideos: [], tiktokVideos: [], projects: [], trainings: [] });
 
   // Image upload state
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -72,17 +78,21 @@ export function CapturePage() {
   const [addingYouTube, setAddingYouTube] = useState(false);
   const [youtubeError, setYoutubeError] = useState('');
 
-  // Person/Location/Project selection state
+  // Person/Location/Project/Training selection state
   const [showPersonSelector, setShowPersonSelector] = useState(false);
   const [showLocationSelector, setShowLocationSelector] = useState(false);
   const [showProjectSelector, setShowProjectSelector] = useState(false);
+  const [showTrainingSelector, setShowTrainingSelector] = useState(false);
   const [allPeople, setAllPeople] = useState<any[]>([]);
   const [allLocations, setAllLocations] = useState<any[]>([]);
   const [allProjects, setAllProjects] = useState<any[]>([]);
+  const [allTrainings, setAllTrainings] = useState<any[]>([]);
   const [loadingPeople, setLoadingPeople] = useState(false);
   const [loadingLocations, setLoadingLocations] = useState(false);
   const [loadingProjects, setLoadingProjects] = useState(false);
+  const [loadingTrainings, setLoadingTrainings] = useState(false);
   const [projectSearchTerm, setProjectSearchTerm] = useState('');
+  const [trainingSearchTerm, setTrainingSearchTerm] = useState('');
 
   // Voice input state
   const [isListening, setIsListening] = useState(false);
@@ -98,6 +108,12 @@ export function CapturePage() {
   const { data: allTopics } = useQuery({
     queryKey: ['projects'],
     queryFn: getAllProjects,
+  });
+
+  // Fetch all trainings for suggestion matching
+  const { data: allTrainingsData } = useQuery({
+    queryKey: ['trainings'],
+    queryFn: getAllTrainings,
   });
 
   // Debug: Log reminders data
@@ -443,11 +459,164 @@ export function CapturePage() {
     }));
   };
 
+  // Add training handler
+  const handleAddTraining = async () => {
+    setShowTrainingSelector(true);
+    setTrainingSearchTerm('');
+    setLoadingTrainings(true);
+    try {
+      const trainings = await getAllTrainings();
+      setAllTrainings(trainings);
+    } catch (err) {
+      console.error('Failed to load trainings:', err);
+    } finally {
+      setLoadingTrainings(false);
+    }
+  };
+
+  // Select a training
+  const handleSelectTraining = (trainingId: string) => {
+    setLinkedEntities(prev => ({
+      ...prev,
+      trainings: [trainingId], // Only one training per memory for now
+    }));
+    setShowTrainingSelector(false);
+    haptic('success');
+  };
+
+  // Remove linked training
+  const handleRemoveTraining = () => {
+    setLinkedEntities(prev => ({
+      ...prev,
+      trainings: [],
+    }));
+  };
+
+  // Handle reminder button click - saves memory with reminder
+  const handleReminderButtonClick = async () => {
+    if (!textValue.trim()) {
+      return;
+    }
+    
+    haptic('light');
+    setError('');
+    setIsRateLimitError(false);
+    setLoading(true);
+    setCreateReminder(true); // Set flag to create reminder
+    
+    try {
+      const memoryDraft = createDraft(textValue);
+      setDraft(memoryDraft);
+      localStorage.setItem('memoryDraft', JSON.stringify(memoryDraft));
+
+      const createdMemory = await createMemory({
+        ...memoryDraft,
+        locationId: linkedEntities.locations[0] || undefined,
+        personId: linkedEntities.persons[0] || undefined,
+        youtubeVideoId: linkedEntities.youtubeVideos[0] || undefined,
+        tiktokVideoId: linkedEntities.tiktokVideos[0] || undefined,
+        createReminder: true,
+      });
+
+      // Upload and link image if one was selected
+      if (selectedImage) {
+        try {
+          setUploadingImage(true);
+          const reader = new FileReader();
+          const imageDataPromise = new Promise<string>((resolve, reject) => {
+            reader.onloadend = () => {
+              const result = reader.result as string;
+              const base64Data = result.split(',')[1];
+              resolve(base64Data);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(selectedImage);
+          });
+
+          const imageData = await imageDataPromise;
+          const uploadedImage = await uploadImage({
+            imageData,
+            contentType: selectedImage.type,
+            filename: selectedImage.name,
+          });
+          await linkImageToMemory(uploadedImage.id, createdMemory.id);
+        } catch (imageError) {
+          console.error('Failed to upload image:', imageError);
+        } finally {
+          setUploadingImage(false);
+        }
+      }
+
+      // Link URL if one was added
+      if (addedUrlPage) {
+        try {
+          await linkUrlPageToMemory(addedUrlPage.id, createdMemory.id);
+        } catch (urlError) {
+          console.error('Failed to link URL:', urlError);
+        }
+      }
+
+      // Link project if one was selected
+      if (linkedEntities.projects[0]) {
+        try {
+          await linkMemoryToProject(createdMemory.id, linkedEntities.projects[0]);
+        } catch (projectError) {
+          console.error('Failed to link project:', projectError);
+        }
+      }
+
+      // Process phrase/word linking if text is 1-3 words
+      if (textValue.trim().split(/\s+/).length <= 3) {
+        try {
+          await processMemoryPhrase(createdMemory.id, textValue.trim());
+        } catch (phraseError) {
+          console.error('Failed to process phrase:', phraseError);
+        }
+      }
+
+      // Link topic if one was entered
+      if (topicInput.trim()) {
+        // Topic linking is handled separately via the topic input
+      }
+
+      // Reset form
+      reset({ text: '' });
+      setTextValue('');
+      setTopicInput('');
+      setSelectedImage(null);
+      setImagePreview(null);
+      setCompressionInfo('');
+      setAddedUrlPage(null);
+      setLinkedEntities({ persons: [], locations: [], youtubeVideos: [], tiktokVideos: [], projects: [] });
+      setReminderButtonEnabled(false);
+      localStorage.removeItem('memoryDraft');
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['memories'] });
+      queryClient.invalidateQueries({ queryKey: ['upcoming-reminders'] });
+
+      haptic('success');
+      navigate(`/app/memories/${createdMemory.id}`);
+    } catch (err: any) {
+      console.error('Create memory error:', err);
+      setError(err.message || 'Failed to create memory');
+      if (err.status === 429) {
+        setIsRateLimitError(true);
+      }
+      haptic('error');
+    } finally {
+      setLoading(false);
+      setCreateReminder(false);
+    setReminderButtonEnabled(false);
+    }
+  };
+
   const onSubmit = async (data: { text: string }) => {
     haptic('light'); // Haptic feedback on submit
     setError('');
     setIsRateLimitError(false);
     setLoading(true);
+    setCreateReminder(false); // Regular submit doesn't create reminder
 
     try {
       const memoryDraft = createDraft(data.text);
@@ -460,6 +629,7 @@ export function CapturePage() {
         personId: linkedEntities.persons[0] || undefined,
         youtubeVideoId: linkedEntities.youtubeVideos[0] || undefined,
         tiktokVideoId: linkedEntities.tiktokVideos[0] || undefined,
+        createReminder: false, // Regular submit doesn't create reminder
       });
 
       // Upload and link image if one was selected
@@ -581,6 +751,53 @@ export function CapturePage() {
         }
       }
 
+      // Handle training input - create or find training by name
+      if (trainingInput.trim()) {
+        try {
+          const { createTraining, getAllTrainings, linkMemoryToTraining } = await import('../api/trainings');
+
+          // Get all trainings to check if training already exists
+          const allTrainings = await getAllTrainings();
+          let trainingId: string | null = null;
+
+          // Check if a training with this name already exists (case-insensitive)
+          const existingTraining = allTrainings.find(
+            t => t.name.toLowerCase() === trainingInput.trim().toLowerCase()
+          );
+
+          if (existingTraining) {
+            // Training exists, use its ID
+            trainingId = existingTraining.id;
+            console.log('Found existing training:', existingTraining.name);
+          } else {
+            // Training doesn't exist, create it
+            const newTraining = await createTraining({ name: trainingInput.trim() });
+            trainingId = newTraining.id;
+            console.log('Created new training:', newTraining.name);
+          }
+
+          // Link memory to training
+          if (trainingId) {
+            await linkMemoryToTraining(trainingId, createdMemory.id);
+            console.log('Memory linked to training:', trainingId);
+          }
+        } catch (trainingError) {
+          console.error('Failed to create/link training:', trainingError);
+          // Don't fail the whole operation if training creation/linking fails
+        }
+      }
+
+      // Link to training if selected (from training selector button)
+      if (linkedEntities.trainings.length > 0) {
+        try {
+          await linkMemoryToTraining(linkedEntities.trainings[0], createdMemory.id);
+          console.log('Memory linked to training:', linkedEntities.trainings[0]);
+        } catch (trainingError) {
+          console.error('Failed to link memory to training:', trainingError);
+          // Don't fail the whole operation if training linking fails
+        }
+      }
+
       // Process phrase/word linking in background (fire and forget)
       // This handles 1-3 word memories, creating word entries and linking them
       processMemoryPhrase(createdMemory.id, data.text).catch(error => {
@@ -588,10 +805,10 @@ export function CapturePage() {
         // Don't fail the whole operation if phrase linking fails
       });
 
-      // Clear draft, linked entities, image, URL, and topic
+      // Clear draft, linked entities, image, URL, topic, and training
       localStorage.removeItem('memoryDraft');
       setDraft(createDraft());
-      setLinkedEntities({ persons: [], locations: [], youtubeVideos: [], tiktokVideos: [], projects: [] });
+      setLinkedEntities({ persons: [], locations: [], youtubeVideos: [], tiktokVideos: [], projects: [], trainings: [] });
       setSelectedImage(null);
       setImagePreview(null);
       setPreLinkedImageId(null);
@@ -599,6 +816,8 @@ export function CapturePage() {
       setAddedUrlPage(null);
       setTopicInput('');
       setSuggestedTopic(null);
+      setTrainingInput('');
+      setSuggestedTraining(null);
       reset();
 
       // Success haptic feedback
@@ -693,6 +912,49 @@ export function CapturePage() {
   // Dismiss suggested topic
   const dismissSuggestedTopic = () => {
     setSuggestedTopic(null);
+  };
+
+  // Training input handler with smart suggestions
+  const handleTrainingInputChange = (value: string) => {
+    setTrainingInput(value);
+    setSuggestedTraining(null);
+
+    if (!value.trim() || !allTrainingsData || allTrainingsData.length === 0) {
+      return;
+    }
+
+    const inputLower = value.trim().toLowerCase();
+
+    // Find similar trainings using fuzzy matching
+    const similarTraining = allTrainingsData.find((training: any) => {
+      const trainingNameLower = training.name.toLowerCase();
+
+      // Don't suggest if exact match (case-insensitive)
+      if (trainingNameLower === inputLower) {
+        return false;
+      }
+
+      // Check if the existing training contains the input or vice versa
+      return trainingNameLower.includes(inputLower) || inputLower.includes(trainingNameLower);
+    });
+
+    if (similarTraining) {
+      setSuggestedTraining({ id: similarTraining.id, name: similarTraining.name });
+    }
+  };
+
+  // Accept suggested training
+  const acceptSuggestedTraining = () => {
+    if (suggestedTraining) {
+      setTrainingInput(suggestedTraining.name);
+      setSuggestedTraining(null);
+      haptic('success');
+    }
+  };
+
+  // Dismiss suggested training
+  const dismissSuggestedTraining = () => {
+    setSuggestedTraining(null);
   };
 
   // Voice input handler
@@ -876,6 +1138,27 @@ export function CapturePage() {
         </div>
       )}
 
+      {/* Training linked indicator */}
+      {linkedEntities.trainings.length > 0 && (
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <GraduationCap className="h-5 w-5 text-purple-600" />
+              <p className="text-sm font-medium text-purple-900">
+                Training linked to this memory
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleRemoveTraining}
+              className="text-purple-600 hover:text-purple-800 focus:outline-none"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Pre-linked image indicator */}
       {preLinkedImageId && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
@@ -950,11 +1233,24 @@ export function CapturePage() {
               id="text"
               value={textValue}
               onChange={handleTextChange}
+              onBlur={handleTextBlur}
               rows={window.innerWidth < 768 ? 4 : 6}
               autoFocus
               className="w-full px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               placeholder="Write your memory here..."
             />
+            {/* Reminder button (R) - appears after text blur */}
+            {reminderButtonEnabled && (
+              <button
+                type="button"
+                onClick={handleReminderButtonClick}
+                disabled={loading || !textValue.trim()}
+                className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                title="Save memory and create reminder"
+              >
+                R
+              </button>
+            )}
             {/* Voice input button (mobile only) */}
             <button
               type="button"
@@ -1019,6 +1315,54 @@ export function CapturePage() {
 
           <p className="mt-1 text-xs text-gray-500">
             Topic will be created if it doesn't exist, or linked if it does
+          </p>
+        </div>
+
+        {/* Training input field */}
+        <div className="relative">
+          <label htmlFor="training" className="block text-sm font-medium text-gray-700 mb-1">
+            Training (optional)
+          </label>
+          <input
+            id="training"
+            type="text"
+            value={trainingInput}
+            onChange={(e) => handleTrainingInputChange(e.target.value)}
+            placeholder="Enter training name..."
+            className="w-full h-12 md:h-10 px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+          />
+
+          {/* Training suggestion popup */}
+          {suggestedTraining && (
+            <div className="absolute left-0 right-0 mt-1 p-3 bg-purple-50 border border-purple-200 rounded-md shadow-sm z-10">
+              <div className="flex items-start gap-2">
+                <div className="flex-1">
+                  <p className="text-sm text-gray-700 mb-1">
+                    Did you mean <span className="font-semibold text-purple-700">{suggestedTraining.name}</span>?
+                  </p>
+                </div>
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={acceptSuggestedTraining}
+                    className="px-2 py-1 text-xs font-medium text-purple-700 bg-purple-100 hover:bg-purple-200 rounded transition-colors"
+                  >
+                    Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={dismissSuggestedTraining}
+                    className="px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+                  >
+                    No
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <p className="mt-1 text-xs text-gray-500">
+            Training will be created if it doesn't exist, or linked if it does
           </p>
         </div>
 
@@ -1124,6 +1468,21 @@ export function CapturePage() {
             title="Link to topic"
           >
             <FolderKanban className="h-5 w-5 md:h-4 md:w-4 text-blue-600" />
+          </button>
+
+          {/* Training button */}
+          <button
+            type="button"
+            onClick={handleAddTraining}
+            disabled={linkedEntities.trainings.length > 0}
+            className={`inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border rounded-md shadow-sm text-base md:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+              linkedEntities.trainings.length > 0
+                ? 'border-purple-300 bg-purple-100 text-purple-400 cursor-not-allowed'
+                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+            title="Link to training"
+          >
+            <GraduationCap className="h-5 w-5 md:h-4 md:w-4 text-purple-600" />
           </button>
 
           {/* YouTube button */}
@@ -1482,6 +1841,76 @@ export function CapturePage() {
             <div className="p-4 border-t border-gray-200">
               <button
                 onClick={() => setShowProjectSelector(false)}
+                className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Training selection modal */}
+      {showTrainingSelector && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">Select a Training</h2>
+              <input
+                type="text"
+                value={trainingSearchTerm}
+                onChange={(e) => setTrainingSearchTerm(e.target.value)}
+                placeholder="Search trainings..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                autoFocus
+              />
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {loadingTrainings ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader className="h-8 w-8 animate-spin text-purple-600" />
+                </div>
+              ) : allTrainings.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <GraduationCap className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                  <p>No trainings found. Create a training first!</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {allTrainings
+                    .filter((training) =>
+                      training.name.toLowerCase().includes(trainingSearchTerm.toLowerCase())
+                    )
+                    .map((training) => (
+                      <button
+                        key={training.id}
+                        onClick={() => handleSelectTraining(training.id)}
+                        className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors"
+                      >
+                        <p className="font-medium text-gray-900">{training.name || 'Unnamed'}</p>
+                        {training.description && (
+                          <p className="text-sm text-gray-500 line-clamp-1">{training.description}</p>
+                        )}
+                        {training._count && (
+                          <p className="text-xs text-gray-400 mt-1">
+                            {training._count.memoryLinks || 0} memories, {training._count.imageLinks || 0} images, {training._count.youtubeVideoLinks || 0} videos
+                          </p>
+                        )}
+                      </button>
+                    ))}
+                  {allTrainings.filter((training) =>
+                    training.name.toLowerCase().includes(trainingSearchTerm.toLowerCase())
+                  ).length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>No trainings match your search</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="p-4 border-t border-gray-200">
+              <button
+                onClick={() => setShowTrainingSelector(false)}
                 className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
               >
                 Cancel

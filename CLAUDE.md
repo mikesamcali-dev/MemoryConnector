@@ -32,7 +32,7 @@ pnpm db:seed
 
 ### Development
 ```powershell
-# Start all services (root level)
+# Start all services (root level - runs API, web, and admin in parallel)
 pnpm dev
 
 # Or start services separately:
@@ -40,8 +40,12 @@ pnpm dev
 cd apps\api
 pnpm dev
 
-# Terminal 2: Frontend
+# Terminal 2: Main Web App
 cd apps\web
+pnpm dev
+
+# Terminal 3: Admin App (optional)
+cd apps\admin
 pnpm dev
 ```
 
@@ -141,6 +145,13 @@ pnpm reset:windows      # Clean environment and reset
 - Preserves original idempotency keys for proper deduplication
 - Conflict resolution handles `DUPLICATE_CONTENT` and `LIMIT_EXCEEDED` errors
 
+### Memory Linking System
+- **Generic Links:** `memory_links` table supports relationships between memories (LinkType: locatedAt, summaryOf, hasMedia, related, mentions)
+- **Automatic Linking:** Words and phrases automatically link to their memory definitions when detected in new memories
+- **Manual Linking:** Users can manually create links between memories, people, images, videos, etc.
+- **TikTok Integration:** Special linking for TikTok videos referenced in memories
+- **Topic Organization:** Memories can be grouped into topics/projects for organization
+
 ## Module Structure
 
 ### Backend (apps/api/src)
@@ -175,15 +186,40 @@ When working with modules, be aware of this dual structure and ensure imports re
 - **spell-check:** Dictionary-based spell checking
 - **user-preferences:** User-specific settings (e.g., reminder preferences)
 
-### Frontend (apps/web/src)
-- **pages:** Login, Signup, Capture, Search, Reminders, Settings
+**Content Processing Modules:**
+- **tiktok-videos:** TikTok video metadata and transcript extraction
+- **youtube-videos:** YouTube video metadata and transcript extraction
+- **images:** Image upload, storage (S3), and linking to memories
+- **url-pages:** Web page content extraction and summarization
+- **slidedecks:** Slidedeck creation and management
+
+**Organization Modules:**
+- **projects:** Topic/project management for organizing memories (API uses "projects" internally, UI shows as "Topics")
+- **reviews:** Spaced repetition review system
+- **gamification:** Points, achievements, and user engagement tracking
+- **audit-trail:** System-wide audit logging
+
+### Frontend Apps
+
+**Main App (apps/web/src):**
+- **pages:** Login, Signup, Capture, Search, Reminders, Settings, Topics (formerly Projects)
 - **components:** ProtectedRoute, SyncToast, UI components
 - **hooks:** useAuth, useOfflineSync
 - **contexts:** AuthContext
 - **api:** Typed API client with auto-refresh
 - **services/offline-queue:** IndexedDB queue management
 
+**Admin App (apps/admin/src):**
+- Separate React application for admin operations
+- Used for managing memory types, viewing system metrics, and administrative tasks
+- Built and deployed separately from main web app
+
 ## Important Implementation Details
+
+### Terminology Note: Projects vs Topics
+- **Backend/Database:** Uses "projects" terminology in code, table names, and API endpoints
+- **Frontend/UI:** Displays as "Topics" to end users (renamed in recent updates)
+- When working with this feature, be aware of this naming discrepancy between layers
 
 ### Authentication
 - Access tokens (JWT) expire in 15 minutes
@@ -268,7 +304,8 @@ The system implements a hybrid storage pattern where memories can use either:
 
 ## Access Points
 
-- **Frontend:** http://localhost:5173
+- **Main Web App:** http://localhost:5173
+- **Admin App:** http://localhost:5174 (when running separately)
 - **Backend API:** http://localhost:4000
 - **API Docs (Swagger):** http://localhost:4000/api/v1/docs
 - **Prisma Studio:** Run `cd apps\api && pnpm db:studio`
