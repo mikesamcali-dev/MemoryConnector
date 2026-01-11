@@ -501,8 +501,7 @@ export function CapturePage() {
     setError('');
     setIsRateLimitError(false);
     setLoading(true);
-    setCreateReminder(true); // Set flag to create reminder
-    
+
     try {
       const memoryDraft = createDraft(textValue);
       setDraft(memoryDraft);
@@ -605,8 +604,7 @@ export function CapturePage() {
       haptic('error');
     } finally {
       setLoading(false);
-      setCreateReminder(false);
-    setReminderButtonEnabled(false);
+      setReminderButtonEnabled(false);
     }
   };
 
@@ -615,7 +613,6 @@ export function CapturePage() {
     setError('');
     setIsRateLimitError(false);
     setLoading(true);
-    setCreateReminder(false); // Regular submit doesn't create reminder
 
     try {
       const memoryDraft = createDraft(data.text);
