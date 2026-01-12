@@ -52,7 +52,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     : baseNavItems;
 
   // Items shown in bottom nav (mobile) - defined in BottomNav component
-  const bottomNavPaths = ['/app/capture', '/app/slidedecks', '/app/search', '/app/projects'];
+  const bottomNavPaths = ['/app/capture', '/app/slidedecks', '/app/training-decks', '/app/search'];
 
   // Primary nav items for desktop
   const desktopPrimaryPaths = ['/app/capture', '/app/slidedecks', '/app/projects', '/app/images'];

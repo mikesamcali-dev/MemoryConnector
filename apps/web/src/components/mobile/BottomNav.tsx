@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Plus, Search, MoreHorizontal, Presentation, FolderKanban } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Presentation, GraduationCap } from 'lucide-react';
 
 interface BottomNavProps {
   onMoreClick?: () => void;
@@ -15,8 +15,8 @@ export function BottomNav({ onMoreClick }: BottomNavProps) {
   const navItems = [
     { path: '/app/capture', icon: Plus, label: 'Capture' },
     { path: '/app/slidedecks', icon: Presentation, label: 'Slides' },
+    { path: '/app/training-decks', icon: GraduationCap, label: 'Train' },
     { path: '/app/search', icon: Search, label: 'Search' },
-    { path: '/app/projects', icon: FolderKanban, label: 'Topics' },
   ];
 
   return (
