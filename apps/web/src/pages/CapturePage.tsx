@@ -16,7 +16,7 @@ import { createDraft } from '../utils/idempotency';
 import { compressImage, getSizeReduction } from '../utils/imageCompression';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Clock, AlertCircle, Calendar, Loader, Users, MapPinned, Video, Image as ImageIcon, Link as LinkIcon, X, Mic, FolderKanban, GraduationCap } from 'lucide-react';
+import { Clock, AlertCircle, Calendar, Loader, Users, MapPinned, Video, Image as ImageIcon, Link as LinkIcon, X, Mic, FolderKanban, GraduationCap, Bell } from 'lucide-react';
 import { useHaptics } from '../hooks/useHaptics';
 
 const memorySchema = z.object({
@@ -46,7 +46,6 @@ export function CapturePage() {
   const [suggestedTopic, setSuggestedTopic] = useState<{ id: string; name: string } | null>(null);
   const [trainingInput, setTrainingInput] = useState('');
   const [suggestedTraining, setSuggestedTraining] = useState<{ id: string; name: string } | null>(null);
-  const [reminderButtonEnabled, setReminderButtonEnabled] = useState(false);
   const [linkedEntities, setLinkedEntities] = useState<{
     persons: string[];
     locations: string[];
@@ -586,7 +585,6 @@ export function CapturePage() {
       setCompressionInfo('');
       setAddedUrlPage(null);
       setLinkedEntities({ persons: [], locations: [], youtubeVideos: [], tiktokVideos: [], projects: [], trainings: [] });
-      setReminderButtonEnabled(false);
       localStorage.removeItem('memoryDraft');
 
       // Invalidate queries to refresh data
@@ -604,7 +602,6 @@ export function CapturePage() {
       haptic('error');
     } finally {
       setLoading(false);
-      setReminderButtonEnabled(false);
     }
   };
 
@@ -1234,18 +1231,6 @@ export function CapturePage() {
               className="w-full px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               placeholder="Write your memory here..."
             />
-            {/* Reminder button (R) - appears after text blur */}
-            {reminderButtonEnabled && (
-              <button
-                type="button"
-                onClick={handleReminderButtonClick}
-                disabled={loading || !textValue.trim()}
-                className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
-                title="Save memory and create reminder"
-              >
-                R
-              </button>
-            )}
             {/* Voice input button (mobile only) */}
             <button
               type="button"
@@ -1465,19 +1450,36 @@ export function CapturePage() {
             <FolderKanban className="h-5 w-5 md:h-4 md:w-4 text-blue-600" />
           </button>
 
-          {/* Training button */}
+          {/* Training button - PROMINENT */}
           <button
             type="button"
             onClick={handleAddTraining}
             disabled={linkedEntities.trainings.length > 0}
-            className={`inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border rounded-md shadow-sm text-base md:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+            className={`inline-flex items-center justify-center gap-2 h-12 md:h-10 px-5 md:px-4 py-2 rounded-lg shadow-lg text-base md:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all active:scale-95 ${
               linkedEntities.trainings.length > 0
-                ? 'border-purple-300 bg-purple-100 text-purple-400 cursor-not-allowed'
-                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                ? 'bg-purple-200 text-purple-400 cursor-not-allowed'
+                : 'bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800'
             }`}
             title="Link to training"
           >
-            <GraduationCap className="h-5 w-5 md:h-4 md:w-4 text-purple-600" />
+            <GraduationCap className="h-5 w-5 md:h-4 md:w-4" />
+            <span className="hidden sm:inline">Training</span>
+          </button>
+
+          {/* Reminder button - PROMINENT */}
+          <button
+            type="button"
+            onClick={handleReminderButtonClick}
+            disabled={loading || !textValue.trim()}
+            className={`inline-flex items-center justify-center gap-2 h-12 md:h-10 px-5 md:px-4 py-2 rounded-lg shadow-lg text-base md:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all active:scale-95 ${
+              loading || !textValue.trim()
+                ? 'bg-blue-200 text-blue-400 cursor-not-allowed'
+                : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800'
+            }`}
+            title="Save memory and create reminder"
+          >
+            <Bell className="h-5 w-5 md:h-4 md:w-4" />
+            <span className="hidden sm:inline">Reminder</span>
           </button>
 
           {/* YouTube button */}
