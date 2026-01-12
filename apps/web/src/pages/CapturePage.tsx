@@ -84,11 +84,9 @@ export function CapturePage() {
   const [allPeople, setAllPeople] = useState<any[]>([]);
   const [allLocations, setAllLocations] = useState<any[]>([]);
   const [allProjects, setAllProjects] = useState<any[]>([]);
-  const [allTrainings, setAllTrainings] = useState<any[]>([]);
   const [loadingPeople, setLoadingPeople] = useState(false);
   const [loadingLocations, setLoadingLocations] = useState(false);
   const [loadingProjects, setLoadingProjects] = useState(false);
-  const [loadingTrainings, setLoadingTrainings] = useState(false);
   const [projectSearchTerm, setProjectSearchTerm] = useState('');
   const [trainingSearchTerm, setTrainingSearchTerm] = useState('');
 
@@ -1212,7 +1210,7 @@ export function CapturePage() {
               Saving...
             </span>
           ) : (
-            'Save Memory'
+            'Save'
           )}
         </button>
       </div>
@@ -1439,22 +1437,6 @@ export function CapturePage() {
             <FolderKanban className="h-5 w-5 md:h-4 md:w-4 text-blue-600" />
           </button>
 
-          {/* Reminder button - PROMINENT */}
-          <button
-            type="button"
-            onClick={handleReminderButtonClick}
-            disabled={loading || !textValue.trim()}
-            className={`inline-flex items-center justify-center gap-2 h-12 md:h-10 px-5 md:px-4 py-2 rounded-lg shadow-lg text-base md:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all active:scale-95 ${
-              loading || !textValue.trim()
-                ? 'bg-blue-200 text-blue-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800'
-            }`}
-            title="Save memory and create reminder"
-          >
-            <Bell className="h-5 w-5 md:h-4 md:w-4" />
-            <span className="hidden sm:inline">Reminder</span>
-          </button>
-
           {/* YouTube button */}
           <button
             type="button"
@@ -1551,12 +1533,12 @@ export function CapturePage() {
           </div>
         )}
 
-        {/* Desktop submit button */}
-        <div className="hidden md:flex items-center justify-between">
+        {/* Desktop submit buttons */}
+        <div className="hidden md:flex items-center gap-3">
           <button
             type="submit"
             disabled={loading || uploadingImage || addingUrl || addingTikTok || addingYouTube}
-            className="w-full md:w-auto h-10 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            className="flex-1 h-10 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           >
             {uploadingImage ? (
               'Uploading image...'
@@ -1569,8 +1551,17 @@ export function CapturePage() {
             ) : loading ? (
               'Saving...'
             ) : (
-              'Save Memory'
+              'Save'
             )}
+          </button>
+          <button
+            type="button"
+            onClick={handleReminderButtonClick}
+            disabled={loading || !textValue.trim() || uploadingImage || addingUrl || addingTikTok || addingYouTube}
+            className="flex-1 inline-flex items-center justify-center gap-2 h-10 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-md hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+          >
+            <Bell className="h-4 w-4" />
+            Save w/Reminders
           </button>
         </div>
       </form>
