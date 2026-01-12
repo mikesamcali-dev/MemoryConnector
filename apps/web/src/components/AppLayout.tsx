@@ -33,7 +33,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     { path: '/app/search', icon: Search, label: 'Search' },
     { path: '/app/projects', icon: FolderKanban, label: 'Topics' },
     { path: '/app/trainings', icon: GraduationCap, label: 'Trainings' },
-    { path: '/app/training-decks', icon: Presentation, label: 'Training Decks' },
+    { path: '/app/training-decks', icon: GraduationCap, label: 'Train' },
     { path: '/app/words', icon: BookOpen, label: 'Words' },
     { path: '/app/locations', icon: MapPin, label: 'Locations' },
     { path: '/app/people', icon: User, label: 'People' },
@@ -54,13 +54,12 @@ export function AppLayout({ children }: AppLayoutProps) {
   // Items shown in bottom nav (mobile) - defined in BottomNav component
   const bottomNavPaths = ['/app/capture', '/app/slidedecks', '/app/training-decks', '/app/search'];
 
-  // Primary nav items for desktop
-  const desktopPrimaryPaths = ['/app/capture', '/app/slidedecks', '/app/projects', '/app/images'];
+  // Primary nav items for desktop (in order: Capture, Slides, Train, Search)
+  const desktopPrimaryPaths = ['/app/capture', '/app/slidedecks', '/app/training-decks', '/app/search'];
 
-  // Desktop "More" menu items (excluding search and admin which go on the right)
+  // Desktop "More" menu items (excluding primary paths and admin)
   const desktopMoreItems = navItems.filter(
     item => !desktopPrimaryPaths.includes(item.path) &&
-            item.path !== '/app/search' &&
             item.path !== '/app/admin'
   );
 
@@ -84,29 +83,29 @@ export function AppLayout({ children }: AppLayoutProps) {
 
             {/* Main Navigation */}
             <div className="flex items-center gap-1">
-              {/* Primary Nav Items */}
-              {navItems
-                .filter(item => desktopPrimaryPaths.includes(item.path))
-                .map((item) => {
-                  const Icon = item.icon;
-                  const active = isActive(item.path);
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className={`
-                        flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all
-                        ${active
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                        }
-                      `}
-                    >
-                      <Icon className="h-5 w-5" />
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
+              {/* Primary Nav Items - Capture, Slides, Train, Search */}
+              {desktopPrimaryPaths.map((path) => {
+                const item = navItems.find(i => i.path === path);
+                if (!item) return null;
+                const Icon = item.icon;
+                const active = isActive(item.path);
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`
+                      flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all
+                      ${active
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      }
+                    `}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
 
               {/* More Dropdown */}
               <div className="relative">
@@ -146,30 +145,6 @@ export function AppLayout({ children }: AppLayoutProps) {
                   </div>
                 )}
               </div>
-
-              {/* Search */}
-              {navItems
-                .filter(item => item.path === '/app/search')
-                .map((item) => {
-                  const Icon = item.icon;
-                  const active = isActive(item.path);
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className={`
-                        flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all
-                        ${active
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                        }
-                      `}
-                    >
-                      <Icon className="h-5 w-5" />
-                      <span>Search</span>
-                    </Link>
-                  );
-                })}
 
               {/* Admin (if user is admin) */}
               {user?.roles.includes('admin') && (
