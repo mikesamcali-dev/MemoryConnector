@@ -76,11 +76,10 @@ export function CapturePage() {
   const [addingYouTube, setAddingYouTube] = useState(false);
   const [youtubeError, setYoutubeError] = useState('');
 
-  // Person/Location/Project/Training selection state
+  // Person/Location/Project selection state
   const [showPersonSelector, setShowPersonSelector] = useState(false);
   const [showLocationSelector, setShowLocationSelector] = useState(false);
   const [showProjectSelector, setShowProjectSelector] = useState(false);
-  const [showTrainingSelector, setShowTrainingSelector] = useState(false);
   const [allPeople, setAllPeople] = useState<any[]>([]);
   const [allLocations, setAllLocations] = useState<any[]>([]);
   const [allProjects, setAllProjects] = useState<any[]>([]);
@@ -88,7 +87,6 @@ export function CapturePage() {
   const [loadingLocations, setLoadingLocations] = useState(false);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [projectSearchTerm, setProjectSearchTerm] = useState('');
-  const [trainingSearchTerm, setTrainingSearchTerm] = useState('');
 
   // Voice input state
   const [isListening, setIsListening] = useState(false);
@@ -456,16 +454,6 @@ export function CapturePage() {
       ...prev,
       projects: [],
     }));
-  };
-
-  // Select a training
-  const handleSelectTraining = (trainingId: string) => {
-    setLinkedEntities(prev => ({
-      ...prev,
-      trainings: [trainingId], // Only one training per memory for now
-    }));
-    setShowTrainingSelector(false);
-    haptic('success');
   };
 
   // Remove linked training
@@ -1802,76 +1790,6 @@ export function CapturePage() {
             <div className="p-4 border-t border-gray-200">
               <button
                 onClick={() => setShowProjectSelector(false)}
-                className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Training selection modal */}
-      {showTrainingSelector && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
-            <div className="p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">Select a Training</h2>
-              <input
-                type="text"
-                value={trainingSearchTerm}
-                onChange={(e) => setTrainingSearchTerm(e.target.value)}
-                placeholder="Search trainings..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                autoFocus
-              />
-            </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              {loadingTrainings ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader className="h-8 w-8 animate-spin text-purple-600" />
-                </div>
-              ) : allTrainings.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <GraduationCap className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                  <p>No trainings found. Create a training first!</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {allTrainings
-                    .filter((training) =>
-                      training.name.toLowerCase().includes(trainingSearchTerm.toLowerCase())
-                    )
-                    .map((training) => (
-                      <button
-                        key={training.id}
-                        onClick={() => handleSelectTraining(training.id)}
-                        className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors"
-                      >
-                        <p className="font-medium text-gray-900">{training.name || 'Unnamed'}</p>
-                        {training.description && (
-                          <p className="text-sm text-gray-500 line-clamp-1">{training.description}</p>
-                        )}
-                        {training._count && (
-                          <p className="text-xs text-gray-400 mt-1">
-                            {training._count.memoryLinks || 0} memories, {training._count.imageLinks || 0} images, {training._count.youtubeVideoLinks || 0} videos
-                          </p>
-                        )}
-                      </button>
-                    ))}
-                  {allTrainings.filter((training) =>
-                    training.name.toLowerCase().includes(trainingSearchTerm.toLowerCase())
-                  ).length === 0 && (
-                    <div className="text-center py-8 text-gray-500">
-                      <p>No trainings match your search</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="p-4 border-t border-gray-200">
-              <button
-                onClick={() => setShowTrainingSelector(false)}
                 className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
               >
                 Cancel
