@@ -460,21 +460,6 @@ export function CapturePage() {
     }));
   };
 
-  // Add training handler
-  const handleAddTraining = async () => {
-    setShowTrainingSelector(true);
-    setTrainingSearchTerm('');
-    setLoadingTrainings(true);
-    try {
-      const trainings = await getAllTrainings();
-      setAllTrainings(trainings);
-    } catch (err) {
-      console.error('Failed to load trainings:', err);
-    } finally {
-      setLoadingTrainings(false);
-    }
-  };
-
   // Select a training
   const handleSelectTraining = (trainingId: string) => {
     setLinkedEntities(prev => ({
@@ -1452,22 +1437,6 @@ export function CapturePage() {
             title="Link to topic"
           >
             <FolderKanban className="h-5 w-5 md:h-4 md:w-4 text-blue-600" />
-          </button>
-
-          {/* Training button - PROMINENT */}
-          <button
-            type="button"
-            onClick={handleAddTraining}
-            disabled={linkedEntities.trainings.length > 0}
-            className={`inline-flex items-center justify-center gap-2 h-12 md:h-10 px-5 md:px-4 py-2 rounded-lg shadow-lg text-base md:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all active:scale-95 ${
-              linkedEntities.trainings.length > 0
-                ? 'bg-purple-200 text-purple-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800'
-            }`}
-            title="Link to training"
-          >
-            <GraduationCap className="h-5 w-5 md:h-4 md:w-4" />
-            <span className="hidden sm:inline">Training</span>
           </button>
 
           {/* Reminder button - PROMINENT */}
