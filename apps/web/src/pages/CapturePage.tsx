@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -95,6 +95,9 @@ export function CapturePage() {
   // Voice input state
   const [isListening, setIsListening] = useState(false);
   const [voiceError, setVoiceError] = useState('');
+
+  // Textarea ref for auto-grow
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Fetch upcoming reminders
   const { data: upcomingReminders, isLoading: loadingReminders, error: remindersError } = useQuery({
@@ -857,11 +860,17 @@ export function CapturePage() {
     return `In ${days}d`;
   };
 
-  // Handle text input change
+  // Handle text input change with auto-grow
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     setTextValue(newValue);
     setValue('text', newValue); // Update form value
+
+    // Auto-grow textarea
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
   };
 
   // Topic input handler with smart suggestions
@@ -977,6 +986,14 @@ export function CapturePage() {
       const newValue = textValue + (textValue ? ' ' : '') + transcript;
       setTextValue(newValue);
       setValue('text', newValue);
+
+      // Auto-grow textarea after voice input
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.style.height = 'auto';
+          textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        }
+      }, 0);
     };
 
     recognition.onerror = (event: any) => {
@@ -1223,12 +1240,13 @@ export function CapturePage() {
           </label>
           <div className="relative">
             <textarea
+              ref={textareaRef}
               id="text"
               value={textValue}
               onChange={handleTextChange}
-              rows={window.innerWidth < 768 ? 4 : 6}
+              rows={2}
               autoFocus
-              className="w-full px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden"
               placeholder="Write your memory here..."
             />
             {/* Voice input button (mobile only) */}
