@@ -68,48 +68,60 @@ export function TrainingLessonCard({ lesson }: TrainingLessonCardProps) {
             </div>
           )}
 
-        {/* YouTube video */}
+        {/* YouTube video - Embedded */}
         {memory.youtubeVideo && (
-          <a
-            href={memory.youtubeVideo.canonicalUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block border-2 border-black rounded overflow-hidden hover:shadow-lg transition-shadow"
-          >
-            {memory.youtubeVideo.thumbnailUrl && (
-              <img
-                src={memory.youtubeVideo.thumbnailUrl}
-                alt={memory.youtubeVideo.title}
-                className="w-full h-48 md:h-64 object-cover"
+          <div className="border-2 border-black rounded overflow-hidden">
+            <div className="relative" style={{ paddingBottom: '56.25%', height: 0 }}>
+              <iframe
+                src={`https://www.youtube.com/embed/${memory.youtubeVideo.youtubeVideoId}`}
+                title={memory.youtubeVideo.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="absolute top-0 left-0 w-full h-full"
               />
-            )}
+            </div>
             <div className="p-3 md:p-4 bg-red-100 flex items-center justify-between gap-2">
               <p className="font-medium text-sm md:text-base flex-1">{memory.youtubeVideo.title}</p>
-              <ExternalLink className="w-4 h-4 md:w-5 md:h-5 text-red-600 flex-shrink-0" />
+              <a
+                href={memory.youtubeVideo.canonicalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-700 bg-red-200 hover:bg-red-300 rounded transition-colors"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Link
+              </a>
             </div>
-          </a>
+          </div>
         )}
 
-        {/* TikTok video */}
+        {/* TikTok video - Embedded */}
         {memory.tiktokVideo && (
-          <a
-            href={memory.tiktokVideo.canonicalUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block border-2 border-black rounded overflow-hidden hover:shadow-lg transition-shadow"
-          >
-            {memory.tiktokVideo.thumbnailUrl && (
-              <img
-                src={memory.tiktokVideo.thumbnailUrl}
-                alt={memory.tiktokVideo.title}
-                className="w-full h-48 md:h-64 object-cover"
+          <div className="border-2 border-black rounded overflow-hidden">
+            <div className="relative bg-black flex items-center justify-center" style={{ paddingBottom: '177.78%', height: 0, maxHeight: '600px' }}>
+              <iframe
+                src={`https://www.tiktok.com/embed/v2/${memory.tiktokVideo.tiktokVideoId}`}
+                title={memory.tiktokVideo.title}
+                allow="encrypted-media;"
+                allowFullScreen
+                scrolling="no"
+                className="absolute top-0 left-0 w-full h-full"
+                style={{ border: 'none' }}
               />
-            )}
+            </div>
             <div className="p-3 md:p-4 bg-gray-100 flex items-center justify-between gap-2">
               <p className="font-medium text-sm md:text-base flex-1">{memory.tiktokVideo.title}</p>
-              <ExternalLink className="w-4 h-4 md:w-5 md:h-5 text-gray-600 flex-shrink-0" />
+              <a
+                href={memory.tiktokVideo.canonicalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 rounded transition-colors"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Link
+              </a>
             </div>
-          </a>
+          </div>
         )}
 
         {/* Event info */}
@@ -239,68 +251,84 @@ export function TrainingLessonCard({ lesson }: TrainingLessonCardProps) {
     );
   }
 
-  // Render YouTube video content
+  // Render YouTube video content - Embedded
   if (lesson.youtubeVideo) {
     const { youtubeVideo } = lesson;
+    const videoId = (youtubeVideo as any).youtubeVideoId || (youtubeVideo as any).videoId;
     return (
       <div className="bg-white rounded-lg shadow-2xl w-full p-4 md:p-8">
-        <a
-          href={youtubeVideo.canonicalUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block border-2 border-black rounded overflow-hidden hover:shadow-lg transition-shadow"
-        >
-          {youtubeVideo.thumbnailUrl && (
-            <img
-              src={youtubeVideo.thumbnailUrl}
-              alt={youtubeVideo.title || 'YouTube video'}
-              className="w-full h-auto object-contain"
+        <div className="border-2 border-black rounded overflow-hidden">
+          <div className="relative" style={{ paddingBottom: '56.25%', height: 0 }}>
+            <iframe
+              src={`https://www.youtube.com/embed/${videoId}`}
+              title={youtubeVideo.title || 'YouTube video'}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="absolute top-0 left-0 w-full h-full"
             />
-          )}
+          </div>
           <div className="p-3 md:p-4 bg-red-100 space-y-2">
-            <p className="font-medium text-base md:text-lg">{youtubeVideo.title}</p>
-            {youtubeVideo.channelTitle && (
-              <p className="text-sm text-gray-600">{youtubeVideo.channelTitle}</p>
-            )}
-            <div className="flex items-center gap-2 text-red-600">
-              <span className="text-sm">Watch on YouTube</span>
-              <ExternalLink className="w-4 h-4" />
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex-1">
+                <p className="font-medium text-base md:text-lg">{youtubeVideo.title}</p>
+                {youtubeVideo.channelTitle && (
+                  <p className="text-sm text-gray-600">{youtubeVideo.channelTitle}</p>
+                )}
+              </div>
+              <a
+                href={youtubeVideo.canonicalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-700 bg-red-200 hover:bg-red-300 rounded transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Link
+              </a>
             </div>
           </div>
-        </a>
+        </div>
       </div>
     );
   }
 
-  // Render TikTok video content
+  // Render TikTok video content - Embedded
   if (lesson.tiktokVideo) {
     const { tiktokVideo } = lesson;
+    const tiktokId = (tiktokVideo as any).tiktokVideoId;
     return (
       <div className="bg-white rounded-lg shadow-2xl w-full p-4 md:p-8">
-        <a
-          href={tiktokVideo.canonicalUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block border-2 border-black rounded overflow-hidden hover:shadow-lg transition-shadow"
-        >
-          {tiktokVideo.thumbnailUrl && (
-            <img
-              src={tiktokVideo.thumbnailUrl}
-              alt={tiktokVideo.title || 'TikTok video'}
-              className="w-full h-auto object-contain"
+        <div className="border-2 border-black rounded overflow-hidden">
+          <div className="relative bg-black flex items-center justify-center" style={{ paddingBottom: '177.78%', height: 0, maxHeight: '600px' }}>
+            <iframe
+              src={`https://www.tiktok.com/embed/v2/${tiktokId}`}
+              title={tiktokVideo.title || 'TikTok video'}
+              allow="encrypted-media;"
+              allowFullScreen
+              scrolling="no"
+              className="absolute top-0 left-0 w-full h-full"
+              style={{ border: 'none' }}
             />
-          )}
+          </div>
           <div className="p-3 md:p-4 bg-gray-100 space-y-2">
-            <p className="font-medium text-base md:text-lg">{tiktokVideo.title}</p>
-            {tiktokVideo.creator && (
-              <p className="text-sm text-gray-600">{tiktokVideo.creator}</p>
-            )}
-            <div className="flex items-center gap-2 text-gray-600">
-              <span className="text-sm">Watch on TikTok</span>
-              <ExternalLink className="w-4 h-4" />
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex-1">
+                <p className="font-medium text-base md:text-lg">{tiktokVideo.title}</p>
+                {tiktokVideo.creator && (
+                  <p className="text-sm text-gray-600">{tiktokVideo.creator}</p>
+                )}
+              </div>
+              <a
+                href={tiktokVideo.canonicalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 rounded transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Link
+              </a>
             </div>
           </div>
-        </a>
+        </div>
       </div>
     );
   }
