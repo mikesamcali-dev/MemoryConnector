@@ -1252,15 +1252,12 @@ export function CapturePage() {
 
         {/* Topic input field */}
         <div className="relative">
-          <label htmlFor="topic" className="block text-sm font-medium text-gray-700 mb-1">
-            Topic (optional)
-          </label>
           <input
             id="topic"
             type="text"
             value={topicInput}
             onChange={(e) => handleTopicInputChange(e.target.value)}
-            placeholder="Enter topic name..."
+            placeholder="Topic (optional)"
             className="w-full h-12 md:h-10 px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           />
 
@@ -1292,23 +1289,16 @@ export function CapturePage() {
               </div>
             </div>
           )}
-
-          <p className="mt-1 text-xs text-gray-500">
-            Topic will be created if it doesn't exist, or linked if it does
-          </p>
         </div>
 
         {/* Training input field */}
         <div className="relative">
-          <label htmlFor="training" className="block text-sm font-medium text-gray-700 mb-1">
-            Training (optional)
-          </label>
           <input
             id="training"
             type="text"
             value={trainingInput}
             onChange={(e) => handleTrainingInputChange(e.target.value)}
-            placeholder="Enter training name..."
+            placeholder="Training (optional)"
             className="w-full h-12 md:h-10 px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
           />
 
@@ -1340,14 +1330,10 @@ export function CapturePage() {
               </div>
             </div>
           )}
-
-          <p className="mt-1 text-xs text-gray-500">
-            Training will be created if it doesn't exist, or linked if it does
-          </p>
         </div>
 
-        {/* Media buttons - Voice (desktop only), Image, YouTube, TikTok, URL */}
-        <div className="flex gap-2">
+        {/* Media buttons - Two rows on mobile for better fit */}
+        <div className="grid grid-cols-4 md:flex gap-2">
           {/* Voice input button (desktop only) */}
           <button
             type="button"
