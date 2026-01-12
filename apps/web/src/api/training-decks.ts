@@ -128,6 +128,7 @@ export interface LessonUrlPage {
 export interface LessonYouTubeVideo {
   id: string;
   videoId: string;
+  youtubeVideoId: string;
   title: string | null;
   thumbnailUrl: string | null;
   channelTitle: string | null;
@@ -138,6 +139,7 @@ export interface LessonYouTubeVideo {
 export interface LessonTikTokVideo {
   id: string;
   videoUrl: string;
+  tiktokVideoId: string;
   title: string | null;
   thumbnailUrl: string | null;
   creator: string | null;
