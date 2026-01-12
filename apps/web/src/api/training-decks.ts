@@ -63,6 +63,7 @@ export interface LessonMemory {
 
   youtubeVideo: {
     id: string;
+    youtubeVideoId: string;
     title: string;
     thumbnailUrl: string | null;
     canonicalUrl: string;
@@ -70,6 +71,7 @@ export interface LessonMemory {
 
   tiktokVideo: {
     id: string;
+    tiktokVideoId: string;
     title: string;
     thumbnailUrl: string | null;
     canonicalUrl: string;
