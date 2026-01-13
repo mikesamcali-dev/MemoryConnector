@@ -27,6 +27,7 @@ export class UsageService {
         memories_this_month = CASE WHEN last_monthly_reset < DATE_TRUNC('month', CURRENT_DATE) THEN 0 ELSE memories_this_month END,
         images_this_month = CASE WHEN last_monthly_reset < DATE_TRUNC('month', CURRENT_DATE) THEN 0 ELSE images_this_month END,
         voice_this_month = CASE WHEN last_monthly_reset < DATE_TRUNC('month', CURRENT_DATE) THEN 0 ELSE voice_this_month END,
+        voice_minutes_this_month = CASE WHEN last_monthly_reset < DATE_TRUNC('month', CURRENT_DATE) THEN 0 ELSE voice_minutes_this_month END,
         last_monthly_reset = CASE WHEN last_monthly_reset < DATE_TRUNC('month', CURRENT_DATE) THEN DATE_TRUNC('month', CURRENT_DATE) ELSE last_monthly_reset END
       WHERE user_id = ${userId}::uuid
     `;
@@ -174,13 +175,26 @@ export class UsageService {
 
       case 'voice':
         await this.prisma.$executeRaw`
-          UPDATE user_usage 
+          UPDATE user_usage
           SET voice_this_month = voice_this_month + 1,
               updated_at = CURRENT_TIMESTAMP
           WHERE user_id = ${userId}::uuid
         `;
         break;
     }
+  }
+
+  /**
+   * Increment voice usage by minutes (for talk-to-text transcription)
+   */
+  async incrementVoiceUsage(userId: string, minutes: number): Promise<void> {
+    await this.prisma.$executeRaw`
+      UPDATE user_usage
+      SET voice_this_month = voice_this_month + 1,
+          voice_minutes_this_month = voice_minutes_this_month + ${minutes},
+          updated_at = CURRENT_TIMESTAMP
+      WHERE user_id = ${userId}::uuid
+    `;
   }
 
   /**
@@ -218,6 +232,7 @@ export class UsageService {
       memories_this_month: Number(data.memories_this_month),
       images_this_month: Number(data.images_this_month),
       voice_this_month: Number(data.voice_this_month),
+      voice_minutes_this_month: Number(data.voice_minutes_this_month),
       searches_today: Number(data.searches_today),
       storage_bytes: Number(data.storage_bytes),
       memories_per_day: Number(data.memories_per_day),

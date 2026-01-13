@@ -18,13 +18,16 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Clock, AlertCircle, Calendar, Loader, Users, MapPinned, Video, Image as ImageIcon, Link as LinkIcon, X, Mic, FolderKanban, GraduationCap, Bell } from 'lucide-react';
 import { useHaptics } from '../hooks/useHaptics';
+import { useVoiceInput } from '../hooks/useVoiceInput';
+import { FeedbackModal } from '../components/FeedbackModal';
+import { submitFeedback } from '../api/transcription';
 
 const memorySchema = z.object({
   text: z.string().min(1, 'Memory text is required'),
 });
 
 export function CapturePage() {
-  const { user: _user } = useAuth(); // Reserved for future use
+  const { user: _user, accessToken } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { haptic } = useHaptics();
@@ -89,8 +92,17 @@ export function CapturePage() {
   const [projectSearchTerm, setProjectSearchTerm] = useState('');
 
   // Voice input state
-  const [isListening, setIsListening] = useState(false);
-  const [voiceError, setVoiceError] = useState('');
+  const {
+    state: voiceState,
+    transcript,
+    partialTranscript,
+    error: voiceError,
+    sessionId: voiceSessionId,
+    startRecording,
+    stopRecording,
+  } = useVoiceInput(accessToken || '');
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackTranscript, setFeedbackTranscript] = useState('');
 
   // Textarea ref for auto-grow
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -931,32 +943,22 @@ export function CapturePage() {
   };
 
   // Voice input handler
-  const handleVoiceInput = () => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      setVoiceError('Speech recognition is not supported in your browser');
-      haptic('error');
-      return;
-    }
-
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = 'en-US';
-
-    recognition.onstart = () => {
-      haptic('light');
-      setIsListening(true);
-      setVoiceError('');
-    };
-
-    recognition.onresult = (event: any) => {
+  const handleVoiceInput = async () => {
+    if (voiceState === 'recording') {
+      await stopRecording();
       haptic('success');
-      const transcript = event.results[0][0].transcript;
-      const newValue = textValue + (textValue ? ' ' : '') + transcript;
-      setTextValue(newValue);
-      setValue('text', newValue);
+    } else {
+      await startRecording();
+      haptic('light');
+    }
+  };
+
+  // Auto-update textarea when transcript is received
+  useEffect(() => {
+    if (transcript) {
+      setTextValue(transcript);
+      setValue('text', transcript);
+      setFeedbackTranscript(transcript);
 
       // Auto-grow textarea after voice input
       setTimeout(() => {
@@ -965,19 +967,21 @@ export function CapturePage() {
           textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
         }
       }, 0);
-    };
+    }
+  }, [transcript, setValue]);
 
-    recognition.onerror = (event: any) => {
-      console.error('Speech recognition error:', event.error);
-      setVoiceError('Voice input failed. Please try again.');
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    recognition.start();
+  // Handle feedback submission
+  const handleFeedbackSubmit = async (correctedText: string, consent: boolean) => {
+    if (voiceSessionId && feedbackTranscript) {
+      try {
+        await submitFeedback(voiceSessionId, feedbackTranscript, correctedText, consent);
+        // Update the text value with the corrected version
+        setTextValue(correctedText);
+        setValue('text', correctedText);
+      } catch (error) {
+        console.error('Failed to submit feedback:', error);
+      }
+    }
   };
 
   return (
@@ -1224,13 +1228,32 @@ export function CapturePage() {
             <button
               type="button"
               onClick={handleVoiceInput}
-              disabled={isListening}
-              className="md:hidden absolute bottom-2 right-2 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-              title="Voice input"
+              disabled={voiceState === 'processing'}
+              className={`md:hidden absolute bottom-2 right-2 p-2 rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 ${
+                voiceState === 'recording' ? 'bg-red-500 text-white' : 'bg-blue-600 text-white'
+              }`}
+              title={voiceState === 'recording' ? 'Stop recording' : 'Voice input'}
             >
-              <Mic className={`h-5 w-5 ${isListening ? 'animate-pulse' : ''}`} />
+              <Mic className={`h-5 w-5 ${voiceState === 'recording' ? 'animate-pulse' : ''}`} />
             </button>
           </div>
+          {partialTranscript && voiceState === 'recording' && (
+            <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="text-xs text-blue-600 mb-1 font-medium">Live Transcript:</div>
+              <div className="text-sm text-gray-700 italic">{partialTranscript}</div>
+            </div>
+          )}
+          {transcript && voiceSessionId && voiceState === 'idle' && (
+            <div className="mt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowFeedbackModal(true)}
+                className="text-sm text-blue-600 hover:text-blue-700 underline"
+              >
+                Correct transcript
+              </button>
+            </div>
+          )}
           {voiceError && (
             <p className="mt-1 text-sm text-red-600">{voiceError}</p>
           )}
@@ -1327,11 +1350,15 @@ export function CapturePage() {
           <button
             type="button"
             onClick={handleVoiceInput}
-            disabled={isListening}
-            className="hidden md:inline-flex items-center justify-center h-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-            title="Voice input"
+            disabled={voiceState === 'processing'}
+            className={`hidden md:inline-flex items-center justify-center h-10 px-3 py-2 border rounded-md shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 ${
+              voiceState === 'recording'
+                ? 'border-red-300 bg-red-50 text-red-700 hover:bg-red-100'
+                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+            title={voiceState === 'recording' ? 'Stop recording' : 'Voice input'}
           >
-            <Mic className={`h-4 w-4 ${isListening ? 'animate-pulse text-blue-600' : ''}`} />
+            <Mic className={`h-4 w-4 ${voiceState === 'recording' ? 'animate-pulse' : ''}`} />
           </button>
 
           {/* Image upload */}
@@ -1799,6 +1826,14 @@ export function CapturePage() {
         </div>
       )}
 
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        rawTranscript={feedbackTranscript}
+        sessionId={voiceSessionId || ''}
+        onSubmit={handleFeedbackSubmit}
+      />
     </div>
   );
 }

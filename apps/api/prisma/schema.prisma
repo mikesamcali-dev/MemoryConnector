@@ -80,6 +80,14 @@ enum IngestionStatus {
   blocked
 }
 
+enum SpeechSessionStatus {
+  active
+  processing
+  completed
+  failed
+  expired
+}
+
 // ============================================================================
 // USER & AUTH
 // ============================================================================
@@ -112,20 +120,24 @@ model User {
   projects            Project[]
   trainings           Training[]
   trainingDecks       TrainingDeck[]
+  speechSessions      SpeechSession[]
+  userLexicon         UserLexicon[]
+  transcriptFeedback  TranscriptFeedback[]
 
   @@map("users")
 }
 
 model UserUsage {
-  userId            String   @id @map("user_id") @db.Uuid
-  memoriesToday     Int      @default(0) @map("memories_today")
-  memoriesThisMonth Int      @default(0) @map("memories_this_month")
-  imagesThisMonth   Int      @default(0) @map("images_this_month")
-  voiceThisMonth    Int      @default(0) @map("voice_this_month")
-  searchesToday     Int      @default(0) @map("searches_today")
-  storageBytes      BigInt   @default(0) @map("storage_bytes")
-  lastDailyReset    DateTime @default(now()) @map("last_daily_reset")
-  lastMonthlyReset  DateTime @default(now()) @map("last_monthly_reset")
+  userId                String   @id @map("user_id") @db.Uuid
+  memoriesToday         Int      @default(0) @map("memories_today")
+  memoriesThisMonth     Int      @default(0) @map("memories_this_month")
+  imagesThisMonth       Int      @default(0) @map("images_this_month")
+  voiceThisMonth        Int      @default(0) @map("voice_this_month")
+  voiceMinutesThisMonth Int      @default(0) @map("voice_minutes_this_month")
+  searchesToday         Int      @default(0) @map("searches_today")
+  storageBytes          BigInt   @default(0) @map("storage_bytes")
+  lastDailyReset        DateTime @default(now()) @map("last_daily_reset")
+  lastMonthlyReset      DateTime @default(now()) @map("last_monthly_reset")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1305,4 +1317,105 @@ model TrainingLesson {
 
   @@index([trainingDeckId, sortOrder])
   @@map("training_lessons")
+}
+
+// ============================================================================
+// SPEECH-TO-TEXT & TRANSCRIPTION
+// ============================================================================
+
+// Speech Sessions - tracks recording sessions (no audio stored)
+model SpeechSession {
+  id                  String              @id @default(uuid()) @db.Uuid
+  userId              String              @map("user_id") @db.Uuid
+  sessionKey          String              @unique @db.VarChar(100) // UUID for WebSocket identification
+  status              SpeechSessionStatus @default(active)
+
+  // Audio metadata (no actual audio stored)
+  audioFormat         String?             @db.VarChar(50) // e.g., "audio/webm;codecs=opus"
+  durationMs          Int?                @map("duration_ms")
+  chunkCount          Int                 @default(0) @map("chunk_count")
+
+  // Transcription results
+  partialTranscript   String?             @db.Text @map("partial_transcript")
+  finalTranscript     String?             @db.Text @map("final_transcript")
+
+  // Processing metadata
+  processingStartedAt DateTime?           @map("processing_started_at")
+  processingEndedAt   DateTime?           @map("processing_ended_at")
+  errorMessage        String?             @db.Text @map("error_message")
+
+  createdAt           DateTime            @default(now()) @map("created_at")
+  updatedAt           DateTime            @updatedAt @map("updated_at")
+  expiresAt           DateTime            @map("expires_at") // Auto-cleanup after 1 hour
+
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chunks              SpeechChunk[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([sessionKey])
+  @@index([expiresAt])
+  @@map("speech_sessions")
+}
+
+// Speech Chunks - temporary metadata for audio chunks
+model SpeechChunk {
+  id             String        @id @default(uuid()) @db.Uuid
+  sessionId      String        @map("session_id") @db.Uuid
+  chunkIndex     Int           @map("chunk_index")
+  sizeBytes      Int           @map("size_bytes")
+  receivedAt     DateTime      @default(now()) @map("received_at")
+  transcribedAt  DateTime?     @map("transcribed_at")
+  transcriptText String?       @db.Text @map("transcript_text")
+
+  session        SpeechSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, chunkIndex])
+  @@index([sessionId, chunkIndex])
+  @@map("speech_chunks")
+}
+
+// User Lexicon - user-specific vocabulary for personalization
+model UserLexicon {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  term        String    @db.VarChar(200) // The term to recognize (e.g., "Makino")
+  replacement String?   @db.VarChar(200) // Optional replacement (null = preserve as-is)
+  weight      Float     @default(1.0) // Bias weight for STT provider
+  usageCount  Int       @default(0) @map("usage_count") // Times term was applied
+  lastUsedAt  DateTime? @map("last_used_at")
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, term])
+  @@index([userId])
+  @@index([userId, usageCount(sort: Desc)])
+  @@map("user_lexicon")
+}
+
+// Transcript Feedback - user corrections for learning
+model TranscriptFeedback {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  sessionId     String?  @map("session_id") @db.Uuid
+
+  // Before/after text
+  rawTranscript String   @db.Text @map("raw_transcript") // Original STT output
+  correctedText String   @db.Text @map("corrected_text") // User-edited version
+
+  // Extracted corrections
+  corrections   Json     // Array of {original: string, corrected: string, type: "term"|"punctuation"|"spelling"}
+
+  // Consent
+  consentStore  Boolean  @default(false) @map("consent_store") // User opted-in to store corrections
+
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([sessionId])
+  @@map("transcript_feedback")
 }

@@ -23,6 +23,7 @@ import { YouTubeVideosModule } from './youtube-videos/youtube-videos.module';
 import { TikTokVideosModule } from './tiktok-videos/tiktok-videos.module';
 import { ImagesModule } from './images/images.module';
 import { UrlPagesModule } from './url-pages/url-pages.module';
+import { TranscriptionModule } from './transcription/transcription.module';
 // Temporarily disabled - these modules need to be updated for hybrid schema
 // import { MemoryRelationshipsModule } from './memory-relationships/memory-relationships.module';
 // import { MemoryEntitiesModule } from './memory-entities/memory-entities.module';
@@ -86,6 +87,7 @@ import { AuditLoggingInterceptor } from './audit-trail/interceptors/audit-loggin
     TikTokVideosModule,
     ImagesModule,
     UrlPagesModule,
+    TranscriptionModule,
     // MemoryRelationshipsModule, // Disabled - needs update for hybrid schema
     // MemoryEntitiesModule, // Disabled - needs update for hybrid schema
     SpellCheckModule,
