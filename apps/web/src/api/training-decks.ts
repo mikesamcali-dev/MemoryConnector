@@ -251,3 +251,22 @@ export async function deleteTrainingDeck(trainingDeckId: string): Promise<void> 
     throw new Error('Failed to delete training deck');
   }
 }
+
+/**
+ * Delete a specific lesson from a training deck
+ */
+export async function deleteTrainingLesson(
+  trainingDeckId: string,
+  lessonId: string,
+): Promise<void> {
+  const response = await fetchWithAuth(
+    `/training-decks/${trainingDeckId}/lessons/${lessonId}`,
+    {
+      method: 'DELETE',
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to delete training lesson');
+  }
+}

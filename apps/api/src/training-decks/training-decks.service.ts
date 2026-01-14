@@ -416,4 +416,45 @@ export class TrainingDecksService {
       },
     });
   }
+
+  /**
+   * Delete a specific training lesson from a deck
+   * Validates deck ownership
+   */
+  async deleteLesson(
+    userId: string,
+    trainingDeckId: string,
+    lessonId: string,
+  ): Promise<void> {
+    // Verify deck ownership
+    const trainingDeck = await this.prisma.trainingDeck.findFirst({
+      where: {
+        id: trainingDeckId,
+        userId,
+      },
+    });
+
+    if (!trainingDeck) {
+      throw new NotFoundException('Training deck not found');
+    }
+
+    // Verify lesson belongs to this deck
+    const lesson = await this.prisma.trainingLesson.findFirst({
+      where: {
+        id: lessonId,
+        trainingDeckId,
+      },
+    });
+
+    if (!lesson) {
+      throw new NotFoundException('Training lesson not found in this deck');
+    }
+
+    // Delete the lesson
+    await this.prisma.trainingLesson.delete({
+      where: {
+        id: lessonId,
+      },
+    });
+  }
 }

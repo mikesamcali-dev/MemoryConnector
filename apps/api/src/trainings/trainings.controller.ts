@@ -229,4 +229,21 @@ export class TrainingsController {
       req.user.id,
     );
   }
+
+  @Patch(':id/last-viewed')
+  @ApiOperation({ summary: 'Update lastViewedAt timestamp for a training' })
+  @ApiResponse({ status: 200, description: 'Last viewed timestamp updated successfully' })
+  @ApiResponse({ status: 404, description: 'Training not found' })
+  async updateLastViewedAt(@Param('id') id: string, @Req() req: any) {
+    return this.trainingsService.updateLastViewedAt(id, req.user.id);
+  }
+
+  @Post(':id/reminders')
+  @ApiOperation({ summary: 'Create 3 spaced repetition reminders for a training' })
+  @ApiResponse({ status: 201, description: 'Reminders created successfully' })
+  @ApiResponse({ status: 404, description: 'Training not found' })
+  @ApiResponse({ status: 400, description: 'Training has no linked memories' })
+  async createReminders(@Param('id') id: string, @Req() req: any) {
+    return this.trainingsService.createReminders(id, req.user.id);
+  }
 }

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { getLessons } from '../api/training-decks';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { X, ChevronLeft, ChevronRight, Trash2, Bell } from 'lucide-react';
+import { getLessons, getTrainingDeck, deleteTrainingLesson } from '../api/training-decks';
+import { updateLastViewedAt, createReminders } from '../api/trainings';
 import { TrainingLessonCard } from '../components/TrainingLessonCard';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
@@ -10,8 +11,17 @@ import { useSwipeGesture } from '../hooks/useSwipeGesture';
 export function TrainingDeckViewerPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Fetch training deck to get trainingId
+  const { data: deck } = useQuery({
+    queryKey: ['training-deck', id],
+    queryFn: () => getTrainingDeck(id!),
+    enabled: !!id,
+  });
 
   // Fetch lessons
   const {
@@ -24,6 +34,44 @@ export function TrainingDeckViewerPage() {
     enabled: !!id,
   });
 
+  // Update lastViewedAt when component mounts
+  useEffect(() => {
+    if (deck?.trainingId) {
+      updateLastViewedAt(deck.trainingId).catch((err) => {
+        console.error('Failed to update lastViewedAt:', err);
+      });
+    }
+  }, [deck?.trainingId]);
+
+  // Delete lesson mutation
+  const deleteLessonMutation = useMutation({
+    mutationFn: (lessonId: string) => deleteTrainingLesson(id!, lessonId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['training-lessons', id] });
+      setShowDeleteConfirm(false);
+      // Navigate to previous lesson or exit if this was the last one
+      if (lessons && lessons.length <= 1) {
+        handleExit();
+      } else if (currentIndex > 0) {
+        setCurrentIndex(currentIndex - 1);
+      }
+    },
+    onError: () => {
+      alert('Failed to delete lesson');
+    },
+  });
+
+  // Create reminders mutation
+  const createRemindersMutation = useMutation({
+    mutationFn: () => createReminders(deck!.trainingId),
+    onSuccess: (data) => {
+      alert(data.message || 'Reminders created successfully!');
+    },
+    onError: (error: Error) => {
+      alert(error.message || 'Failed to create reminders');
+    },
+  });
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -32,13 +80,22 @@ export function TrainingDeckViewerPage() {
       } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
         handlePrevious();
       } else if (e.key === 'Escape') {
-        handleExit();
+        if (showDeleteConfirm) {
+          setShowDeleteConfirm(false);
+        } else {
+          handleExit();
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentIndex, lessons]);
+  }, [currentIndex, lessons, showDeleteConfirm]);
+
+  // Reset delete confirmation when lesson changes
+  useEffect(() => {
+    setShowDeleteConfirm(false);
+  }, [currentIndex]);
 
   const handlePrevious = () => {
     if (lessons && currentIndex > 0) {
@@ -54,6 +111,18 @@ export function TrainingDeckViewerPage() {
 
   const handleExit = () => {
     navigate('/app/training-decks');
+  };
+
+  const handleDeleteLesson = () => {
+    if (lessons && lessons[currentIndex]) {
+      deleteLessonMutation.mutate(lessons[currentIndex].id);
+    }
+  };
+
+  const handleCreateReminders = () => {
+    if (deck?.trainingId) {
+      createRemindersMutation.mutate();
+    }
   };
 
   // Swipe gesture handlers for mobile
@@ -99,8 +168,41 @@ export function TrainingDeckViewerPage() {
         <div className="text-white font-medium text-sm md:text-base">
           Lesson {currentIndex + 1} of {lessons.length}
         </div>
-        {!isMobile && (
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          {/* Create Reminders Button */}
+          <button
+            onClick={handleCreateReminders}
+            disabled={!deck?.trainingId || createRemindersMutation.isPending}
+            className="flex items-center gap-1 md:gap-2 px-2 md:px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors text-xs md:text-sm"
+            title="Create 3 spaced repetition reminders"
+          >
+            <Bell className="w-4 h-4" />
+            <span className="hidden md:inline">Reminders</span>
+          </button>
+
+          {/* Delete Lesson Button */}
+          {showDeleteConfirm ? (
+            <button
+              onClick={handleDeleteLesson}
+              disabled={deleteLessonMutation.isPending}
+              className="flex items-center gap-1 md:gap-2 px-2 md:px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-xs md:text-sm"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Confirm?</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="flex items-center gap-1 md:gap-2 px-2 md:px-3 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors text-xs md:text-sm"
+              title="Remove this lesson from the deck"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span className="hidden md:inline">Edit</span>
+            </button>
+          )}
+
+          {/* Exit Button - Desktop only */}
+          {!isMobile && (
             <button
               onClick={handleExit}
               className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
@@ -108,8 +210,8 @@ export function TrainingDeckViewerPage() {
               <X className="w-5 h-5" />
               <span>Exit</span>
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Lesson content - Scrollable on mobile, centered on desktop */}

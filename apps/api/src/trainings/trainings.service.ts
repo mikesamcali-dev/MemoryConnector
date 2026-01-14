@@ -826,4 +826,103 @@ export class TrainingsService {
 
     return { success: true, message: 'TikTok video unlinked from training successfully' };
   }
+
+  /**
+   * Update lastViewedAt timestamp for a training
+   * Validates ownership
+   */
+  async updateLastViewedAt(id: string, userId: string) {
+    // Verify ownership
+    const training = await this.prisma.training.findFirst({
+      where: { id, userId },
+    });
+
+    if (!training) {
+      throw new HttpException(
+        'Training not found or you do not have permission to update it',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    // Update lastViewedAt
+    return this.prisma.training.update({
+      where: { id },
+      data: {
+        lastViewedAt: new Date(),
+      },
+    });
+  }
+
+  /**
+   * Create 3 spaced repetition reminders for a training
+   * Schedule: 1 day, 3 days, 7 days from now
+   * Validates ownership
+   */
+  async createReminders(id: string, userId: string) {
+    // Verify ownership
+    const training = await this.prisma.training.findFirst({
+      where: { id, userId },
+    });
+
+    if (!training) {
+      throw new HttpException(
+        'Training not found or you do not have permission to create reminders for it',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    // Get first memory or content from the training to create reminders
+    const trainingWithContent = await this.prisma.training.findUnique({
+      where: { id },
+      include: {
+        memoryLinks: {
+          include: {
+            memory: {
+              select: { id: true },
+            },
+          },
+          take: 1,
+        },
+      },
+    });
+
+    if (!trainingWithContent?.memoryLinks?.length) {
+      throw new HttpException(
+        'Training has no linked memories. Cannot create reminders without associated memories.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const memoryId = trainingWithContent.memoryLinks[0].memory.id;
+
+    // Create 3 reminders with SRS schedule (1 day, 3 days, 7 days)
+    const now = new Date();
+    const schedules = [
+      { days: 1, name: '1 day' },
+      { days: 3, name: '3 days' },
+      { days: 7, name: '7 days' },
+    ];
+
+    const reminders = await Promise.all(
+      schedules.map((schedule) => {
+        const scheduledAt = new Date(now);
+        scheduledAt.setDate(scheduledAt.getDate() + schedule.days);
+
+        return this.prisma.reminder.create({
+          data: {
+            userId,
+            memoryId,
+            scheduledAt,
+            status: 'pending',
+          },
+        });
+      }),
+    );
+
+    return {
+      success: true,
+      message: `Created ${reminders.length} reminders for training`,
+      reminders,
+    };
+  }
 }

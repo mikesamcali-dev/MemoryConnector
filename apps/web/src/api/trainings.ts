@@ -216,3 +216,17 @@ export async function unlinkTikTokVideoFromTraining(
     method: 'DELETE',
   });
 }
+
+export async function updateLastViewedAt(trainingId: string): Promise<Training> {
+  const response = await fetchWithAuth(`/trainings/${trainingId}/last-viewed`, {
+    method: 'PATCH',
+  });
+  return response.json();
+}
+
+export async function createReminders(trainingId: string): Promise<any> {
+  const response = await fetchWithAuth(`/trainings/${trainingId}/reminders`, {
+    method: 'POST',
+  });
+  return response.json();
+}

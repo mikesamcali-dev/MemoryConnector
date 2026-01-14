@@ -1302,13 +1302,14 @@ model Slide {
 
 // Trainings - user-specific training organization entity
 model Training {
-  id          String   @id @default(uuid()) @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
-  name        String   @db.VarChar(200)
-  description String?  @db.Text
-  tags        Json?    @default("[]")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  name         String    @db.VarChar(200)
+  description  String?   @db.Text
+  tags         Json?     @default("[]")
+  lastViewedAt DateTime? @map("last_viewed_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   user              User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
   memoryLinks       MemoryTrainingLink[]

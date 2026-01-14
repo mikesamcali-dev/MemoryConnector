@@ -120,4 +120,23 @@ export class TrainingDecksController {
   async delete(@Param('id') id: string, @User() user: any) {
     await this.trainingDecksService.delete(user.id, id);
   }
+
+  @Delete(':id/lessons/:lessonId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete a specific training lesson from a deck' })
+  @ApiResponse({
+    status: 204,
+    description: 'Training lesson deleted successfully',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Training deck or lesson not found',
+  })
+  async deleteLesson(
+    @Param('id') id: string,
+    @Param('lessonId') lessonId: string,
+    @User() user: any,
+  ) {
+    await this.trainingDecksService.deleteLesson(user.id, id, lessonId);
+  }
 }
