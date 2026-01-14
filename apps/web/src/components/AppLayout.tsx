@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Brain, Plus, Search, Bell, Settings, LogOut, ShieldCheck, MapPin, User, Network, Video, Film, Image, Link as LinkIcon, Presentation, MoreHorizontal, ChevronDown, BookOpen, FolderKanban, GraduationCap } from 'lucide-react';
+import { Brain, Plus, Search, Bell, Settings, LogOut, ShieldCheck, MapPin, User, Network, Video, Film, Image, Link as LinkIcon, Presentation, MoreHorizontal, ChevronDown, BookOpen, FolderKanban, GraduationCap, Twitter } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { BottomNav } from './mobile/BottomNav';
@@ -41,6 +41,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     { path: '/app/urls', icon: LinkIcon, label: 'URLs' },
     { path: '/app/youtube-videos', icon: Video, label: 'YouTube' },
     { path: '/app/tiktok-videos', icon: Film, label: 'TikTok' },
+    { path: '/app/twitter-posts', icon: Twitter, label: 'X' },
     { path: '/app/relationships', icon: Network, label: 'Network' },
     { path: '/app/reminders', icon: Bell, label: 'Reminders' },
     { path: '/app/settings', icon: Settings, label: 'Settings' },

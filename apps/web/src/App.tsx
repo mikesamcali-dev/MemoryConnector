@@ -28,6 +28,8 @@ const YouTubeVideoMemoriesPage = lazy(() => import('./pages/YouTubeVideoMemories
 const TikTokVideosListPage = lazy(() => import('./pages/TikTokVideosListPage').then(m => ({ default: m.TikTokVideosListPage })));
 const TikTokVideoDetailPage = lazy(() => import('./pages/TikTokVideoDetailPage').then(m => ({ default: m.TikTokVideoDetailPage })));
 const TikTokBuilderPage = lazy(() => import('./pages/TikTokBuilderPage').then(m => ({ default: m.TikTokBuilderPage })));
+const TwitterPostsListPage = lazy(() => import('./pages/TwitterPostsListPage').then(m => ({ default: m.TwitterPostsListPage })));
+const TwitterPostDetailPage = lazy(() => import('./pages/TwitterPostDetailPage').then(m => ({ default: m.TwitterPostDetailPage })));
 const PersonBuilderPage = lazy(() => import('./pages/PersonBuilderPage').then(m => ({ default: m.PersonBuilderPage })));
 const PersonDetailPage = lazy(() => import('./pages/PersonDetailPage').then(m => ({ default: m.PersonDetailPage })));
 const RelationshipGraphPage = lazy(() => import('./pages/RelationshipGraphPage').then(m => ({ default: m.RelationshipGraphPage })));
@@ -315,6 +317,26 @@ function App() {
                 <ProtectedRoute>
                   <AppLayout>
                     <TikTokBuilderPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/twitter-posts"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <TwitterPostsListPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/twitter-posts/:postId"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <TwitterPostDetailPage />
                   </AppLayout>
                 </ProtectedRoute>
               }

@@ -116,7 +116,7 @@ export async function extractTwitterMetadata(url: string): Promise<TwitterMetada
   return response.json();
 }
 
-export async function createTwitterPost(userId: string, data: {
+export async function createTwitterPost(data: {
   twitterPostId: string;
   canonicalUrl: string;
   text: string;
@@ -129,7 +129,7 @@ export async function createTwitterPost(userId: string, data: {
 }): Promise<TwitterPost> {
   const response = await fetchWithAuth('/twitter-posts', {
     method: 'POST',
-    body: JSON.stringify({ ...data, userId }),
+    body: JSON.stringify(data),
   });
   return response.json();
 }
