@@ -1168,13 +1168,13 @@ export function CapturePage() {
         </div>
       )}
 
-      {/* Mobile save button - at top to avoid keyboard */}
-      <div className="md:hidden mb-4">
+      {/* Mobile save buttons - at top to avoid keyboard */}
+      <div className="md:hidden mb-4 flex gap-2">
         <button
           type="submit"
           form="capture-form"
           disabled={loading || uploadingImage || addingUrl || addingTikTok || addingYouTube}
-          className="w-full h-12 px-6 bg-blue-600 text-white text-base font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 shadow-md transition-all active:scale-95"
+          className="flex-1 h-12 px-4 bg-blue-600 text-white text-base font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 shadow-md transition-all active:scale-95"
         >
           {uploadingImage ? (
             <span className="flex items-center justify-center gap-2">
@@ -1204,6 +1204,16 @@ export function CapturePage() {
           ) : (
             'Save'
           )}
+        </button>
+        <button
+          type="button"
+          onClick={handleReminderButtonClick}
+          disabled={loading || !textValue.trim() || uploadingImage || addingUrl || addingTikTok || addingYouTube}
+          className="flex-1 inline-flex items-center justify-center gap-2 h-12 px-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-base font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 shadow-md transition-all active:scale-95"
+        >
+          <Bell className="h-5 w-5" />
+          <span className="hidden xs:inline">Save w/Reminders</span>
+          <span className="xs:hidden">w/Reminders</span>
         </button>
       </div>
 

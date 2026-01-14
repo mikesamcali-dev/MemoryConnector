@@ -120,6 +120,7 @@ model User {
   projects            Project[]
   trainings           Training[]
   trainingDecks       TrainingDeck[]
+  twitterPosts        TwitterPost[]
   speechSessions      SpeechSession[]
   userLexicon         UserLexicon[]
   transcriptFeedback  TranscriptFeedback[]
@@ -261,6 +262,7 @@ model Memory {
   personId         String?          @map("person_id") @db.Uuid
   youtubeVideoId   String?          @map("youtube_video_id") @db.Uuid
   tiktokVideoId    String?          @map("tiktok_video_id") @db.Uuid
+  twitterPostId    String?          @map("twitter_post_id") @db.Uuid
 
   // Spaced Repetition System (SRS) fields
   lastReviewedAt   DateTime?        @map("last_reviewed_at")
@@ -289,6 +291,7 @@ model Memory {
   person              Person?                  @relation(fields: [personId], references: [id], onDelete: SetNull)
   youtubeVideo        YouTubeVideo?            @relation(fields: [youtubeVideoId], references: [id], onDelete: SetNull)
   tiktokVideo         TikTokVideo?             @relation(fields: [tiktokVideoId], references: [id], onDelete: SetNull)
+  twitterPost         TwitterPost?             @relation(fields: [twitterPostId], references: [id], onDelete: SetNull)
 
   // Link relations
   linksFrom           MemoryLink[]             @relation("LinkSource")
@@ -309,6 +312,7 @@ model Memory {
   @@index([personId])
   @@index([youtubeVideoId])
   @@index([tiktokVideoId])
+  @@index([twitterPostId])
   @@index([userId, nextReviewAt]) // For SRS queries
   @@map("memories")
 }
@@ -395,6 +399,7 @@ model Person {
   urlPageLinks          PersonUrlPageLink[]
   youtubeVideoLinks     PersonYouTubeVideoLink[]
   tiktokVideoLinks      PersonTikTokVideoLink[]
+  twitterPostLinks      PersonTwitterPostLink[]
 
   @@map("people")
 }
@@ -481,6 +486,22 @@ model PersonTikTokVideoLink {
   @@map("person_tiktok_video_links")
 }
 
+// Person-TwitterPost Links (Many-to-Many)
+model PersonTwitterPostLink {
+  id            String      @id @default(uuid()) @db.Uuid
+  personId      String      @map("person_id") @db.Uuid
+  twitterPostId String      @map("twitter_post_id") @db.Uuid
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  person      Person      @relation(fields: [personId], references: [id], onDelete: Cascade)
+  twitterPost TwitterPost @relation(fields: [twitterPostId], references: [id], onDelete: Cascade)
+
+  @@unique([personId, twitterPostId])
+  @@index([personId])
+  @@index([twitterPostId])
+  @@map("person_twitter_post_links")
+}
+
 // Words - now a shared/reusable entity (like Location and Person)
 model Word {
   id             String    @id @default(uuid()) @db.Uuid
@@ -513,12 +534,13 @@ model Project {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  user              User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
   memoryLinks       MemoryProjectLink[]
   imageLinks        ProjectImageLink[]
   urlPageLinks      ProjectUrlPageLink[]
   youtubeVideoLinks ProjectYouTubeVideoLink[]
   tiktokVideoLinks  ProjectTikTokVideoLink[]
+  twitterPostLinks  ProjectTwitterPostLink[]
 
   @@index([userId])
   @@index([userId, name])
@@ -603,6 +625,22 @@ model ProjectTikTokVideoLink {
   @@index([projectId])
   @@index([tiktokVideoId])
   @@map("project_tiktok_video_links")
+}
+
+// Project-TwitterPost Links (Many-to-Many)
+model ProjectTwitterPostLink {
+  id            String      @id @default(uuid()) @db.Uuid
+  projectId     String      @map("project_id") @db.Uuid
+  twitterPostId String      @map("twitter_post_id") @db.Uuid
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  twitterPost TwitterPost @relation(fields: [twitterPostId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, twitterPostId])
+  @@index([projectId])
+  @@index([twitterPostId])
+  @@map("project_twitter_post_links")
 }
 
 // Images - standalone entity for photos/images with face detection
@@ -932,6 +970,93 @@ model TikTokVideo {
 }
 
 // ============================================================================
+// TWITTER/X POSTS - Shared/Reusable Entity
+// ============================================================================
+
+model TwitterPost {
+  id                 String            @id @default(uuid()) @db.Uuid
+
+  // Platform & Twitter identifiers
+  platform           String            @default("twitter") @db.VarChar(16)
+  twitterPostId      String            @map("twitter_post_id") @db.VarChar(64)
+  canonicalUrl       String            @map("canonical_url") @db.VarChar(2048)
+
+  // Post metadata
+  text               String            @db.Text
+  thumbnailUrl       String?           @map("thumbnail_url") @db.VarChar(2048)
+
+  // Creator info
+  creatorDisplayName String            @map("creator_display_name") @db.VarChar(256)
+  creatorUsername    String?           @map("creator_username") @db.VarChar(128)
+  creatorId          String?           @map("creator_id") @db.VarChar(64)
+
+  // Post details
+  publishedAt        DateTime          @map("published_at")
+  languageCode       String?           @map("language_code") @db.VarChar(12)
+
+  // Metrics (snapshots)
+  viewCount          BigInt?           @map("view_count")
+  likeCount          BigInt?           @map("like_count")
+  replyCount         BigInt?           @map("reply_count")
+  retweetCount       BigInt?           @map("retweet_count")
+  quoteCount         BigInt?           @map("quote_count")
+  bookmarkCount      BigInt?           @map("bookmark_count")
+  capturedAt         DateTime?         @map("captured_at") // When statistics were captured
+
+  // Media & content
+  hasMedia           Boolean           @default(false) @map("has_media")
+  mediaUrls          Json?             @map("media_urls") // Array of media URLs
+  mediaTypes         Json?             @map("media_types") // Array of media types (photo, video, animated_gif)
+  hashtags           Json?             // Array of hashtags
+  mentions           Json?             // Array of user mentions
+  externalLinks      Json?             @map("external_links") // Links found in tweet
+
+  // Enrichment
+  summary            String?           @db.Text
+  topics             Json?             // Array of LLM-derived topics
+  sentiment          String?           @db.VarChar(32) // positive, negative, neutral
+
+  // Additional metadata
+  isReply            Boolean           @default(false) @map("is_reply")
+  isRetweet          Boolean           @default(false) @map("is_retweet")
+  isQuote            Boolean           @default(false) @map("is_quote")
+  contentHash        String?           @map("content_hash") @db.VarChar(64)
+
+  // Ingestion tracking
+  ingestionStatus    IngestionStatus   @map("ingestion_status")
+  ingestionAttempts  Int               @default(0) @map("ingestion_attempts")
+  lastIngestionError String?           @map("last_ingestion_error") @db.Text
+  ingestedAt         DateTime?         @map("ingested_at")
+  lastEnrichedAt     DateTime?         @map("last_enriched_at")
+
+  // User association
+  userId             String            @map("user_id") @db.Uuid
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  memories        Memory[]
+  projectLinks    ProjectTwitterPostLink[]
+  personLinks     PersonTwitterPostLink[]
+  trainingLinks   TrainingTwitterPostLink[]
+  trainingLessons TrainingLesson[]
+
+  @@unique([platform, twitterPostId])
+  @@unique([canonicalUrl])
+  @@index([userId])
+  @@index([creatorId])
+  @@index([creatorUsername])
+  @@index([publishedAt(sort: Desc)])
+  @@index([ingestedAt(sort: Desc)])
+  @@index([ingestionStatus])
+  @@index([contentHash])
+  @@map("twitter_posts")
+}
+
+// ============================================================================
 // MEMORY LINKS (Relationships)
 // ============================================================================
 
@@ -1185,12 +1310,13 @@ model Training {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  user              User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
   memoryLinks       MemoryTrainingLink[]
   imageLinks        TrainingImageLink[]
   urlPageLinks      TrainingUrlPageLink[]
   youtubeVideoLinks TrainingYouTubeVideoLink[]
   tiktokVideoLinks  TrainingTikTokVideoLink[]
+  twitterPostLinks  TrainingTwitterPostLink[]
   trainingDecks     TrainingDeck[]
 
   @@index([userId])
@@ -1278,6 +1404,22 @@ model TrainingTikTokVideoLink {
   @@map("training_tiktok_video_links")
 }
 
+// Training-TwitterPost Links (Many-to-Many)
+model TrainingTwitterPostLink {
+  id            String      @id @default(uuid()) @db.Uuid
+  trainingId    String      @map("training_id") @db.Uuid
+  twitterPostId String      @map("twitter_post_id") @db.Uuid
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  training    Training    @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  twitterPost TwitterPost @relation(fields: [twitterPostId], references: [id], onDelete: Cascade)
+
+  @@unique([trainingId, twitterPostId])
+  @@index([trainingId])
+  @@index([twitterPostId])
+  @@map("training_twitter_post_links")
+}
+
 // Training Decks - sequential presentation of training content
 model TrainingDeck {
   id          String   @id @default(uuid()) @db.Uuid
@@ -1305,6 +1447,7 @@ model TrainingLesson {
   urlPageId      String?  @map("url_page_id") @db.Uuid
   youtubeVideoId String?  @map("youtube_video_id") @db.Uuid
   tiktokVideoId  String?  @map("tiktok_video_id") @db.Uuid
+  twitterPostId  String?  @map("twitter_post_id") @db.Uuid
   sortOrder      Int      @map("sort_order")
   createdAt      DateTime @default(now()) @map("created_at")
 
@@ -1314,6 +1457,7 @@ model TrainingLesson {
   urlPage      UrlPage?      @relation(fields: [urlPageId], references: [id], onDelete: Cascade)
   youtubeVideo YouTubeVideo? @relation(fields: [youtubeVideoId], references: [id], onDelete: Cascade)
   tiktokVideo  TikTokVideo?  @relation(fields: [tiktokVideoId], references: [id], onDelete: Cascade)
+  twitterPost  TwitterPost?  @relation(fields: [twitterPostId], references: [id], onDelete: Cascade)
 
   @@index([trainingDeckId, sortOrder])
   @@map("training_lessons")

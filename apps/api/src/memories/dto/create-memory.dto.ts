@@ -51,6 +51,11 @@ export class CreateMemoryDto {
   @IsUUID()
   tiktokVideoId?: string;
 
+  @ApiProperty({ required: false, description: 'Twitter Post ID to link this memory to' })
+  @IsOptional()
+  @IsUUID()
+  twitterPostId?: string;
+
   @ApiProperty({ required: false, description: 'Whether to create reminders for this memory' })
   @IsOptional()
   createReminder?: boolean;

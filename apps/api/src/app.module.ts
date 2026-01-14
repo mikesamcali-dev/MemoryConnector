@@ -21,6 +21,7 @@ import { PeopleModule } from './people/people.module';
 import { UserPreferencesModule } from './user-preferences/user-preferences.module';
 import { YouTubeVideosModule } from './youtube-videos/youtube-videos.module';
 import { TikTokVideosModule } from './tiktok-videos/tiktok-videos.module';
+import { TwitterPostsModule } from './twitter-posts/twitter-posts.module';
 import { ImagesModule } from './images/images.module';
 import { UrlPagesModule } from './url-pages/url-pages.module';
 import { TranscriptionModule } from './transcription/transcription.module';
@@ -85,6 +86,7 @@ import { AuditLoggingInterceptor } from './audit-trail/interceptors/audit-loggin
     UserPreferencesModule,
     YouTubeVideosModule,
     TikTokVideosModule,
+    TwitterPostsModule,
     ImagesModule,
     UrlPagesModule,
     TranscriptionModule,

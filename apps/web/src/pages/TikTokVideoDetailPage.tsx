@@ -93,19 +93,31 @@ export function TikTokVideoDetailPage() {
         <div className="flex flex-col sm:flex-row gap-4 md:gap-6">
           {/* Thumbnail */}
           {video.thumbnailUrl ? (
-            <div className="flex-shrink-0 mx-auto sm:mx-0">
-              <div className="w-32 sm:w-40 md:w-48 aspect-[9/16] bg-gray-100 rounded-lg overflow-hidden">
+            <a
+              href={video.canonicalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-shrink-0 mx-auto sm:mx-0 block group"
+            >
+              <div className="w-32 sm:w-40 md:w-48 aspect-[9/16] bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
                 <img
                   src={video.thumbnailUrl}
                   alt={video.title}
                   className="w-full h-full object-cover"
                 />
               </div>
-            </div>
+            </a>
           ) : (
-            <div className="flex-shrink-0 mx-auto sm:mx-0 w-32 sm:w-40 md:w-48 aspect-[9/16] bg-gray-100 rounded-lg flex items-center justify-center">
-              <Video className="h-12 w-12 text-gray-300" />
-            </div>
+            <a
+              href={video.canonicalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-shrink-0 mx-auto sm:mx-0 block"
+            >
+              <div className="w-32 sm:w-40 md:w-48 aspect-[9/16] bg-gray-100 rounded-lg flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity">
+                <Video className="h-12 w-12 text-gray-300" />
+              </div>
+            </a>
           )}
 
           {/* Details */}

@@ -27,7 +27,7 @@ export class MemoriesService {
   ) {}
 
   async create(userId: string, createMemoryDto: CreateMemoryDto) {
-    const { textContent, imageUrl, typeId, latitude, longitude, locationId, personId, youtubeVideoId, tiktokVideoId, createReminder } = createMemoryDto;
+    const { textContent, imageUrl, typeId, latitude, longitude, locationId, personId, youtubeVideoId, tiktokVideoId, twitterPostId, createReminder } = createMemoryDto;
 
     // Check for content-based duplicate
     const contentHash = this.duplicateDetection.computeContentHash(
@@ -71,6 +71,7 @@ export class MemoriesService {
         personId: personId ?? null,
         youtubeVideoId: youtubeVideoId ?? null,
         tiktokVideoId: tiktokVideoId ?? null,
+        twitterPostId: twitterPostId ?? null,
         occurredAt: new Date(),
         contentHash,
         state: MemoryState.SAVED,
@@ -255,6 +256,7 @@ export class MemoriesService {
         person: true,
         youtubeVideo: true,
         tiktokVideo: true,
+        twitterPost: true,
         wordLinks: {
           include: {
             word: true,
@@ -382,6 +384,9 @@ export class MemoriesService {
     if (updateMemoryDto.tiktokVideoId !== undefined) {
       updateData.tiktokVideoId = updateMemoryDto.tiktokVideoId;
     }
+    if (updateMemoryDto.twitterPostId !== undefined) {
+      updateData.twitterPostId = updateMemoryDto.twitterPostId;
+    }
 
     // Update the memory
     const memory = await this.prisma.memory.update({
@@ -398,6 +403,7 @@ export class MemoriesService {
         person: true,
         youtubeVideo: true,
         tiktokVideo: true,
+        twitterPost: true,
         wordLinks: {
           include: {
             word: true,

@@ -82,15 +82,29 @@ export function YouTubeVideoMemoriesPage() {
               <div className="flex gap-4">
                 {/* Thumbnail */}
                 {video.thumbnailUrl ? (
-                  <img
-                    src={video.thumbnailUrl}
-                    alt={video.title}
-                    className="w-48 h-28 object-cover rounded flex-shrink-0"
-                  />
+                  <a
+                    href={video.canonicalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-shrink-0 block group"
+                  >
+                    <img
+                      src={video.thumbnailUrl}
+                      alt={video.title}
+                      className="w-48 h-28 object-cover rounded cursor-pointer hover:opacity-90 transition-opacity"
+                    />
+                  </a>
                 ) : (
-                  <div className="w-48 h-28 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
-                    <Video className="h-12 w-12 text-gray-400" />
-                  </div>
+                  <a
+                    href={video.canonicalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-shrink-0 block"
+                  >
+                    <div className="w-48 h-28 bg-gray-200 rounded flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity">
+                      <Video className="h-12 w-12 text-gray-400" />
+                    </div>
+                  </a>
                 )}
 
                 {/* Video Info */}

@@ -68,18 +68,28 @@ export function TrainingLessonCard({ lesson }: TrainingLessonCardProps) {
             </div>
           )}
 
-        {/* YouTube video - Embedded */}
+        {/* YouTube video - Clickable Thumbnail */}
         {memory.youtubeVideo && (
           <div className="border-2 border-black rounded overflow-hidden">
-            <div className="relative" style={{ paddingBottom: '56.25%', height: 0 }}>
-              <iframe
-                src={`https://www.youtube.com/embed/${memory.youtubeVideo.youtubeVideoId}`}
-                title={memory.youtubeVideo.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="absolute top-0 left-0 w-full h-full"
-              />
-            </div>
+            <a
+              href={memory.youtubeVideo.canonicalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block relative cursor-pointer hover:opacity-90 transition-opacity"
+              style={{ paddingBottom: '56.25%', height: 0 }}
+            >
+              {memory.youtubeVideo.thumbnailUrl ? (
+                <img
+                  src={memory.youtubeVideo.thumbnailUrl}
+                  alt={memory.youtubeVideo.title}
+                  className="absolute top-0 left-0 w-full h-full object-cover"
+                />
+              ) : (
+                <div className="absolute top-0 left-0 w-full h-full bg-gray-200 flex items-center justify-center">
+                  <ExternalLink className="h-12 w-12 text-gray-400" />
+                </div>
+              )}
+            </a>
             <div className="p-3 md:p-4 bg-red-100 flex items-center justify-between gap-2">
               <p className="font-medium text-sm md:text-base flex-1">{memory.youtubeVideo.title}</p>
               <a
@@ -95,20 +105,28 @@ export function TrainingLessonCard({ lesson }: TrainingLessonCardProps) {
           </div>
         )}
 
-        {/* TikTok video - Embedded */}
+        {/* TikTok video - Clickable Thumbnail */}
         {memory.tiktokVideo && (
           <div className="border-2 border-black rounded overflow-hidden">
-            <div className="relative bg-black flex items-center justify-center" style={{ paddingBottom: '177.78%', height: 0, maxHeight: '600px' }}>
-              <iframe
-                src={`https://www.tiktok.com/embed/v2/${memory.tiktokVideo.tiktokVideoId}`}
-                title={memory.tiktokVideo.title}
-                allow="encrypted-media;"
-                allowFullScreen
-                scrolling="no"
-                className="absolute top-0 left-0 w-full h-full"
-                style={{ border: 'none' }}
-              />
-            </div>
+            <a
+              href={memory.tiktokVideo.canonicalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block relative bg-black cursor-pointer hover:opacity-90 transition-opacity"
+              style={{ paddingBottom: '177.78%', height: 0, maxHeight: '600px' }}
+            >
+              {memory.tiktokVideo.thumbnailUrl ? (
+                <img
+                  src={memory.tiktokVideo.thumbnailUrl}
+                  alt={memory.tiktokVideo.title}
+                  className="absolute top-0 left-0 w-full h-full object-cover"
+                />
+              ) : (
+                <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+                  <ExternalLink className="h-12 w-12 text-white" />
+                </div>
+              )}
+            </a>
             <div className="p-3 md:p-4 bg-gray-100 flex items-center justify-between gap-2">
               <p className="font-medium text-sm md:text-base flex-1">{memory.tiktokVideo.title}</p>
               <a
@@ -251,22 +269,31 @@ export function TrainingLessonCard({ lesson }: TrainingLessonCardProps) {
     );
   }
 
-  // Render YouTube video content - Embedded
+  // Render YouTube video content - Clickable Thumbnail
   if (lesson.youtubeVideo) {
     const { youtubeVideo } = lesson;
-    const videoId = (youtubeVideo as any).youtubeVideoId || (youtubeVideo as any).videoId;
     return (
       <div className="bg-white rounded-lg shadow-2xl w-full p-4 md:p-8">
         <div className="border-2 border-black rounded overflow-hidden">
-          <div className="relative" style={{ paddingBottom: '56.25%', height: 0 }}>
-            <iframe
-              src={`https://www.youtube.com/embed/${videoId}`}
-              title={youtubeVideo.title || 'YouTube video'}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              className="absolute top-0 left-0 w-full h-full"
-            />
-          </div>
+          <a
+            href={youtubeVideo.canonicalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block relative cursor-pointer hover:opacity-90 transition-opacity"
+            style={{ paddingBottom: '56.25%', height: 0 }}
+          >
+            {youtubeVideo.thumbnailUrl ? (
+              <img
+                src={youtubeVideo.thumbnailUrl}
+                alt={youtubeVideo.title || 'YouTube video'}
+                className="absolute top-0 left-0 w-full h-full object-cover"
+              />
+            ) : (
+              <div className="absolute top-0 left-0 w-full h-full bg-gray-200 flex items-center justify-center">
+                <ExternalLink className="h-12 w-12 text-gray-400" />
+              </div>
+            )}
+          </a>
           <div className="p-3 md:p-4 bg-red-100 space-y-2">
             <div className="flex items-center justify-between gap-2">
               <div className="flex-1">
@@ -291,24 +318,31 @@ export function TrainingLessonCard({ lesson }: TrainingLessonCardProps) {
     );
   }
 
-  // Render TikTok video content - Embedded
+  // Render TikTok video content - Clickable Thumbnail
   if (lesson.tiktokVideo) {
     const { tiktokVideo } = lesson;
-    const tiktokId = (tiktokVideo as any).tiktokVideoId;
     return (
       <div className="bg-white rounded-lg shadow-2xl w-full p-4 md:p-8">
         <div className="border-2 border-black rounded overflow-hidden">
-          <div className="relative bg-black flex items-center justify-center" style={{ paddingBottom: '177.78%', height: 0, maxHeight: '600px' }}>
-            <iframe
-              src={`https://www.tiktok.com/embed/v2/${tiktokId}`}
-              title={tiktokVideo.title || 'TikTok video'}
-              allow="encrypted-media;"
-              allowFullScreen
-              scrolling="no"
-              className="absolute top-0 left-0 w-full h-full"
-              style={{ border: 'none' }}
-            />
-          </div>
+          <a
+            href={tiktokVideo.canonicalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block relative bg-black cursor-pointer hover:opacity-90 transition-opacity"
+            style={{ paddingBottom: '177.78%', height: 0, maxHeight: '600px' }}
+          >
+            {tiktokVideo.thumbnailUrl ? (
+              <img
+                src={tiktokVideo.thumbnailUrl}
+                alt={tiktokVideo.title || 'TikTok video'}
+                className="absolute top-0 left-0 w-full h-full object-cover"
+              />
+            ) : (
+              <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+                <ExternalLink className="h-12 w-12 text-white" />
+              </div>
+            )}
+          </a>
           <div className="p-3 md:p-4 bg-gray-100 space-y-2">
             <div className="flex items-center justify-between gap-2">
               <div className="flex-1">

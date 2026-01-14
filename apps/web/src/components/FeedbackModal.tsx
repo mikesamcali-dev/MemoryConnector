@@ -13,7 +13,7 @@ export function FeedbackModal({
   isOpen,
   onClose,
   rawTranscript,
-  sessionId,
+  sessionId: _sessionId,
   onSubmit,
 }: FeedbackModalProps) {
   const [correctedText, setCorrectedText] = useState(rawTranscript);

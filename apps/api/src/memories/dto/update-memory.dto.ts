@@ -60,4 +60,9 @@ export class UpdateMemoryDto {
   @IsOptional()
   @IsUUID()
   tiktokVideoId?: string | null;
+
+  @ApiProperty({ required: false, description: 'Twitter Post ID to link to this memory' })
+  @IsOptional()
+  @IsUUID()
+  twitterPostId?: string | null;
 }
