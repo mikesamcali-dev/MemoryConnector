@@ -184,3 +184,39 @@ export async function deleteSlideDeck(slideDeckId: string): Promise<void> {
     throw new Error('Failed to delete slide deck');
   }
 }
+
+/**
+ * Get all recent reminders for slidedeck selection
+ */
+export async function getRecentRemindersForSelection(): Promise<any[]> {
+  const response = await fetchWithAuth('/slidedecks/recent-reminders');
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch recent reminders');
+  }
+
+  return response.json();
+}
+
+/**
+ * Create a new slide deck from selected reminder IDs
+ */
+export async function createSlideDeckFromSelected(
+  reminderIds: string[],
+  title?: string,
+): Promise<SlideDeck> {
+  const response = await fetchWithAuth('/slidedecks/create-from-selected', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ reminderIds, title }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to create slide deck');
+  }
+
+  return response.json();
+}

@@ -268,6 +268,138 @@ export class SlideDecksService {
   }
 
   /**
+   * Create a new slide deck from selected reminder IDs
+   * Deduplicates by memoryId (keeps first occurrence)
+   * Creates slidedeck with slides and updates reminder status to 'slide'
+   */
+  async createFromSelectedReminders(
+    userId: string,
+    reminderIds: string[],
+    title?: string,
+  ): Promise<any> {
+    if (!reminderIds || reminderIds.length === 0) {
+      throw new BadRequestException('No reminders selected');
+    }
+
+    // Find all selected reminders
+    const selectedReminders = await this.prisma.reminder.findMany({
+      where: {
+        id: {
+          in: reminderIds,
+        },
+        userId,
+        dismissedAt: null,
+      },
+      orderBy: {
+        scheduledAt: 'asc',
+      },
+      include: {
+        memory: {
+          select: {
+            id: true,
+            title: true,
+            body: true,
+          },
+        },
+      },
+    });
+
+    if (selectedReminders.length === 0) {
+      throw new BadRequestException('No valid reminders found');
+    }
+
+    // Deduplicate by memoryId - keep first occurrence
+    const remindersByMemory = new Map<string, any>();
+    selectedReminders.forEach((reminder) => {
+      if (!remindersByMemory.has(reminder.memoryId)) {
+        remindersByMemory.set(reminder.memoryId, reminder);
+      }
+    });
+
+    const uniqueReminders = Array.from(remindersByMemory.values());
+
+    // Create slide deck with slides in a transaction
+    const slideDeck = await this.prisma.$transaction(async (tx) => {
+      // Create the slide deck
+      const deck = await tx.slideDeck.create({
+        data: {
+          userId,
+          title: title || null,
+        },
+      });
+
+      // Create slides
+      await Promise.all(
+        uniqueReminders.map((reminder, index) =>
+          tx.slide.create({
+            data: {
+              slideDeckId: deck.id,
+              reminderId: reminder.id,
+              memoryId: reminder.memoryId,
+              sortOrder: index,
+            },
+          }),
+        ),
+      );
+
+      // Update reminder statuses to 'slide'
+      await tx.reminder.updateMany({
+        where: {
+          id: {
+            in: uniqueReminders.map((r) => r.id),
+          },
+        },
+        data: {
+          status: 'slide',
+        },
+      });
+
+      return deck;
+    });
+
+    // Return deck with slide count
+    return {
+      ...slideDeck,
+      slideCount: uniqueReminders.length,
+    };
+  }
+
+  /**
+   * Get all recent reminders for a user (for selection UI)
+   * Returns all reminders regardless of scheduled date
+   */
+  async getAllRecentReminders(userId: string): Promise<any[]> {
+    const reminders = await this.prisma.reminder.findMany({
+      where: {
+        userId,
+        dismissedAt: null,
+        status: 'pending',
+      },
+      orderBy: {
+        scheduledAt: 'asc',
+      },
+      include: {
+        memory: {
+          select: {
+            id: true,
+            title: true,
+            body: true,
+          },
+        },
+      },
+      take: 200, // Limit to most recent 200 reminders
+    });
+
+    return reminders.map((reminder) => ({
+      id: reminder.id,
+      memoryId: reminder.memoryId,
+      scheduledAt: reminder.scheduledAt,
+      status: reminder.status,
+      memoryPreview: reminder.memory?.body || reminder.memory?.title || 'No content',
+    }));
+  }
+
+  /**
    * Delete a slide deck
    * Cascades to slides, reminders remain with status='slide'
    */

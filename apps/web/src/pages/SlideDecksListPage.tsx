@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { Presentation, Trash2, Eye, Plus, Edit2, Check, X } from 'lucide-react';
 import {
   getAllSlideDecks,
-  createSlideDeckFromOverdue,
   updateSlideDeck,
   deleteSlideDeck,
 } from '../api/slidedecks';
@@ -25,19 +24,6 @@ export function SlideDecksListPage() {
   } = useQuery({
     queryKey: ['slidedecks'],
     queryFn: getAllSlideDecks,
-  });
-
-  // Create slide deck mutation
-  const createMutation = useMutation({
-    mutationFn: createSlideDeckFromOverdue,
-    onSuccess: (newDeck) => {
-      queryClient.invalidateQueries({ queryKey: ['slidedecks'] });
-      // Navigate to the new deck
-      navigate(`/app/slidedecks/${newDeck.id}/view`);
-    },
-    onError: (error: Error) => {
-      alert(error.message);
-    },
   });
 
   // Update slide deck mutation
@@ -67,7 +53,7 @@ export function SlideDecksListPage() {
   });
 
   const handleCreate = () => {
-    createMutation.mutate(undefined);
+    navigate('/app/slidedecks/select-reminders');
   };
 
   const handleView = (id: string) => {
@@ -129,21 +115,11 @@ export function SlideDecksListPage() {
           </div>
           <button
             onClick={handleCreate}
-            disabled={createMutation.isPending}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm md:text-base"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base"
           >
-            {createMutation.isPending ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>Creating...</span>
-              </>
-            ) : (
-              <>
-                <Plus className="w-4 h-4 md:w-5 md:h-5" />
-                <span className="hidden sm:inline">Create from Overdue Reminders</span>
-                <span className="sm:hidden">Create from Reminders</span>
-              </>
-            )}
+            <Plus className="w-4 h-4 md:w-5 md:h-5" />
+            <span className="hidden sm:inline">Create from Reminders</span>
+            <span className="sm:hidden">Create</span>
           </button>
         </div>
         <p className="text-gray-600 mt-2 text-sm md:text-base">

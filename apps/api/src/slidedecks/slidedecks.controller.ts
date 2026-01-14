@@ -59,6 +59,38 @@ export class SlideDecksController {
     return this.slideDecksService.createFromOverdueReminders(user.id, dto);
   }
 
+  @Post('create-from-selected')
+  @ApiOperation({ summary: 'Create slide deck from selected reminder IDs' })
+  @ApiResponse({
+    status: 201,
+    description: 'Slide deck created successfully',
+    type: SlideDeckResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'No reminders selected or found',
+  })
+  async createFromSelected(
+    @User() user: any,
+    @Body() dto: { reminderIds: string[]; title?: string },
+  ) {
+    return this.slideDecksService.createFromSelectedReminders(
+      user.id,
+      dto.reminderIds,
+      dto.title,
+    );
+  }
+
+  @Get('recent-reminders')
+  @ApiOperation({ summary: 'Get all recent reminders for slidedeck selection' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of recent reminders',
+  })
+  async getRecentReminders(@User() user: any) {
+    return this.slideDecksService.getAllRecentReminders(user.id);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get specific slide deck' })
   @ApiResponse({

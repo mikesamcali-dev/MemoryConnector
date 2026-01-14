@@ -37,6 +37,7 @@ const ImageBuilderPage = lazy(() => import('./pages/ImageBuilderPage').then(m =>
 const UrlBuilderPage = lazy(() => import('./pages/UrlBuilderPage').then(m => ({ default: m.UrlBuilderPage })));
 const SlideDecksListPage = lazy(() => import('./pages/SlideDecksListPage').then(m => ({ default: m.SlideDecksListPage })));
 const SlideDeckViewerPage = lazy(() => import('./pages/SlideDeckViewerPage').then(m => ({ default: m.SlideDeckViewerPage })));
+const SlideDeckReminderSelectionPage = lazy(() => import('./pages/SlideDeckReminderSelectionPage').then(m => ({ default: m.SlideDeckReminderSelectionPage })));
 const AtlasPage = lazy(() => import('./pages/AtlasPage').then(m => ({ default: m.AtlasPage })));
 const AdminPanelPage = lazy(() => import('./pages/AdminPanelPage').then(m => ({ default: m.AdminPanelPage })));
 const WordsPage = lazy(() => import('./pages/WordsPage').then(m => ({ default: m.WordsPage })));
@@ -219,6 +220,16 @@ function App() {
                 <ProtectedRoute>
                   <AppLayout>
                     <SlideDecksListPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/slidedecks/select-reminders"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <SlideDeckReminderSelectionPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
