@@ -63,5 +63,23 @@ export class RemindersController {
   async createSRSReminders(@Param('memoryId') memoryId: string, @User() user: any) {
     return this.remindersService.createSRSReminders(user.id, memoryId);
   }
+
+  @Post('memory/:memoryId/custom')
+  @ApiOperation({ summary: 'Create a custom reminder for a memory with specific scheduled time' })
+  async createCustomReminder(
+    @Param('memoryId') memoryId: string,
+    @Body() body: { scheduledAt: string },
+    @User() user: any
+  ) {
+    const scheduledAt = new Date(body.scheduledAt);
+    return this.remindersService.createCustomReminder(user.id, memoryId, scheduledAt);
+  }
+
+  @Get('due-count')
+  @ApiOperation({ summary: 'Get count of due reminders' })
+  async getDueCount(@User() user: any) {
+    const count = await this.remindersService.getDueRemindersCount(user.id);
+    return { count };
+  }
 }
 

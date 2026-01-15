@@ -99,3 +99,16 @@ export async function createSRSReminders(memoryId: string) {
   return response.json();
 }
 
+export async function createCustomReminder(memoryId: string, scheduledAt: string) {
+  const response = await fetchWithAuth(`/reminders/memory/${memoryId}/custom`, {
+    method: 'POST',
+    body: JSON.stringify({ scheduledAt }),
+  });
+  return response.json();
+}
+
+export async function getDueRemindersCount(): Promise<{ count: number }> {
+  const response = await fetchWithAuth('/reminders/due-count');
+  return response.json();
+}
+

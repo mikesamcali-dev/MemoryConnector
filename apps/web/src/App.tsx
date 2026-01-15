@@ -44,6 +44,7 @@ const WordsPage = lazy(() => import('./pages/WordsPage').then(m => ({ default: m
 const WordDetailPage = lazy(() => import('./pages/WordDetailPage').then(m => ({ default: m.WordDetailPage })));
 const QuestionsPage = lazy(() => import('./pages/QuestionsPage').then(m => ({ default: m.QuestionsPage })));
 const QuestionDetailPage = lazy(() => import('./pages/QuestionDetailPage').then(m => ({ default: m.QuestionDetailPage })));
+const ReminderSchedulePage = lazy(() => import('./pages/ReminderSchedulePage').then(m => ({ default: m.ReminderSchedulePage })));
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage').then(m => ({ default: m.ProjectsPage })));
 const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage').then(m => ({ default: m.ProjectDetailPage })));
 const TrainingsPage = lazy(() => import('./pages/TrainingsPage').then(m => ({ default: m.TrainingsPage })));
@@ -134,6 +135,16 @@ function App() {
                 <ProtectedRoute>
                   <AppLayout>
                     <RemindersPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/reminder-schedule"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ReminderSchedulePage />
                   </AppLayout>
                 </ProtectedRoute>
               }

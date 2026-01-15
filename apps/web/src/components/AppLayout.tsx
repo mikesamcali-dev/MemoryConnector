@@ -1,10 +1,12 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Brain, Plus, Search, Bell, Settings, LogOut, ShieldCheck, MapPin, User, Network, Video, Film, Image, Link as LinkIcon, Presentation, MoreHorizontal, ChevronDown, BookOpen, FolderKanban, GraduationCap, Twitter, MessageSquare } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { BottomNav } from './mobile/BottomNav';
 import { BottomSheet } from './mobile/BottomSheet';
+import { getDueRemindersCount } from '../api/reminders';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -18,6 +20,13 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isDesktopMoreOpen, setIsDesktopMoreOpen] = useState(false);
 
+  // Fetch due reminders count
+  const { data: dueCount } = useQuery({
+    queryKey: ['due-reminders-count'],
+    queryFn: getDueRemindersCount,
+    refetchInterval: 60000, // Refetch every minute
+  });
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -25,6 +34,17 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const isActive = (path: string) => {
     return location.pathname === path;
+  };
+
+  const renderBadge = (path: string) => {
+    if (path === '/app/reminders' && dueCount && dueCount.count > 0) {
+      return (
+        <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full">
+          {dueCount.count > 99 ? '99+' : dueCount.count}
+        </span>
+      );
+    }
+    return null;
   };
 
   const baseNavItems = [
@@ -126,21 +146,25 @@ export function AppLayout({ children }: AppLayoutProps) {
                     {desktopMoreItems.map((item) => {
                       const Icon = item.icon;
                       const active = isActive(item.path);
+                      const badge = renderBadge(item.path);
                       return (
                         <Link
                           key={item.path}
                           to={item.path}
                           onClick={() => setIsDesktopMoreOpen(false)}
                           className={`
-                            flex items-center gap-3 px-4 py-2 font-medium transition-all
+                            flex items-center justify-between px-4 py-2 font-medium transition-all
                             ${active
                               ? 'bg-blue-50 text-blue-600'
                               : 'text-gray-700 hover:bg-gray-100'
                             }
                           `}
                         >
-                          <Icon className="h-5 w-5" />
-                          <span>{item.label}</span>
+                          <div className="flex items-center gap-3">
+                            <Icon className="h-5 w-5" />
+                            <span>{item.label}</span>
+                          </div>
+                          {badge}
                         </Link>
                       );
                     })}

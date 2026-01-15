@@ -579,7 +579,8 @@ export function CapturePage() {
       queryClient.invalidateQueries({ queryKey: ['upcoming-reminders'] });
 
       haptic('success');
-      navigate(`/app/memories/${createdMemory.id}`);
+      // Navigate to reminder schedule page to set due date
+      navigate('/app/reminder-schedule', { state: { memoryId: createdMemory.id } });
     } catch (err: any) {
       console.error('Create memory error:', err);
       setError(err.message || 'Failed to create memory');
@@ -701,7 +702,8 @@ export function CapturePage() {
       queryClient.invalidateQueries({ queryKey: ['questions'] });
 
       haptic('success');
-      navigate('/app/questions');
+      // Navigate to reminder schedule page to set due date
+      navigate('/app/reminder-schedule', { state: { memoryId: createdMemory.id } });
     } catch (err: any) {
       console.error('Create memory/question error:', err);
       setError(err.message || 'Failed to create memory');

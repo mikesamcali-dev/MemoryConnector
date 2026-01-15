@@ -282,6 +282,52 @@ export class RemindersService {
     };
   }
 
+  async createCustomReminder(userId: string, memoryId: string, scheduledAt: Date) {
+    // Verify the memory belongs to the user
+    const memory = await this.prisma.memory.findFirst({
+      where: { id: memoryId, userId },
+    });
+
+    if (!memory) {
+      throw new HttpException('Memory not found', HttpStatus.NOT_FOUND);
+    }
+
+    // Create the reminder
+    const reminder = await this.prisma.reminder.create({
+      data: {
+        userId,
+        memoryId,
+        scheduledAt,
+        status: 'pending',
+      },
+    });
+
+    console.log(`Created custom reminder for memory ${memoryId} scheduled at ${scheduledAt}`);
+
+    return {
+      success: true,
+      reminder: {
+        id: reminder.id,
+        scheduledAt: reminder.scheduledAt,
+      },
+    };
+  }
+
+  async getDueRemindersCount(userId: string): Promise<number> {
+    const now = new Date();
+    const count = await this.prisma.reminder.count({
+      where: {
+        userId,
+        status: 'pending',
+        scheduledAt: {
+          lte: now,
+        },
+        dismissedAt: null,
+      },
+    });
+    return count;
+  }
+
   private truncateText(text: string | null, maxLength: number): string {
     if (!text) return '';
     if (text.length <= maxLength) return text;
