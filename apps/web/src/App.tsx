@@ -42,6 +42,8 @@ const AtlasPage = lazy(() => import('./pages/AtlasPage').then(m => ({ default: m
 const AdminPanelPage = lazy(() => import('./pages/AdminPanelPage').then(m => ({ default: m.AdminPanelPage })));
 const WordsPage = lazy(() => import('./pages/WordsPage').then(m => ({ default: m.WordsPage })));
 const WordDetailPage = lazy(() => import('./pages/WordDetailPage').then(m => ({ default: m.WordDetailPage })));
+const QuestionsPage = lazy(() => import('./pages/QuestionsPage').then(m => ({ default: m.QuestionsPage })));
+const QuestionDetailPage = lazy(() => import('./pages/QuestionDetailPage').then(m => ({ default: m.QuestionDetailPage })));
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage').then(m => ({ default: m.ProjectsPage })));
 const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage').then(m => ({ default: m.ProjectDetailPage })));
 const TrainingsPage = lazy(() => import('./pages/TrainingsPage').then(m => ({ default: m.TrainingsPage })));
@@ -152,6 +154,26 @@ function App() {
                 <ProtectedRoute>
                   <AppLayout>
                     <WordDetailPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/questions"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <QuestionsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/questions/:id"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <QuestionDetailPage />
                   </AppLayout>
                 </ProtectedRoute>
               }

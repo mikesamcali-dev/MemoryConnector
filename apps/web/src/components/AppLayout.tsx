@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Brain, Plus, Search, Bell, Settings, LogOut, ShieldCheck, MapPin, User, Network, Video, Film, Image, Link as LinkIcon, Presentation, MoreHorizontal, ChevronDown, BookOpen, FolderKanban, GraduationCap, Twitter } from 'lucide-react';
+import { Brain, Plus, Search, Bell, Settings, LogOut, ShieldCheck, MapPin, User, Network, Video, Film, Image, Link as LinkIcon, Presentation, MoreHorizontal, ChevronDown, BookOpen, FolderKanban, GraduationCap, Twitter, MessageSquare } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { BottomNav } from './mobile/BottomNav';
@@ -35,6 +35,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     { path: '/app/trainings', icon: GraduationCap, label: 'Trainings' },
     { path: '/app/training-decks', icon: GraduationCap, label: 'Train' },
     { path: '/app/words', icon: BookOpen, label: 'Words' },
+    { path: '/app/questions', icon: MessageSquare, label: 'Questions' },
     { path: '/app/locations', icon: MapPin, label: 'Locations' },
     { path: '/app/people', icon: User, label: 'People' },
     { path: '/app/images', icon: Image, label: 'Images' },

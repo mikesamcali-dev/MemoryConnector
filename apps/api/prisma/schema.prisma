@@ -124,6 +124,7 @@ model User {
   speechSessions      SpeechSession[]
   userLexicon         UserLexicon[]
   transcriptFeedback  TranscriptFeedback[]
+  questions           Question[]
 
   @@map("users")
 }
@@ -304,6 +305,7 @@ model Memory {
   trainingLinks       MemoryTrainingLink[]
   slides              Slide[]
   trainingLessons     TrainingLesson[]
+  questions           Question[]
 
   @@index([userId, state])
   @@index([userId, contentHash, createdAt])
@@ -522,6 +524,25 @@ model Word {
 
   @@index([word])
   @@map("words")
+}
+
+// Questions - user questions answered by AI
+model Question {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  memoryId  String   @map("memory_id") @db.Uuid
+  question  String   @db.Text
+  answer    String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([memoryId])
+  @@index([userId, createdAt])
+  @@map("questions")
 }
 
 // Projects - user-specific project organization entity

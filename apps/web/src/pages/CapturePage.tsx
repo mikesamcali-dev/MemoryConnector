@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createMemory } from '../api/memories';
 import { getAllPeople, getAllLocationsForUser } from '../api/admin';
 import { getUpcomingReminders } from '../api/reminders';
+import { createQuestion } from '../api/questions';
 import { processMemoryPhrase } from '../api/words';
 import { uploadImage, linkImageToMemory } from '../api/images';
 import { addUrl, linkUrlPageToMemory } from '../api/urlPages';
@@ -16,7 +17,7 @@ import { createDraft } from '../utils/idempotency';
 import { compressImage, getSizeReduction } from '../utils/imageCompression';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Clock, AlertCircle, Calendar, Loader, Users, MapPinned, Video, Image as ImageIcon, Link as LinkIcon, X, Mic, FolderKanban, GraduationCap, Bell } from 'lucide-react';
+import { Clock, AlertCircle, Calendar, Loader, Users, MapPinned, Video, Image as ImageIcon, Link as LinkIcon, X, Mic, FolderKanban, GraduationCap, Bell, MessageSquare } from 'lucide-react';
 import { useHaptics } from '../hooks/useHaptics';
 import { useVoiceInput } from '../hooks/useVoiceInput';
 import { FeedbackModal } from '../components/FeedbackModal';
@@ -581,6 +582,128 @@ export function CapturePage() {
       navigate(`/app/memories/${createdMemory.id}`);
     } catch (err: any) {
       console.error('Create memory error:', err);
+      setError(err.message || 'Failed to create memory');
+      if (err.status === 429) {
+        setIsRateLimitError(true);
+      }
+      haptic('error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle Ask button click - saves memory with reminders and asks OpenAI
+  const handleAskButtonClick = async () => {
+    if (!textValue.trim()) {
+      return;
+    }
+
+    haptic('light');
+    setError('');
+    setIsRateLimitError(false);
+    setLoading(true);
+
+    try {
+      const memoryDraft = createDraft(textValue);
+      setDraft(memoryDraft);
+      localStorage.setItem('memoryDraft', JSON.stringify(memoryDraft));
+
+      const createdMemory = await createMemory({
+        ...memoryDraft,
+        locationId: linkedEntities.locations[0] || undefined,
+        personId: linkedEntities.persons[0] || undefined,
+        youtubeVideoId: linkedEntities.youtubeVideos[0] || undefined,
+        tiktokVideoId: linkedEntities.tiktokVideos[0] || undefined,
+        createReminder: true,
+      });
+
+      // Upload and link image if one was selected
+      if (selectedImage) {
+        try {
+          setUploadingImage(true);
+          const reader = new FileReader();
+          const imageDataPromise = new Promise<string>((resolve, reject) => {
+            reader.onloadend = () => {
+              const result = reader.result as string;
+              const base64Data = result.split(',')[1];
+              resolve(base64Data);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(selectedImage);
+          });
+
+          const imageData = await imageDataPromise;
+          const uploadedImage = await uploadImage({
+            imageData,
+            contentType: selectedImage.type,
+            filename: selectedImage.name,
+          });
+          await linkImageToMemory(uploadedImage.id, createdMemory.id);
+        } catch (imageError) {
+          console.error('Failed to upload image:', imageError);
+        } finally {
+          setUploadingImage(false);
+        }
+      }
+
+      // Link URL if one was added
+      if (addedUrlPage) {
+        try {
+          await linkUrlPageToMemory(addedUrlPage.id, createdMemory.id);
+        } catch (urlError) {
+          console.error('Failed to link URL:', urlError);
+        }
+      }
+
+      // Link project if one was selected
+      if (linkedEntities.projects[0]) {
+        try {
+          await linkMemoryToProject(createdMemory.id, linkedEntities.projects[0]);
+        } catch (projectError) {
+          console.error('Failed to link project:', projectError);
+        }
+      }
+
+      // Ask OpenAI and save question/answer
+      try {
+        await createQuestion({
+          memoryId: createdMemory.id,
+          question: textValue.trim(),
+        });
+      } catch (questionError) {
+        console.error('Failed to create question:', questionError);
+        // Continue anyway - memory was saved successfully
+      }
+
+      // Process phrase/word linking if text is 1-3 words
+      if (textValue.trim().split(/\s+/).length <= 3) {
+        try {
+          await processMemoryPhrase(createdMemory.id, textValue.trim());
+        } catch (phraseError) {
+          console.error('Failed to process phrase:', phraseError);
+        }
+      }
+
+      // Reset form
+      reset({ text: '' });
+      setTextValue('');
+      setTopicInput('');
+      setSelectedImage(null);
+      setImagePreview(null);
+      setCompressionInfo('');
+      setAddedUrlPage(null);
+      setLinkedEntities({ persons: [], locations: [], youtubeVideos: [], tiktokVideos: [], projects: [], trainings: [] });
+      localStorage.removeItem('memoryDraft');
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['memories'] });
+      queryClient.invalidateQueries({ queryKey: ['upcoming-reminders'] });
+      queryClient.invalidateQueries({ queryKey: ['questions'] });
+
+      haptic('success');
+      navigate('/app/questions');
+    } catch (err: any) {
+      console.error('Create memory/question error:', err);
       setError(err.message || 'Failed to create memory');
       if (err.status === 429) {
         setIsRateLimitError(true);
@@ -1215,6 +1338,15 @@ export function CapturePage() {
           <span className="hidden xs:inline">Save w/Reminders</span>
           <span className="xs:hidden">w/Reminders</span>
         </button>
+        <button
+          type="button"
+          onClick={handleAskButtonClick}
+          disabled={loading || !textValue.trim() || uploadingImage || addingUrl || addingTikTok || addingYouTube}
+          className="flex-1 inline-flex items-center justify-center gap-2 h-12 px-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white text-base font-semibold rounded-lg hover:from-purple-700 hover:to-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 shadow-md transition-all active:scale-95"
+        >
+          <MessageSquare className="h-5 w-5" />
+          <span>Ask</span>
+        </button>
       </div>
 
       <form id="capture-form" onSubmit={handleSubmit(onSubmit)} className="space-y-3 md:space-y-4 mb-8">
@@ -1587,6 +1719,15 @@ export function CapturePage() {
           >
             <Bell className="h-4 w-4" />
             Save w/Reminders
+          </button>
+          <button
+            type="button"
+            onClick={handleAskButtonClick}
+            disabled={loading || !textValue.trim() || uploadingImage || addingUrl || addingTikTok || addingYouTube}
+            className="flex-1 inline-flex items-center justify-center gap-2 h-10 px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white text-sm font-semibold rounded-md hover:from-purple-700 hover:to-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+          >
+            <MessageSquare className="h-4 w-4" />
+            Ask
           </button>
         </div>
       </form>
