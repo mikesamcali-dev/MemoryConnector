@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { getMemory, updateMemory, deleteMemory, analyzeText, WordMatch, linkWordsToMemory } from '../api/memories';
 import { getRemindersForMemory, updateReminderSchedule, deleteReminder, createSRSReminders } from '../api/reminders';
-import { ArrowLeft, Save, MapPin, Calendar, Edit2, X, Clock, Trash2, Plus, Link2, BookOpen, Image as ImageIcon, ExternalLink, Bell } from 'lucide-react';
+import { ArrowLeft, Save, MapPin, Calendar, Edit2, X, Clock, Trash2, Plus, Link2, BookOpen, Image as ImageIcon, ExternalLink, Bell, MessageSquare } from 'lucide-react';
 import { EntitySuggestionsModal } from '../components/EntitySuggestionsModal';
 
 const updateMemorySchema = z.object({
@@ -1044,6 +1044,45 @@ export function MemoryDetailPage() {
                       <span>Fetched: {new Date(link.urlPage.fetchedAt).toLocaleDateString()}</span>
                     </div>
                   </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Questions Section */}
+      {memory.questions && memory.questions.length > 0 && (
+        <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <MessageSquare className="h-6 w-6 text-purple-600" />
+            <h2 className="text-2xl font-bold text-gray-900">Questions ({memory.questions.length})</h2>
+          </div>
+          <div className="space-y-4">
+            {memory.questions.map((question: any) => (
+              <div
+                key={question.id}
+                onClick={() => navigate(`/app/questions/${question.id}`)}
+                className="border border-purple-200 rounded-lg p-4 hover:bg-purple-50 cursor-pointer transition-colors"
+              >
+                {/* Question */}
+                <div className="mb-3">
+                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Question</h3>
+                  <p className="text-gray-900 font-medium">{question.question}</p>
+                </div>
+
+                {/* Answer */}
+                {question.answer && (
+                  <div className="mb-3">
+                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Answer</h3>
+                    <p className="text-gray-700 text-sm line-clamp-3">{question.answer}</p>
+                  </div>
+                )}
+
+                {/* Timestamp */}
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <Calendar className="h-3 w-3" />
+                  <span>Asked: {new Date(question.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>
             ))}

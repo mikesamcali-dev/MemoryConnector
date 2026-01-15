@@ -26,8 +26,8 @@ enum MemoryState {
 }
 
 enum StorageStrategy {
-  generic     // Data stored in memories.data as JSONB
-  structured  // Data stored in dedicated table
+  generic // Data stored in memories.data as JSONB
+  structured // Data stored in dedicated table
 
   @@map("storagestrategy")
 }
@@ -44,15 +44,15 @@ enum ReminderStatus {
   pending
   sent
   cancelled
-  slide  // Reminder has been added to a slide deck
+  slide // Reminder has been added to a slide deck
 }
 
 enum LinkType {
-  locatedAt    // Memory is located at another memory (location)
-  summaryOf    // Memory summarizes another memory
-  hasMedia     // Memory has media attachment (another memory)
-  related      // Generic relationship
-  mentions     // Memory mentions a person/entity
+  locatedAt // Memory is located at another memory (location)
+  summaryOf // Memory summarizes another memory
+  hasMedia // Memory has media attachment (another memory)
+  related // Generic relationship
+  mentions // Memory mentions a person/entity
 
   @@map("linktype")
 }
@@ -147,35 +147,35 @@ model UserUsage {
 }
 
 model UserStats {
-  id                    String   @id @default(uuid()) @db.Uuid
-  userId                String   @unique @map("user_id") @db.Uuid
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @unique @map("user_id") @db.Uuid
 
   // Capture streaks
-  currentStreakDays     Int      @default(0) @map("current_streak_days")
-  longestStreakDays     Int      @default(0) @map("longest_streak_days")
-  lastCaptureDate       DateTime? @map("last_capture_date")
+  currentStreakDays Int       @default(0) @map("current_streak_days")
+  longestStreakDays Int       @default(0) @map("longest_streak_days")
+  lastCaptureDate   DateTime? @map("last_capture_date")
 
   // Review statistics
-  totalReviewsCompleted Int      @default(0) @map("total_reviews_completed")
-  totalReviewsAgain     Int      @default(0) @map("total_reviews_again")
-  totalReviewsHard      Int      @default(0) @map("total_reviews_hard")
-  totalReviewsGood      Int      @default(0) @map("total_reviews_good")
-  totalReviewsEasy      Int      @default(0) @map("total_reviews_easy")
+  totalReviewsCompleted Int @default(0) @map("total_reviews_completed")
+  totalReviewsAgain     Int @default(0) @map("total_reviews_again")
+  totalReviewsHard      Int @default(0) @map("total_reviews_hard")
+  totalReviewsGood      Int @default(0) @map("total_reviews_good")
+  totalReviewsEasy      Int @default(0) @map("total_reviews_easy")
 
   // Memory statistics
-  totalMemoriesCreated  Int      @default(0) @map("total_memories_created")
-  totalLinksCreated     Int      @default(0) @map("total_links_created")
+  totalMemoriesCreated Int @default(0) @map("total_memories_created")
+  totalLinksCreated    Int @default(0) @map("total_links_created")
 
   // Sentiment balance
-  sentimentPositive     Int      @default(0) @map("sentiment_positive")
-  sentimentNeutral      Int      @default(0) @map("sentiment_neutral")
-  sentimentNegative     Int      @default(0) @map("sentiment_negative")
+  sentimentPositive Int @default(0) @map("sentiment_positive")
+  sentimentNeutral  Int @default(0) @map("sentiment_neutral")
+  sentimentNegative Int @default(0) @map("sentiment_negative")
 
   // Achievements (JSON array of achievement codes)
-  achievementsUnlocked  Json     @default("[]") @map("achievements_unlocked")
+  achievementsUnlocked Json @default("[]") @map("achievements_unlocked")
 
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -183,13 +183,13 @@ model UserStats {
 }
 
 model UserReminderPreferences {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @unique @map("user_id") @db.Uuid
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @unique @map("user_id") @db.Uuid
 
   // Reminder intervals in minutes
   firstReminderMinutes  Int @default(3) @map("first_reminder_minutes")
-  secondReminderMinutes Int @default(4320) @map("second_reminder_minutes")  // 3 days
-  thirdReminderMinutes  Int @default(30240) @map("third_reminder_minutes")  // 3 weeks
+  secondReminderMinutes Int @default(4320) @map("second_reminder_minutes") // 3 days
+  thirdReminderMinutes  Int @default(30240) @map("third_reminder_minutes") // 3 weeks
 
   // Enable/disable reminders
   remindersEnabled Boolean @default(true) @map("reminders_enabled")
@@ -222,7 +222,7 @@ model TierLimit {
 model MemoryType {
   id              String          @id @default(uuid()) @db.Uuid
   code            String          @unique // e.g., "event", "location", "note"
-  label           String          // Human-readable name
+  label           String // Human-readable name
   description     String?
   icon            String?         @default("📝")
   color           String?         @default("#6B7280")
@@ -244,68 +244,68 @@ model MemoryType {
 // ============================================================================
 
 model Memory {
-  id               String           @id @default(uuid()) @db.Uuid
-  userId           String           @map("user_id") @db.Uuid
-  title            String?          @db.VarChar(500)
-  body             String?          @db.Text
-  occurredAt       DateTime?        @map("occurred_at") // When the memory happened
-  startAt          DateTime?        @map("start_at")    // For events
-  endAt            DateTime?        @map("end_at")      // For events
-  data             Json?            // Generic metadata for non-structured types
-  latitude         Float?
-  longitude        Float?
-  imageUrl         String?          @map("image_url")
-  state            MemoryState      @default(SAVED)
-  contentHash      String?          @map("content_hash") @db.VarChar(32)
-  enrichmentStatus EnrichmentStatus @default(pending) @map("enrichment_status")
-  enrichmentQueuedAt DateTime?      @map("enrichment_queued_at")
-  locationId       String?          @map("location_id") @db.Uuid
-  personId         String?          @map("person_id") @db.Uuid
-  youtubeVideoId   String?          @map("youtube_video_id") @db.Uuid
-  tiktokVideoId    String?          @map("tiktok_video_id") @db.Uuid
-  twitterPostId    String?          @map("twitter_post_id") @db.Uuid
+  id                 String           @id @default(uuid()) @db.Uuid
+  userId             String           @map("user_id") @db.Uuid
+  title              String?          @db.VarChar(500)
+  body               String?          @db.Text
+  occurredAt         DateTime?        @map("occurred_at") // When the memory happened
+  startAt            DateTime?        @map("start_at") // For events
+  endAt              DateTime?        @map("end_at") // For events
+  data               Json? // Generic metadata for non-structured types
+  latitude           Float?
+  longitude          Float?
+  imageUrl           String?          @map("image_url")
+  state              MemoryState      @default(SAVED)
+  contentHash        String?          @map("content_hash") @db.VarChar(32)
+  enrichmentStatus   EnrichmentStatus @default(pending) @map("enrichment_status")
+  enrichmentQueuedAt DateTime?        @map("enrichment_queued_at")
+  locationId         String?          @map("location_id") @db.Uuid
+  personId           String?          @map("person_id") @db.Uuid
+  youtubeVideoId     String?          @map("youtube_video_id") @db.Uuid
+  tiktokVideoId      String?          @map("tiktok_video_id") @db.Uuid
+  twitterPostId      String?          @map("twitter_post_id") @db.Uuid
 
   // Spaced Repetition System (SRS) fields
-  lastReviewedAt   DateTime?        @map("last_reviewed_at")
-  nextReviewAt     DateTime?        @map("next_review_at")
-  reviewInterval   Int?             @default(1) @map("review_interval") // Days until next review
-  easeFactor       Float?           @default(2.5) @map("ease_factor") // SM-2 algorithm ease factor
-  reviewCount      Int              @default(0) @map("review_count")
-  lapseCount       Int              @default(0) @map("lapse_count") // Times marked "Again"
+  lastReviewedAt DateTime? @map("last_reviewed_at")
+  nextReviewAt   DateTime? @map("next_review_at")
+  reviewInterval Int?      @default(1) @map("review_interval") // Days until next review
+  easeFactor     Float?    @default(2.5) @map("ease_factor") // SM-2 algorithm ease factor
+  reviewCount    Int       @default(0) @map("review_count")
+  lapseCount     Int       @default(0) @map("lapse_count") // Times marked "Again"
 
-  createdAt        DateTime         @default(now()) @map("created_at")
-  updatedAt        DateTime         @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  user                User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  typeAssignments     MemoryTypeAssignment[]
-  reminders           Reminder[]
-  embeddings          Embedding[]
-  idempotencyKeys     IdempotencyKey[]
-  aiCostTracking      AiCostTracking[]
+  user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  typeAssignments MemoryTypeAssignment[]
+  reminders       Reminder[]
+  embeddings      Embedding[]
+  idempotencyKeys IdempotencyKey[]
+  aiCostTracking  AiCostTracking[]
 
   // Structured type relations (1:1)
-  event               Event?
+  event Event?
 
   // Shared entity relations
-  location            Location?                @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  person              Person?                  @relation(fields: [personId], references: [id], onDelete: SetNull)
-  youtubeVideo        YouTubeVideo?            @relation(fields: [youtubeVideoId], references: [id], onDelete: SetNull)
-  tiktokVideo         TikTokVideo?             @relation(fields: [tiktokVideoId], references: [id], onDelete: SetNull)
-  twitterPost         TwitterPost?             @relation(fields: [twitterPostId], references: [id], onDelete: SetNull)
+  location     Location?     @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  person       Person?       @relation(fields: [personId], references: [id], onDelete: SetNull)
+  youtubeVideo YouTubeVideo? @relation(fields: [youtubeVideoId], references: [id], onDelete: SetNull)
+  tiktokVideo  TikTokVideo?  @relation(fields: [tiktokVideoId], references: [id], onDelete: SetNull)
+  twitterPost  TwitterPost?  @relation(fields: [twitterPostId], references: [id], onDelete: SetNull)
 
   // Link relations
-  linksFrom           MemoryLink[]             @relation("LinkSource")
-  linksTo             MemoryLink[]             @relation("LinkTarget")
-  wordLinks           MemoryWordLink[]
-  imageLinks          MemoryImageLink[]
-  urlPageLinks        MemoryUrlPageLink[]
-  projectLinks        MemoryProjectLink[]
-  personLinks         MemoryPersonLink[]
-  trainingLinks       MemoryTrainingLink[]
-  slides              Slide[]
-  trainingLessons     TrainingLesson[]
-  questions           Question[]
+  linksFrom       MemoryLink[]         @relation("LinkSource")
+  linksTo         MemoryLink[]         @relation("LinkTarget")
+  wordLinks       MemoryWordLink[]
+  imageLinks      MemoryImageLink[]
+  urlPageLinks    MemoryUrlPageLink[]
+  projectLinks    MemoryProjectLink[]
+  personLinks     MemoryPersonLink[]
+  trainingLinks   MemoryTrainingLink[]
+  slides          Slide[]
+  trainingLessons TrainingLesson[]
+  questions       Question[]
 
   @@index([userId, state])
   @@index([userId, contentHash, createdAt])
@@ -393,15 +393,15 @@ model Person {
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  memories              Memory[]
-  relationshipsFrom     PersonRelationship[] @relation("RelationshipSource")
-  relationshipsTo       PersonRelationship[] @relation("RelationshipTarget")
-  imageLinks            ImagePersonLink[]
-  memoryLinks           MemoryPersonLink[]
-  urlPageLinks          PersonUrlPageLink[]
-  youtubeVideoLinks     PersonYouTubeVideoLink[]
-  tiktokVideoLinks      PersonTikTokVideoLink[]
-  twitterPostLinks      PersonTwitterPostLink[]
+  memories          Memory[]
+  relationshipsFrom PersonRelationship[]     @relation("RelationshipSource")
+  relationshipsTo   PersonRelationship[]     @relation("RelationshipTarget")
+  imageLinks        ImagePersonLink[]
+  memoryLinks       MemoryPersonLink[]
+  urlPageLinks      PersonUrlPageLink[]
+  youtubeVideoLinks PersonYouTubeVideoLink[]
+  tiktokVideoLinks  PersonTikTokVideoLink[]
+  twitterPostLinks  PersonTwitterPostLink[]
 
   @@map("people")
 }
@@ -458,10 +458,10 @@ model PersonUrlPageLink {
 
 // Person-YouTubeVideo Links (Many-to-Many)
 model PersonYouTubeVideoLink {
-  id             String       @id @default(uuid()) @db.Uuid
-  personId       String       @map("person_id") @db.Uuid
-  youtubeVideoId String       @map("youtube_video_id") @db.Uuid
-  createdAt      DateTime     @default(now()) @map("created_at")
+  id             String   @id @default(uuid()) @db.Uuid
+  personId       String   @map("person_id") @db.Uuid
+  youtubeVideoId String   @map("youtube_video_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at")
 
   person       Person       @relation(fields: [personId], references: [id], onDelete: Cascade)
   youtubeVideo YouTubeVideo @relation(fields: [youtubeVideoId], references: [id], onDelete: Cascade)
@@ -474,10 +474,10 @@ model PersonYouTubeVideoLink {
 
 // Person-TikTokVideo Links (Many-to-Many)
 model PersonTikTokVideoLink {
-  id            String      @id @default(uuid()) @db.Uuid
-  personId      String      @map("person_id") @db.Uuid
-  tiktokVideoId String      @map("tiktok_video_id") @db.Uuid
-  createdAt     DateTime    @default(now()) @map("created_at")
+  id            String   @id @default(uuid()) @db.Uuid
+  personId      String   @map("person_id") @db.Uuid
+  tiktokVideoId String   @map("tiktok_video_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
 
   person      Person      @relation(fields: [personId], references: [id], onDelete: Cascade)
   tiktokVideo TikTokVideo @relation(fields: [tiktokVideoId], references: [id], onDelete: Cascade)
@@ -490,10 +490,10 @@ model PersonTikTokVideoLink {
 
 // Person-TwitterPost Links (Many-to-Many)
 model PersonTwitterPostLink {
-  id            String      @id @default(uuid()) @db.Uuid
-  personId      String      @map("person_id") @db.Uuid
-  twitterPostId String      @map("twitter_post_id") @db.Uuid
-  createdAt     DateTime    @default(now()) @map("created_at")
+  id            String   @id @default(uuid()) @db.Uuid
+  personId      String   @map("person_id") @db.Uuid
+  twitterPostId String   @map("twitter_post_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
 
   person      Person      @relation(fields: [personId], references: [id], onDelete: Cascade)
   twitterPost TwitterPost @relation(fields: [twitterPostId], references: [id], onDelete: Cascade)
@@ -512,9 +512,9 @@ model Word {
   phonetic       String?   @db.VarChar(100)
   partOfSpeech   String?   @map("part_of_speech") @db.VarChar(50)
   etymology      String?   @db.Text
-  examples       Json?     // Array of example sentences
-  synonyms       Json?     // Array of synonyms
-  antonyms       Json?     // Array of antonyms
+  examples       Json? // Array of example sentences
+  synonyms       Json? // Array of synonyms
+  antonyms       Json? // Array of antonyms
   difficulty     String?   @db.VarChar(20)
   lastEnrichedAt DateTime? @map("last_enriched_at")
   createdAt      DateTime  @default(now()) @map("created_at")
@@ -618,10 +618,10 @@ model ProjectUrlPageLink {
 
 // Project-YouTubeVideo Links (Many-to-Many)
 model ProjectYouTubeVideoLink {
-  id             String       @id @default(uuid()) @db.Uuid
-  projectId      String       @map("project_id") @db.Uuid
-  youtubeVideoId String       @map("youtube_video_id") @db.Uuid
-  createdAt      DateTime     @default(now()) @map("created_at")
+  id             String   @id @default(uuid()) @db.Uuid
+  projectId      String   @map("project_id") @db.Uuid
+  youtubeVideoId String   @map("youtube_video_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at")
 
   project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   youtubeVideo YouTubeVideo @relation(fields: [youtubeVideoId], references: [id], onDelete: Cascade)
@@ -634,10 +634,10 @@ model ProjectYouTubeVideoLink {
 
 // Project-TikTokVideo Links (Many-to-Many)
 model ProjectTikTokVideoLink {
-  id            String      @id @default(uuid()) @db.Uuid
-  projectId     String      @map("project_id") @db.Uuid
-  tiktokVideoId String      @map("tiktok_video_id") @db.Uuid
-  createdAt     DateTime    @default(now()) @map("created_at")
+  id            String   @id @default(uuid()) @db.Uuid
+  projectId     String   @map("project_id") @db.Uuid
+  tiktokVideoId String   @map("tiktok_video_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
 
   project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   tiktokVideo TikTokVideo @relation(fields: [tiktokVideoId], references: [id], onDelete: Cascade)
@@ -650,10 +650,10 @@ model ProjectTikTokVideoLink {
 
 // Project-TwitterPost Links (Many-to-Many)
 model ProjectTwitterPostLink {
-  id            String      @id @default(uuid()) @db.Uuid
-  projectId     String      @map("project_id") @db.Uuid
-  twitterPostId String      @map("twitter_post_id") @db.Uuid
-  createdAt     DateTime    @default(now()) @map("created_at")
+  id            String   @id @default(uuid()) @db.Uuid
+  projectId     String   @map("project_id") @db.Uuid
+  twitterPostId String   @map("twitter_post_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
 
   project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   twitterPost TwitterPost @relation(fields: [twitterPostId], references: [id], onDelete: Cascade)
@@ -688,12 +688,12 @@ model Image {
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
-  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  faces         ImageFace[]
-  memoryLinks   MemoryImageLink[]
-  personLinks   ImagePersonLink[]
-  projectLinks  ProjectImageLink[]
-  trainingLinks TrainingImageLink[]
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  faces           ImageFace[]
+  memoryLinks     MemoryImageLink[]
+  personLinks     ImagePersonLink[]
+  projectLinks    ProjectImageLink[]
+  trainingLinks   TrainingImageLink[]
   trainingLessons TrainingLesson[]
 
   @@unique([userId, sha256])
@@ -705,21 +705,21 @@ model Image {
 
 // Image Faces - detected faces in images
 model ImageFace {
-  id               String   @id @default(uuid()) @db.Uuid
-  imageId          String   @map("image_id") @db.Uuid
-  bboxX            Int      @map("bbox_x")
-  bboxY            Int      @map("bbox_y")
-  bboxWidth        Int      @map("bbox_width")
-  bboxHeight       Int      @map("bbox_height")
-  blurScore        Float?   @map("blur_score")
-  occlusionScore   Float?   @map("occlusion_score")
-  poseYaw          Float?   @map("pose_yaw")
-  posePitch        Float?   @map("pose_pitch")
-  poseRoll         Float?   @map("pose_roll")
-  embedding        Json?    // Face embedding vector (only if consent given)
-  embeddingModel   String?  @map("embedding_model") @db.VarChar(50)
-  faceCropUrl      String?  @map("face_crop_url") @db.Text
-  createdAt        DateTime @default(now()) @map("created_at")
+  id             String   @id @default(uuid()) @db.Uuid
+  imageId        String   @map("image_id") @db.Uuid
+  bboxX          Int      @map("bbox_x")
+  bboxY          Int      @map("bbox_y")
+  bboxWidth      Int      @map("bbox_width")
+  bboxHeight     Int      @map("bbox_height")
+  blurScore      Float?   @map("blur_score")
+  occlusionScore Float?   @map("occlusion_score")
+  poseYaw        Float?   @map("pose_yaw")
+  posePitch      Float?   @map("pose_pitch")
+  poseRoll       Float?   @map("pose_roll")
+  embedding      Json? // Face embedding vector (only if consent given)
+  embeddingModel String?  @map("embedding_model") @db.VarChar(50)
+  faceCropUrl    String?  @map("face_crop_url") @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
 
   image       Image             @relation(fields: [imageId], references: [id], onDelete: Cascade)
   personLinks ImagePersonLink[]
@@ -730,13 +730,13 @@ model ImageFace {
 
 // Image Person Links - links detected faces to people
 model ImagePersonLink {
-  id            String   @id @default(uuid()) @db.Uuid
-  imageId       String   @map("image_id") @db.Uuid
-  personId      String   @map("person_id") @db.Uuid
-  faceId        String?  @map("face_id") @db.Uuid
-  confidence    Float?   // Match confidence score
-  linkMethod    String   @map("link_method") @db.VarChar(20) // auto|confirmed|manual
-  createdAt     DateTime @default(now()) @map("created_at")
+  id         String   @id @default(uuid()) @db.Uuid
+  imageId    String   @map("image_id") @db.Uuid
+  personId   String   @map("person_id") @db.Uuid
+  faceId     String?  @map("face_id") @db.Uuid
+  confidence Float? // Match confidence score
+  linkMethod String   @map("link_method") @db.VarChar(20) // auto|confirmed|manual
+  createdAt  DateTime @default(now()) @map("created_at")
 
   image  Image      @relation(fields: [imageId], references: [id], onDelete: Cascade)
   person Person     @relation(fields: [personId], references: [id], onDelete: Cascade)
@@ -770,25 +770,25 @@ model MemoryImageLink {
 // ============================================================================
 
 model UrlPage {
-  id              String    @id @default(uuid()) @db.Uuid
-  userId          String    @map("user_id") @db.Uuid
-  url             String    @db.Text
-  urlHash         String    @map("url_hash") @db.VarChar(64) // SHA256 hash for deduplication
-  title           String?   @db.Text
-  description     String?   @db.Text
-  summary         String?   @db.Text
-  content         String?   @db.Text // Extracted page content
-  author          String?   @db.VarChar(255)
-  publishedAt     DateTime? @map("published_at")
-  siteName        String?   @map("site_name") @db.VarChar(255)
-  imageUrl        String?   @map("image_url") @db.Text
-  tags            Json?     // Array of extracted tags
-  metadata        Json?     // Additional AI-extracted metadata
-  fetchedAt       DateTime  @default(now()) @map("fetched_at")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  url         String    @db.Text
+  urlHash     String    @map("url_hash") @db.VarChar(64) // SHA256 hash for deduplication
+  title       String?   @db.Text
+  description String?   @db.Text
+  summary     String?   @db.Text
+  content     String?   @db.Text // Extracted page content
+  author      String?   @db.VarChar(255)
+  publishedAt DateTime? @map("published_at")
+  siteName    String?   @map("site_name") @db.VarChar(255)
+  imageUrl    String?   @map("image_url") @db.Text
+  tags        Json? // Array of extracted tags
+  metadata    Json? // Additional AI-extracted metadata
+  fetchedAt   DateTime  @default(now()) @map("fetched_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   memoryLinks     MemoryUrlPageLink[]
   projectLinks    ProjectUrlPageLink[]
   personLinks     PersonUrlPageLink[]
@@ -803,10 +803,10 @@ model UrlPage {
 }
 
 model MemoryUrlPageLink {
-  id         String   @id @default(uuid()) @db.Uuid
-  memoryId   String   @map("memory_id") @db.Uuid
-  urlPageId  String   @map("url_page_id") @db.Uuid
-  createdAt  DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid()) @db.Uuid
+  memoryId  String   @map("memory_id") @db.Uuid
+  urlPageId String   @map("url_page_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
 
   memory  Memory  @relation(fields: [memoryId], references: [id], onDelete: Cascade)
   urlPage UrlPage @relation(fields: [urlPageId], references: [id], onDelete: Cascade)
@@ -836,66 +836,66 @@ model ExcludedWord {
 // ============================================================================
 
 model YouTubeVideo {
-  id                 String            @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
 
   // Platform & YouTube identifiers
-  platform           String            @default("youtube") @db.VarChar(16)
-  youtubeVideoId     String            @map("youtube_video_id") @db.VarChar(16)
-  canonicalUrl       String            @map("canonical_url") @db.VarChar(2048)
+  platform       String @default("youtube") @db.VarChar(16)
+  youtubeVideoId String @map("youtube_video_id") @db.VarChar(16)
+  canonicalUrl   String @map("canonical_url") @db.VarChar(2048)
 
   // Video metadata
-  title              String            @db.VarChar(512)
-  description        String?           @db.Text
-  thumbnailUrl       String?           @map("thumbnail_url") @db.VarChar(2048)
+  title        String  @db.VarChar(512)
+  description  String? @db.Text
+  thumbnailUrl String? @map("thumbnail_url") @db.VarChar(2048)
 
   // Creator info
-  creatorDisplayName String            @map("creator_display_name") @db.VarChar(256)
-  channelId          String?           @map("channel_id") @db.VarChar(64)
+  creatorDisplayName String  @map("creator_display_name") @db.VarChar(256)
+  channelId          String? @map("channel_id") @db.VarChar(64)
 
   // Video details
-  publishedAt        DateTime          @map("published_at")
-  durationSeconds    Int               @map("duration_seconds")
-  languageCode       String            @map("language_code") @db.VarChar(12)
+  publishedAt     DateTime @map("published_at")
+  durationSeconds Int      @map("duration_seconds")
+  languageCode    String   @map("language_code") @db.VarChar(12)
 
   // Compliance & content details
-  license            String?           @db.VarChar(64)
-  madeForKids        Boolean?          @map("made_for_kids")
-  captionAvailable   Boolean?          @map("caption_available")
+  license          String?  @db.VarChar(64)
+  madeForKids      Boolean? @map("made_for_kids")
+  captionAvailable Boolean? @map("caption_available")
 
   // Transcript data
-  transcriptStatus   TranscriptStatus  @map("transcript_status")
-  transcriptSource   TranscriptSource  @map("transcript_source")
-  transcriptText     String?           @map("transcript_text") @db.Text
-  transcriptSegments Json?             @map("transcript_segments") // Array of {chunk_id, start_seconds, end_seconds, text}
+  transcriptStatus   TranscriptStatus @map("transcript_status")
+  transcriptSource   TranscriptSource @map("transcript_source")
+  transcriptText     String?          @map("transcript_text") @db.Text
+  transcriptSegments Json?            @map("transcript_segments") // Array of {chunk_id, start_seconds, end_seconds, text}
 
   // Enrichment
-  summary            String?           @db.Text
-  topics             Json?             // Array of LLM-derived topics
-  chapters           Json?             // Array of {start_seconds, label, description}
+  summary  String? @db.Text
+  topics   Json? // Array of LLM-derived topics
+  chapters Json? // Array of {start_seconds, label, description}
 
   // Metrics (snapshots)
-  viewCount          BigInt?           @map("view_count")
-  likeCount          BigInt?           @map("like_count")
-  favoriteCount      BigInt?           @map("favorite_count")
-  commentCount       BigInt?           @map("comment_count")
-  categoryId         String?           @map("category_id") @db.VarChar(32)
-  capturedAt         DateTime?         @map("captured_at") // When statistics were captured
+  viewCount     BigInt?   @map("view_count")
+  likeCount     BigInt?   @map("like_count")
+  favoriteCount BigInt?   @map("favorite_count")
+  commentCount  BigInt?   @map("comment_count")
+  categoryId    String?   @map("category_id") @db.VarChar(32)
+  capturedAt    DateTime? @map("captured_at") // When statistics were captured
 
   // Additional metadata
-  tags               Json?             // Array of tags
-  externalLinks      Json?             @map("external_links") // Links found in description
-  contentHash        String?           @map("content_hash") @db.VarChar(64)
+  tags          Json? // Array of tags
+  externalLinks Json?   @map("external_links") // Links found in description
+  contentHash   String? @map("content_hash") @db.VarChar(64)
 
   // Ingestion tracking
-  ingestionStatus    IngestionStatus   @map("ingestion_status")
-  ingestionAttempts  Int               @default(0) @map("ingestion_attempts")
-  lastIngestionError String?           @map("last_ingestion_error") @db.Text
-  ingestedAt         DateTime?         @map("ingested_at")
-  lastEnrichedAt     DateTime?         @map("last_enriched_at")
+  ingestionStatus    IngestionStatus @map("ingestion_status")
+  ingestionAttempts  Int             @default(0) @map("ingestion_attempts")
+  lastIngestionError String?         @map("last_ingestion_error") @db.Text
+  ingestedAt         DateTime?       @map("ingested_at")
+  lastEnrichedAt     DateTime?       @map("last_enriched_at")
 
   // Timestamps
-  createdAt          DateTime          @default(now()) @map("created_at")
-  updatedAt          DateTime          @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
   memories        Memory[]
@@ -920,57 +920,57 @@ model YouTubeVideo {
 // ============================================================================
 
 model TikTokVideo {
-  id                 String            @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
 
   // Platform & TikTok identifiers
-  platform           String            @default("tiktok") @db.VarChar(16)
-  tiktokVideoId      String            @map("tiktok_video_id") @db.VarChar(64)
-  canonicalUrl       String            @map("canonical_url") @db.VarChar(2048)
+  platform      String @default("tiktok") @db.VarChar(16)
+  tiktokVideoId String @map("tiktok_video_id") @db.VarChar(64)
+  canonicalUrl  String @map("canonical_url") @db.VarChar(2048)
 
   // Video metadata
-  title              String            @db.VarChar(512)
-  description        String?           @db.Text
-  thumbnailUrl       String?           @map("thumbnail_url") @db.VarChar(2048)
+  title        String  @db.VarChar(512)
+  description  String? @db.Text
+  thumbnailUrl String? @map("thumbnail_url") @db.VarChar(2048)
 
   // Creator info
-  creatorDisplayName String            @map("creator_display_name") @db.VarChar(256)
-  creatorUsername    String?           @map("creator_username") @db.VarChar(128)
-  creatorId          String?           @map("creator_id") @db.VarChar(64)
+  creatorDisplayName String  @map("creator_display_name") @db.VarChar(256)
+  creatorUsername    String? @map("creator_username") @db.VarChar(128)
+  creatorId          String? @map("creator_id") @db.VarChar(64)
 
   // Video details
-  publishedAt        DateTime?         @map("published_at")
-  durationSeconds    Int?              @map("duration_seconds")
+  publishedAt     DateTime? @map("published_at")
+  durationSeconds Int?      @map("duration_seconds")
 
   // Enrichment
-  summary            String?           @db.Text
-  transcript         String?           @db.Text // Whisper transcription of video audio
-  extractedData      Json?             @map("extracted_data") // Structured data from Whisper analysis
-  topics             Json?             // Array of LLM-derived topics
-  musicInfo          Json?             @map("music_info") // {title, author, url}
+  summary       String? @db.Text
+  transcript    String? @db.Text // Whisper transcription of video audio
+  extractedData Json?   @map("extracted_data") // Structured data from Whisper analysis
+  topics        Json? // Array of LLM-derived topics
+  musicInfo     Json?   @map("music_info") // {title, author, url}
 
   // Metrics (snapshots)
-  viewCount          BigInt?           @map("view_count")
-  likeCount          BigInt?           @map("like_count")
-  shareCount         BigInt?           @map("share_count")
-  commentCount       BigInt?           @map("comment_count")
-  capturedAt         DateTime?         @map("captured_at") // When statistics were captured
+  viewCount    BigInt?   @map("view_count")
+  likeCount    BigInt?   @map("like_count")
+  shareCount   BigInt?   @map("share_count")
+  commentCount BigInt?   @map("comment_count")
+  capturedAt   DateTime? @map("captured_at") // When statistics were captured
 
   // Additional metadata
-  hashtags           Json?             // Array of hashtags
-  mentions           Json?             // Array of mentioned users
-  externalLinks      Json?             @map("external_links") // Links found in description
-  contentHash        String?           @map("content_hash") @db.VarChar(64)
+  hashtags      Json? // Array of hashtags
+  mentions      Json? // Array of mentioned users
+  externalLinks Json?   @map("external_links") // Links found in description
+  contentHash   String? @map("content_hash") @db.VarChar(64)
 
   // Ingestion tracking
-  ingestionStatus    IngestionStatus   @map("ingestion_status")
-  ingestionAttempts  Int               @default(0) @map("ingestion_attempts")
-  lastIngestionError String?           @map("last_ingestion_error") @db.Text
-  ingestedAt         DateTime?         @map("ingested_at")
-  lastEnrichedAt     DateTime?         @map("last_enriched_at")
+  ingestionStatus    IngestionStatus @map("ingestion_status")
+  ingestionAttempts  Int             @default(0) @map("ingestion_attempts")
+  lastIngestionError String?         @map("last_ingestion_error") @db.Text
+  ingestedAt         DateTime?       @map("ingested_at")
+  lastEnrichedAt     DateTime?       @map("last_enriched_at")
 
   // Timestamps
-  createdAt          DateTime          @default(now()) @map("created_at")
-  updatedAt          DateTime          @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
   memories        Memory[]
@@ -995,68 +995,68 @@ model TikTokVideo {
 // ============================================================================
 
 model TwitterPost {
-  id                 String            @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
 
   // Platform & Twitter identifiers
-  platform           String            @default("twitter") @db.VarChar(16)
-  twitterPostId      String            @map("twitter_post_id") @db.VarChar(64)
-  canonicalUrl       String            @map("canonical_url") @db.VarChar(2048)
+  platform      String @default("twitter") @db.VarChar(16)
+  twitterPostId String @map("twitter_post_id") @db.VarChar(64)
+  canonicalUrl  String @map("canonical_url") @db.VarChar(2048)
 
   // Post metadata
-  text               String            @db.Text
-  thumbnailUrl       String?           @map("thumbnail_url") @db.VarChar(2048)
+  text         String  @db.Text
+  thumbnailUrl String? @map("thumbnail_url") @db.VarChar(2048)
 
   // Creator info
-  creatorDisplayName String            @map("creator_display_name") @db.VarChar(256)
-  creatorUsername    String?           @map("creator_username") @db.VarChar(128)
-  creatorId          String?           @map("creator_id") @db.VarChar(64)
+  creatorDisplayName String  @map("creator_display_name") @db.VarChar(256)
+  creatorUsername    String? @map("creator_username") @db.VarChar(128)
+  creatorId          String? @map("creator_id") @db.VarChar(64)
 
   // Post details
-  publishedAt        DateTime          @map("published_at")
-  languageCode       String?           @map("language_code") @db.VarChar(12)
+  publishedAt  DateTime @map("published_at")
+  languageCode String?  @map("language_code") @db.VarChar(12)
 
   // Metrics (snapshots)
-  viewCount          BigInt?           @map("view_count")
-  likeCount          BigInt?           @map("like_count")
-  replyCount         BigInt?           @map("reply_count")
-  retweetCount       BigInt?           @map("retweet_count")
-  quoteCount         BigInt?           @map("quote_count")
-  bookmarkCount      BigInt?           @map("bookmark_count")
-  capturedAt         DateTime?         @map("captured_at") // When statistics were captured
+  viewCount     BigInt?   @map("view_count")
+  likeCount     BigInt?   @map("like_count")
+  replyCount    BigInt?   @map("reply_count")
+  retweetCount  BigInt?   @map("retweet_count")
+  quoteCount    BigInt?   @map("quote_count")
+  bookmarkCount BigInt?   @map("bookmark_count")
+  capturedAt    DateTime? @map("captured_at") // When statistics were captured
 
   // Media & content
-  hasMedia           Boolean           @default(false) @map("has_media")
-  mediaUrls          Json?             @map("media_urls") // Array of media URLs
-  mediaTypes         Json?             @map("media_types") // Array of media types (photo, video, animated_gif)
-  hashtags           Json?             // Array of hashtags
-  mentions           Json?             // Array of user mentions
-  externalLinks      Json?             @map("external_links") // Links found in tweet
+  hasMedia      Boolean @default(false) @map("has_media")
+  mediaUrls     Json?   @map("media_urls") // Array of media URLs
+  mediaTypes    Json?   @map("media_types") // Array of media types (photo, video, animated_gif)
+  hashtags      Json? // Array of hashtags
+  mentions      Json? // Array of user mentions
+  externalLinks Json?   @map("external_links") // Links found in tweet
 
   // Enrichment
-  summary            String?           @db.Text
-  topics             Json?             // Array of LLM-derived topics
-  sentiment          String?           @db.VarChar(32) // positive, negative, neutral
+  summary   String? @db.Text
+  topics    Json? // Array of LLM-derived topics
+  sentiment String? @db.VarChar(32) // positive, negative, neutral
 
   // Additional metadata
-  isReply            Boolean           @default(false) @map("is_reply")
-  isRetweet          Boolean           @default(false) @map("is_retweet")
-  isQuote            Boolean           @default(false) @map("is_quote")
-  contentHash        String?           @map("content_hash") @db.VarChar(64)
+  isReply     Boolean @default(false) @map("is_reply")
+  isRetweet   Boolean @default(false) @map("is_retweet")
+  isQuote     Boolean @default(false) @map("is_quote")
+  contentHash String? @map("content_hash") @db.VarChar(64)
 
   // Ingestion tracking
-  ingestionStatus    IngestionStatus   @map("ingestion_status")
-  ingestionAttempts  Int               @default(0) @map("ingestion_attempts")
-  lastIngestionError String?           @map("last_ingestion_error") @db.Text
-  ingestedAt         DateTime?         @map("ingested_at")
-  lastEnrichedAt     DateTime?         @map("last_enriched_at")
+  ingestionStatus    IngestionStatus @map("ingestion_status")
+  ingestionAttempts  Int             @default(0) @map("ingestion_attempts")
+  lastIngestionError String?         @map("last_ingestion_error") @db.Text
+  ingestedAt         DateTime?       @map("ingested_at")
+  lastEnrichedAt     DateTime?       @map("last_enriched_at")
 
   // User association
-  userId             String            @map("user_id") @db.Uuid
-  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @map("user_id") @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Timestamps
-  createdAt          DateTime          @default(now()) @map("created_at")
-  updatedAt          DateTime          @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
   memories        Memory[]
@@ -1082,13 +1082,13 @@ model TwitterPost {
 // ============================================================================
 
 model MemoryLink {
-  id          String    @id @default(uuid()) @db.Uuid
-  sourceId    String    @map("source_id") @db.Uuid
-  targetId    String    @map("target_id") @db.Uuid
-  linkType    LinkType  @map("link_type")
-  metadata    Json?     // Additional link metadata
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  id        String   @id @default(uuid()) @db.Uuid
+  sourceId  String   @map("source_id") @db.Uuid
+  targetId  String   @map("target_id") @db.Uuid
+  linkType  LinkType @map("link_type")
+  metadata  Json? // Additional link metadata
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   source Memory @relation("LinkSource", fields: [sourceId], references: [id], onDelete: Cascade)
   target Memory @relation("LinkTarget", fields: [targetId], references: [id], onDelete: Cascade)
@@ -1212,64 +1212,64 @@ model AiCostTracking {
 // ============================================================================
 
 model AuditTrail {
-  id                 String    @id @default(uuid()) @db.Uuid
-  tenantId           String?   @map("tenant_id") @db.Uuid
+  id       String  @id @default(uuid()) @db.Uuid
+  tenantId String? @map("tenant_id") @db.Uuid
 
   // Who: Actor identity
-  userId             String?   @map("user_id") @db.Uuid
-  actorType          String    @default("USER") @map("actor_type") @db.VarChar(20)
-  actorEmail         String?   @map("actor_email") @db.VarChar(255)
-  impersonatorId     String?   @map("impersonator_id") @db.Uuid
+  userId         String? @map("user_id") @db.Uuid
+  actorType      String  @default("USER") @map("actor_type") @db.VarChar(20)
+  actorEmail     String? @map("actor_email") @db.VarChar(255)
+  impersonatorId String? @map("impersonator_id") @db.Uuid
 
   // What: Event classification
-  eventType          String    @map("event_type") @db.VarChar(50)
-  action             String    @db.VarChar(20)
-  entityName         String?   @map("entity_name") @db.VarChar(100)
-  entityId           String?   @map("entity_id") @db.Uuid
+  eventType  String  @map("event_type") @db.VarChar(50)
+  action     String  @db.VarChar(20)
+  entityName String? @map("entity_name") @db.VarChar(100)
+  entityId   String? @map("entity_id") @db.Uuid
 
   // When: Timing
-  createdAt          DateTime  @default(now()) @map("created_at")
-  durationMs         Int?      @map("duration_ms")
+  createdAt  DateTime @default(now()) @map("created_at")
+  durationMs Int?     @map("duration_ms")
 
   // Where: Request origin
-  ipAddress          String?   @map("ip_address") @db.VarChar(45)
-  userAgent          String?   @map("user_agent") @db.Text
-  deviceId           String?   @map("device_id") @db.VarChar(100)
-  geoCountry         String?   @map("geo_country") @db.VarChar(2)
-  geoCity            String?   @map("geo_city") @db.VarChar(100)
+  ipAddress  String? @map("ip_address") @db.VarChar(45)
+  userAgent  String? @map("user_agent") @db.Text
+  deviceId   String? @map("device_id") @db.VarChar(100)
+  geoCountry String? @map("geo_country") @db.VarChar(2)
+  geoCity    String? @map("geo_city") @db.VarChar(100)
 
   // Context: Request tracking
-  requestId          String?   @map("request_id") @db.VarChar(100)
-  sessionId          String?   @map("session_id") @db.VarChar(100)
-  correlationId      String?   @map("correlation_id") @db.VarChar(100)
-  traceId            String?   @map("trace_id") @db.VarChar(100)
-  method             String?   @db.VarChar(10)
-  url                String?   @db.VarChar(500)
+  requestId     String? @map("request_id") @db.VarChar(100)
+  sessionId     String? @map("session_id") @db.VarChar(100)
+  correlationId String? @map("correlation_id") @db.VarChar(100)
+  traceId       String? @map("trace_id") @db.VarChar(100)
+  method        String? @db.VarChar(10)
+  url           String? @db.VarChar(500)
 
   // Result: Outcome
-  success            Boolean   @default(true)
-  statusCode         Int?      @map("status_code")
-  errorCode          String?   @map("error_code") @db.VarChar(50)
-  errorMessage       String?   @map("error_message") @db.Text
-  exceptionType      String?   @map("exception_type") @db.VarChar(255)
+  success       Boolean @default(true)
+  statusCode    Int?    @map("status_code")
+  errorCode     String? @map("error_code") @db.VarChar(50)
+  errorMessage  String? @map("error_message") @db.Text
+  exceptionType String? @map("exception_type") @db.VarChar(255)
 
   // Data: State changes and payloads
-  beforeJson         Json?     @map("before_json")
-  afterJson          Json?     @map("after_json")
-  diffJson           Json?     @map("diff_json")
-  requestJson        Json?     @map("request_json")
-  responseJson       Json?     @map("response_json")
+  beforeJson   Json? @map("before_json")
+  afterJson    Json? @map("after_json")
+  diffJson     Json? @map("diff_json")
+  requestJson  Json? @map("request_json")
+  responseJson Json? @map("response_json")
 
   // Metadata
-  loggingLevel       String    @default("STANDARD") @map("logging_level") @db.VarChar(20)
-  redactedFields     String[]  @map("redacted_fields")
-  truncatedFields    String[]  @map("truncated_fields")
-  dataHash           String?   @map("data_hash") @db.VarChar(64)
+  loggingLevel    String   @default("STANDARD") @map("logging_level") @db.VarChar(20)
+  redactedFields  String[] @map("redacted_fields")
+  truncatedFields String[] @map("truncated_fields")
+  dataHash        String?  @map("data_hash") @db.VarChar(64)
 
   // Additional context
-  tags               Json?
-  notes              String?   @db.Text
-  msg                String?   @db.Text
+  tags  Json?
+  notes String? @db.Text
+  msg   String? @db.Text
 
   @@index([userId])
   @@index([createdAt(sort: Desc)])
@@ -1287,11 +1287,11 @@ model AuditTrail {
 // ============================================================================
 
 model SlideDeck {
-  id          String   @id @default(uuid()) @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
-  title       String?  @db.VarChar(200)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  title     String?  @db.VarChar(200)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   slides Slide[]
@@ -1396,10 +1396,10 @@ model TrainingUrlPageLink {
 
 // Training-YouTubeVideo Links (Many-to-Many)
 model TrainingYouTubeVideoLink {
-  id             String       @id @default(uuid()) @db.Uuid
-  trainingId     String       @map("training_id") @db.Uuid
-  youtubeVideoId String       @map("youtube_video_id") @db.Uuid
-  createdAt      DateTime     @default(now()) @map("created_at")
+  id             String   @id @default(uuid()) @db.Uuid
+  trainingId     String   @map("training_id") @db.Uuid
+  youtubeVideoId String   @map("youtube_video_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at")
 
   training     Training     @relation(fields: [trainingId], references: [id], onDelete: Cascade)
   youtubeVideo YouTubeVideo @relation(fields: [youtubeVideoId], references: [id], onDelete: Cascade)
@@ -1412,10 +1412,10 @@ model TrainingYouTubeVideoLink {
 
 // Training-TikTokVideo Links (Many-to-Many)
 model TrainingTikTokVideoLink {
-  id            String      @id @default(uuid()) @db.Uuid
-  trainingId    String      @map("training_id") @db.Uuid
-  tiktokVideoId String      @map("tiktok_video_id") @db.Uuid
-  createdAt     DateTime    @default(now()) @map("created_at")
+  id            String   @id @default(uuid()) @db.Uuid
+  trainingId    String   @map("training_id") @db.Uuid
+  tiktokVideoId String   @map("tiktok_video_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
 
   training    Training    @relation(fields: [trainingId], references: [id], onDelete: Cascade)
   tiktokVideo TikTokVideo @relation(fields: [tiktokVideoId], references: [id], onDelete: Cascade)
@@ -1428,10 +1428,10 @@ model TrainingTikTokVideoLink {
 
 // Training-TwitterPost Links (Many-to-Many)
 model TrainingTwitterPostLink {
-  id            String      @id @default(uuid()) @db.Uuid
-  trainingId    String      @map("training_id") @db.Uuid
-  twitterPostId String      @map("twitter_post_id") @db.Uuid
-  createdAt     DateTime    @default(now()) @map("created_at")
+  id            String   @id @default(uuid()) @db.Uuid
+  trainingId    String   @map("training_id") @db.Uuid
+  twitterPostId String   @map("twitter_post_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
 
   training    Training    @relation(fields: [trainingId], references: [id], onDelete: Cascade)
   twitterPost TwitterPost @relation(fields: [twitterPostId], references: [id], onDelete: Cascade)
@@ -1444,12 +1444,12 @@ model TrainingTwitterPostLink {
 
 // Training Decks - sequential presentation of training content
 model TrainingDeck {
-  id          String   @id @default(uuid()) @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
-  trainingId  String   @map("training_id") @db.Uuid
-  title       String?  @db.VarChar(200)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  trainingId String   @map("training_id") @db.Uuid
+  title      String?  @db.VarChar(200)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   training        Training         @relation(fields: [trainingId], references: [id], onDelete: Cascade)
@@ -1491,31 +1491,31 @@ model TrainingLesson {
 
 // Speech Sessions - tracks recording sessions (no audio stored)
 model SpeechSession {
-  id                  String              @id @default(uuid()) @db.Uuid
-  userId              String              @map("user_id") @db.Uuid
-  sessionKey          String              @unique @db.VarChar(100) // UUID for WebSocket identification
-  status              SpeechSessionStatus @default(active)
+  id         String              @id @default(uuid()) @db.Uuid
+  userId     String              @map("user_id") @db.Uuid
+  sessionKey String              @unique @db.VarChar(100) // UUID for WebSocket identification
+  status     SpeechSessionStatus @default(active)
 
   // Audio metadata (no actual audio stored)
-  audioFormat         String?             @db.VarChar(50) // e.g., "audio/webm;codecs=opus"
-  durationMs          Int?                @map("duration_ms")
-  chunkCount          Int                 @default(0) @map("chunk_count")
+  audioFormat String? @db.VarChar(50) // e.g., "audio/webm;codecs=opus"
+  durationMs  Int?    @map("duration_ms")
+  chunkCount  Int     @default(0) @map("chunk_count")
 
   // Transcription results
-  partialTranscript   String?             @db.Text @map("partial_transcript")
-  finalTranscript     String?             @db.Text @map("final_transcript")
+  partialTranscript String? @map("partial_transcript") @db.Text
+  finalTranscript   String? @map("final_transcript") @db.Text
 
   // Processing metadata
-  processingStartedAt DateTime?           @map("processing_started_at")
-  processingEndedAt   DateTime?           @map("processing_ended_at")
-  errorMessage        String?             @db.Text @map("error_message")
+  processingStartedAt DateTime? @map("processing_started_at")
+  processingEndedAt   DateTime? @map("processing_ended_at")
+  errorMessage        String?   @map("error_message") @db.Text
 
-  createdAt           DateTime            @default(now()) @map("created_at")
-  updatedAt           DateTime            @updatedAt @map("updated_at")
-  expiresAt           DateTime            @map("expires_at") // Auto-cleanup after 1 hour
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  expiresAt DateTime @map("expires_at") // Auto-cleanup after 1 hour
 
-  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  chunks              SpeechChunk[]
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chunks SpeechChunk[]
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([sessionKey])
@@ -1525,15 +1525,15 @@ model SpeechSession {
 
 // Speech Chunks - temporary metadata for audio chunks
 model SpeechChunk {
-  id             String        @id @default(uuid()) @db.Uuid
-  sessionId      String        @map("session_id") @db.Uuid
-  chunkIndex     Int           @map("chunk_index")
-  sizeBytes      Int           @map("size_bytes")
-  receivedAt     DateTime      @default(now()) @map("received_at")
-  transcribedAt  DateTime?     @map("transcribed_at")
-  transcriptText String?       @db.Text @map("transcript_text")
+  id             String    @id @default(uuid()) @db.Uuid
+  sessionId      String    @map("session_id") @db.Uuid
+  chunkIndex     Int       @map("chunk_index")
+  sizeBytes      Int       @map("size_bytes")
+  receivedAt     DateTime  @default(now()) @map("received_at")
+  transcribedAt  DateTime? @map("transcribed_at")
+  transcriptText String?   @map("transcript_text") @db.Text
 
-  session        SpeechSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  session SpeechSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@unique([sessionId, chunkIndex])
   @@index([sessionId, chunkIndex])
@@ -1550,10 +1550,10 @@ model UserLexicon {
   usageCount  Int       @default(0) @map("usage_count") // Times term was applied
   lastUsedAt  DateTime? @map("last_used_at")
 
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, term])
   @@index([userId])
@@ -1563,23 +1563,23 @@ model UserLexicon {
 
 // Transcript Feedback - user corrections for learning
 model TranscriptFeedback {
-  id            String   @id @default(uuid()) @db.Uuid
-  userId        String   @map("user_id") @db.Uuid
-  sessionId     String?  @map("session_id") @db.Uuid
+  id        String  @id @default(uuid()) @db.Uuid
+  userId    String  @map("user_id") @db.Uuid
+  sessionId String? @map("session_id") @db.Uuid
 
   // Before/after text
-  rawTranscript String   @db.Text @map("raw_transcript") // Original STT output
-  correctedText String   @db.Text @map("corrected_text") // User-edited version
+  rawTranscript String @map("raw_transcript") @db.Text // Original STT output
+  correctedText String @map("corrected_text") @db.Text // User-edited version
 
   // Extracted corrections
-  corrections   Json     // Array of {original: string, corrected: string, type: "term"|"punctuation"|"spelling"}
+  corrections Json // Array of {original: string, corrected: string, type: "term"|"punctuation"|"spelling"}
 
   // Consent
-  consentStore  Boolean  @default(false) @map("consent_store") // User opted-in to store corrections
+  consentStore Boolean @default(false) @map("consent_store") // User opted-in to store corrections
 
-  createdAt     DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([sessionId])

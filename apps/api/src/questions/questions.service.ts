@@ -35,20 +35,27 @@ export class QuestionsService {
       throw new NotFoundException('Memory not found or you do not have permission to access it');
     }
 
-    // Get answer from OpenAI
+    // Get answer from OpenAI with memory context
     let answer: string | null = null;
     try {
       if (this.openai) {
+        // Build context from memory content
+        const memoryContext = memory.body || memory.title || 'No content available';
+
         const response = await this.openai.chat.completions.create({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4o',
           messages: [
             {
+              role: 'system',
+              content: 'You are a helpful assistant that answers questions about a user\'s personal memories. Provide detailed, specific answers based on the memory content provided. If the memory doesn\'t contain enough information to answer the question, acknowledge what you can infer and what information is missing.',
+            },
+            {
               role: 'user',
-              content: dto.question,
+              content: `Memory Content:\n${memoryContext}\n\nQuestion: ${dto.question}`,
             },
           ],
           temperature: 0.7,
-          max_tokens: 1000,
+          max_tokens: 2000,
         });
 
         answer = response.choices[0]?.message?.content || null;

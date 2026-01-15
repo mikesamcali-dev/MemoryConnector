@@ -101,6 +101,13 @@ export interface Memory {
       fetchedAt: string;
     };
   }[];
+  questions?: {
+    id: string;
+    question: string;
+    answer: string | null;
+    createdAt: string;
+    updatedAt: string;
+  }[];
   event?: {
     id: string;
     name: string;

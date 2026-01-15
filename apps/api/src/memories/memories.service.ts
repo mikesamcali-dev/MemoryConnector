@@ -272,6 +272,11 @@ export class MemoriesService {
             urlPage: true,
           },
         },
+        questions: {
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
         linksFrom: {
           include: {
             target: {
