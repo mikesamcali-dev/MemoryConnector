@@ -646,6 +646,20 @@ export function PersonDetailPage() {
             <div className="pt-4 border-t border-gray-200">
               <div className="flex flex-col sm:flex-row gap-2">
                 <button
+                  onClick={() => navigate('/app/capture', {
+                    state: {
+                      preselectedPerson: {
+                        id: personId,
+                        displayName: person.displayName
+                      }
+                    }
+                  })}
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create Memory with This Person
+                </button>
+                <button
                   onClick={handleDelete}
                   className="flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                 >

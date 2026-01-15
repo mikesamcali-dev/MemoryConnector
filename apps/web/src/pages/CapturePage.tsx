@@ -91,6 +91,7 @@ export function CapturePage() {
   const [loadingLocations, setLoadingLocations] = useState(false);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [projectSearchTerm, setProjectSearchTerm] = useState('');
+  const [selectedPersonName, setSelectedPersonName] = useState<string>('');
 
   // Voice input state
   const {
@@ -163,6 +164,21 @@ export function CapturePage() {
         tiktokVideos: [tiktokVideoId],
       }));
       console.log('Auto-linking TikTok video:', tiktokVideoId);
+    }
+  }, [location.state]);
+
+  // Auto-link person if navigated from person detail page
+  useEffect(() => {
+    const state = location.state as { preselectedPerson?: { id: string; displayName: string } } | null;
+    const preselectedPerson = state?.preselectedPerson;
+
+    if (preselectedPerson) {
+      setLinkedEntities(prev => ({
+        ...prev,
+        persons: [preselectedPerson.id],
+      }));
+      setSelectedPersonName(preselectedPerson.displayName);
+      console.log('Auto-linking person:', preselectedPerson.displayName);
     }
   }, [location.state]);
 
@@ -402,10 +418,12 @@ export function CapturePage() {
 
   // Select a person
   const handleSelectPerson = (personId: string) => {
+    const person = allPeople.find(p => p.id === personId);
     setLinkedEntities(prev => ({
       ...prev,
       persons: [personId], // Only one person per memory for now
     }));
+    setSelectedPersonName(person?.displayName || '');
     setShowPersonSelector(false);
     haptic('success');
   };
@@ -426,6 +444,7 @@ export function CapturePage() {
       ...prev,
       persons: [],
     }));
+    setSelectedPersonName('');
   };
 
   // Remove linked location
@@ -1191,9 +1210,16 @@ export function CapturePage() {
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-purple-600" />
-              <p className="text-sm font-medium text-purple-900">
-                Person linked to this memory
-              </p>
+              <div>
+                <p className="text-sm font-medium text-purple-900">
+                  {selectedPersonName || 'Person linked to this memory'}
+                </p>
+                {selectedPersonName && (
+                  <p className="text-xs text-purple-700">
+                    Linked to this memory
+                  </p>
+                )}
+              </div>
             </div>
             <button
               type="button"
