@@ -1,10 +1,22 @@
 import { useState } from 'react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useNavigate } from 'react-router-dom';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { getAllProjects, createProject, deleteProject } from '../api/projects';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { FolderKanban, Plus, Search, Trash2 } from 'lucide-react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { ProjectEditModal } from '../components/ProjectEditModal';
 
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 export function ProjectsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -234,6 +246,13 @@ export function ProjectsPage() {
         onSave={handleCreateProject}
         isSaving={createMutation.isPending}
       />
+      {/* Help Popup */}
+      <HelpPopup
+        pageKey="projects"
+        isOpen={helpPopup.isOpen}
+        onClose={helpPopup.closePopup}
+      />
+
     </div>
   );
 }

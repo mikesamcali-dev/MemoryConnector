@@ -1,5 +1,9 @@
 import { useState } from 'react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import {
   getAllUsers,
   updateUserEnabled,
@@ -35,6 +39,8 @@ import {
 } from 'lucide-react';
 import { WordEditModal } from '../components/admin/WordEditModal';
 
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 export function AdminPanelPage() {
   const queryClient = useQueryClient();
   const [loadingUserId, setLoadingUserId] = useState<string | null>(null);
@@ -644,6 +650,13 @@ export function AdminPanelPage() {
         onSave={handleSaveWord}
         isSaving={createWordMutation.isPending || updateWordMutation.isPending}
       />
+      {/* Help Popup */}
+      <HelpPopup
+        pageKey="admin"
+        isOpen={helpPopup.isOpen}
+        onClose={helpPopup.closePopup}
+      />
+
     </div>
   );
 }

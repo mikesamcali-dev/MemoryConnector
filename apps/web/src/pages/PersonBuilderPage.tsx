@@ -1,9 +1,19 @@
 import { useState } from 'react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { getAllPeople, createPerson, updatePerson, deletePerson, createPersonRelationship } from '../api/admin';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { ArrowLeft, User, Plus, Search, Edit, Trash2, Mail, Phone, Link2, X } from 'lucide-react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useNavigate } from 'react-router-dom';
 
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 export function PersonBuilderPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -577,6 +587,13 @@ export function PersonBuilderPage() {
           </div>
         </div>
       )}
+      {/* Help Popup */}
+      <HelpPopup
+        pageKey="people"
+        isOpen={helpPopup.isOpen}
+        onClose={helpPopup.closePopup}
+      />
+
     </div>
   );
 }

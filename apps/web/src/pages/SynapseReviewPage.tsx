@@ -1,10 +1,22 @@
 import { useState } from 'react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useNavigate } from 'react-router-dom';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { Brain, ChevronLeft, CheckCircle, RotateCcw } from 'lucide-react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { getDueReviews, submitReview, ReviewRating, ReviewMemory } from '../api/reviews';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useHaptics } from '../hooks/useHaptics';
 
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 export function SynapseReviewPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -287,6 +299,13 @@ export function SynapseReviewPage() {
           )}
         </div>
       </div>
+      {/* Help Popup */}
+      <HelpPopup
+        pageKey="review"
+        isOpen={helpPopup.isOpen}
+        onClose={helpPopup.closePopup}
+      />
+
     </div>
   );
 }

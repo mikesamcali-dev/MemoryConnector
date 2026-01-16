@@ -1,8 +1,16 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useQuery } from '@tanstack/react-query';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { getLocationMemories, getLocation } from '../api/admin';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { ArrowLeft, MapPin, Calendar, FileText } from 'lucide-react';
 
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 export function LocationMemoriesPage() {
   const { locationId } = useParams<{ locationId: string }>();
   const navigate = useNavigate();
@@ -139,6 +147,13 @@ export function LocationMemoriesPage() {
           )}
         </div>
       </div>
+      {/* Help Popup */}
+      <HelpPopup
+        pageKey="locations"
+        isOpen={helpPopup.isOpen}
+        onClose={helpPopup.closePopup}
+      />
+
     </div>
   );
 }

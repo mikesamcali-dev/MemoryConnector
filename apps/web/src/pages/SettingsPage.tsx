@@ -3,14 +3,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getUsageStats } from '../api/usage';
 import { getMemories, deleteMemory } from '../api/memories';
 import { getReminderPreferences, updateReminderPreferences, minutesToDisplay, parseToMinutes } from '../api/userPreferences';
+import { resetAllHelpViews } from '../api/helpViews';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { Link, useNavigate } from 'react-router-dom';
-import { Trash2, Edit, TrendingUp, Calendar, Bell } from 'lucide-react';
+import { Trash2, Edit, TrendingUp, Calendar, Bell, HelpCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export function SettingsPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const helpPopup = useHelpPopup('settings');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   // Reminder preferences state
@@ -117,6 +121,15 @@ export function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ['usage-stats'] });
       queryClient.invalidateQueries({ queryKey: ['memories'] });
       setDeleteConfirmId(null);
+    },
+  });
+
+  // Reset help views mutation
+  const resetHelpViewsMutation = useMutation({
+    mutationFn: resetAllHelpViews,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['help-view-state'] });
+      alert('All help popups have been reset and will show again!');
     },
   });
 
@@ -394,6 +407,29 @@ export function SettingsPage() {
         )}
       </div>
 
+      {/* Help Popups Reset */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6 mb-6 md:mb-8">
+        <div className="flex items-center justify-between mb-3 md:mb-4">
+          <div>
+            <h2 className="text-lg md:text-xl font-semibold flex items-center gap-2">
+              <HelpCircle className="h-4 md:h-5 w-4 md:w-5 text-blue-600" />
+              <span>Help Popups</span>
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Reset all help popups to show again on each page (max 3 times per page)
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => resetHelpViewsMutation.mutate()}
+          disabled={resetHelpViewsMutation.isPending}
+          className="h-12 md:h-10 px-4 md:px-3 py-2 bg-blue-600 text-white text-base md:text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+        >
+          {resetHelpViewsMutation.isPending ? 'Resetting...' : 'Reset My Helpers'}
+        </button>
+      </div>
+
       {/* Recent Memories */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
         <div className="flex items-center justify-between mb-3 md:mb-4">
@@ -498,6 +534,13 @@ export function SettingsPage() {
           </div>
         </div>
       )}
+
+      {/* Help Popup */}
+      <HelpPopup
+        pageKey="settings"
+        isOpen={helpPopup.isOpen}
+        onClose={helpPopup.closePopup}
+      />
     </div>
   );
 }

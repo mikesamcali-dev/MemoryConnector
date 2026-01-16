@@ -1,7 +1,15 @@
 import { useState } from 'react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useNavigate } from 'react-router-dom';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { GraduationCap, Trash2, Eye, Edit2, Check, X } from 'lucide-react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import {
   getAllTrainingDecks,
   updateTrainingDeck,
@@ -9,6 +17,8 @@ import {
 } from '../api/training-decks';
 import { format } from 'date-fns';
 
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 export function TrainingDecksListPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -331,6 +341,13 @@ export function TrainingDecksListPage() {
           </div>
         </>
       )}
+      {/* Help Popup */}
+      <HelpPopup
+        pageKey="training-decks"
+        isOpen={helpPopup.isOpen}
+        onClose={helpPopup.closePopup}
+      />
+
     </div>
   );
 }

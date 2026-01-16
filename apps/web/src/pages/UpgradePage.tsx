@@ -1,6 +1,10 @@
 import { Check } from 'lucide-react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useAuth } from '../contexts/AuthContext';
 
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 export function UpgradePage() {
   const { user } = useAuth();
   const currentTier = user?.tier || 'free';
@@ -140,6 +144,13 @@ export function UpgradePage() {
           All plans include secure cloud storage, automatic backups, and access to new features as they're released.
         </p>
       </div>
+      {/* Help Popup */}
+      <HelpPopup
+        pageKey="upgrade"
+        isOpen={helpPopup.isOpen}
+        onClose={helpPopup.closePopup}
+      />
+
     </div>
   );
 }

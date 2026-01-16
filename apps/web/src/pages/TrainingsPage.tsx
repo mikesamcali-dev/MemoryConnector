@@ -1,10 +1,22 @@
 import { useState } from 'react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useNavigate } from 'react-router-dom';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { getAllTrainings, createTraining, deleteTraining } from '../api/trainings';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { GraduationCap, Plus, Search, Trash2 } from 'lucide-react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { TrainingEditModal } from '../components/TrainingEditModal';
 
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 export function TrainingsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -256,6 +268,13 @@ export function TrainingsPage() {
         onSave={handleCreateTraining}
         isSaving={createMutation.isPending}
       />
+      {/* Help Popup */}
+      <HelpPopup
+        pageKey="trainings"
+        isOpen={helpPopup.isOpen}
+        onClose={helpPopup.closePopup}
+      />
+
     </div>
   );
 }

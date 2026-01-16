@@ -1,13 +1,31 @@
 import { useState, useEffect } from 'react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { X, ChevronLeft, ChevronRight, Trash2, Bell } from 'lucide-react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { getLessons, getTrainingDeck, deleteTrainingLesson } from '../api/training-decks';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { updateLastViewedAt, createReminders } from '../api/trainings';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { TrainingLessonCard } from '../components/TrainingLessonCard';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
 
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 export function TrainingDeckViewerPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -276,6 +294,13 @@ export function TrainingDeckViewerPage() {
           </div>
         )}
       </div>
+      {/* Help Popup */}
+      <HelpPopup
+        pageKey="training-deck-viewer"
+        isOpen={helpPopup.isOpen}
+        onClose={helpPopup.closePopup}
+      />
+
     </div>
   );
 }

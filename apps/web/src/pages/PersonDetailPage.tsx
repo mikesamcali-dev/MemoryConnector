@@ -1,6 +1,12 @@
 import { useState } from 'react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import {
   getPersonById,
   deletePerson,
@@ -27,12 +33,24 @@ import {
   Users,
 } from 'lucide-react';
 import { PersonLinkMemoryModal } from '../components/PersonLinkMemoryModal';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { PersonLinkImageModal } from '../components/PersonLinkImageModal';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { PersonLinkUrlPageModal } from '../components/PersonLinkUrlPageModal';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { PersonLinkYouTubeVideoModal } from '../components/PersonLinkYouTubeVideoModal';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { PersonLinkTikTokVideoModal } from '../components/PersonLinkTikTokVideoModal';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { PersonLinkPersonModal } from '../components/PersonLinkPersonModal';
 
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 type TabType = 'memories' | 'images' | 'urls' | 'youtube' | 'tiktok' | 'relationships';
 
 export function PersonDetailPage() {
@@ -719,6 +737,13 @@ export function PersonDetailPage() {
         isOpen={isLinkPersonModalOpen}
         onClose={() => setIsLinkPersonModalOpen(false)}
       />
+      {/* Help Popup */}
+      <HelpPopup
+        pageKey="person-detail"
+        isOpen={helpPopup.isOpen}
+        onClose={helpPopup.closePopup}
+      />
+
     </div>
   );
 }

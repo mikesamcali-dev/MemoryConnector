@@ -1,14 +1,34 @@
 import { useState, useEffect } from 'react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useForm } from 'react-hook-form';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { z } from 'zod';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { getMemory, updateMemory, deleteMemory, analyzeText, WordMatch, linkWordsToMemory } from '../api/memories';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { getRemindersForMemory, updateReminderSchedule, deleteReminder, createSRSReminders } from '../api/reminders';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { ArrowLeft, Save, MapPin, Calendar, Edit2, X, Clock, Trash2, Plus, Link2, BookOpen, Image as ImageIcon, ExternalLink, Bell, MessageSquare } from 'lucide-react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { EntitySuggestionsModal } from '../components/EntitySuggestionsModal';
 
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 const updateMemorySchema = z.object({
   textContent: z.string().optional(),
   latitude: z.number().optional(),
@@ -1518,6 +1538,13 @@ export function MemoryDetailPage() {
           </div>
         </div>
       )}
+      {/* Help Popup */}
+      <HelpPopup
+        pageKey="memory-detail"
+        isOpen={helpPopup.isOpen}
+        onClose={helpPopup.closePopup}
+      />
+
     </div>
   );
 }

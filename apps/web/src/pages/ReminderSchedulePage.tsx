@@ -1,10 +1,22 @@
 import { useState } from 'react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { createCustomReminder } from '../api/reminders';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { ArrowLeft, Calendar, Clock, Check } from 'lucide-react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useHaptics } from '../hooks/useHaptics';
 
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 export function ReminderSchedulePage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -255,6 +267,13 @@ export function ReminderSchedulePage() {
           {createReminderMutation.isPending ? 'Creating...' : 'Set Reminder'}
         </button>
       </div>
+      {/* Help Popup */}
+      <HelpPopup
+        pageKey="reminder-schedule"
+        isOpen={helpPopup.isOpen}
+        onClose={helpPopup.closePopup}
+      />
+
     </div>
   );
 }

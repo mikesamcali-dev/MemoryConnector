@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { searchAll } from '../api/search';
 import { getMemories, deleteMemory } from '../api/memories';
 import {
@@ -29,6 +31,7 @@ export function SearchPage() {
   const isMobile = useIsMobile();
   const { haptic } = useHaptics();
   const queryClient = useQueryClient();
+  const helpPopup = useHelpPopup('search');
   const [query, setQuery] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
@@ -571,6 +574,13 @@ export function SearchPage() {
           </button>
         </div>
       </BottomSheet>
+
+      {/* Help Popup */}
+      <HelpPopup
+        pageKey="search"
+        isOpen={helpPopup.isOpen}
+        onClose={helpPopup.closePopup}
+      />
     </div>
   );
 }

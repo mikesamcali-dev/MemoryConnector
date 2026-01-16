@@ -1,17 +1,35 @@
 import { useState, useEffect } from 'react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { getMemory, updateMemory, linkWordsToMemory } from '../api/memories';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { getAllEvents, getAllLocationsForUser, getAllPeople, createEvent, createLocation, getAllYouTubeVideos } from '../api/admin';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import {
   getMemoryRelationships,
   deleteMemoryRelationship,
 } from '../api/memoryRelationships';
 import { getAllWords } from '../api/words';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { getAllProjects, linkMemoryToProject } from '../api/projects';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { getAllTikTokVideos } from '../api/tiktok';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { ArrowLeft, Save, Link as LinkIcon, Plus, X, Trash2, MapPin, Video, BookOpen, FolderKanban } from 'lucide-react';
 
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 export function LinkMemoryPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -918,6 +936,13 @@ export function LinkMemoryPage() {
           Done
         </button>
       </div>
+      {/* Help Popup */}
+      <HelpPopup
+        pageKey="memory-detail"
+        isOpen={helpPopup.isOpen}
+        onClose={helpPopup.closePopup}
+      />
+
     </div>
   );
 }

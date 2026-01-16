@@ -1,9 +1,19 @@
 import { useState } from 'react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useNavigate } from 'react-router-dom';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useQuery } from '@tanstack/react-query';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { ArrowLeft, Loader, Link as LinkIcon, FileText, Tag, Calendar, User, ExternalLink } from 'lucide-react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { addUrl, getUserUrlPages } from '../api/urlPages';
 
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 export function UrlBuilderPage() {
   const navigate = useNavigate();
   const [url, setUrl] = useState('');
@@ -385,6 +395,13 @@ export function UrlBuilderPage() {
           </div>
         )}
       </div>
+      {/* Help Popup */}
+      <HelpPopup
+        pageKey="urls"
+        isOpen={helpPopup.isOpen}
+        onClose={helpPopup.closePopup}
+      />
+
     </div>
   );
 }

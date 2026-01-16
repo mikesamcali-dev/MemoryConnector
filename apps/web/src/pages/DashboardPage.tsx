@@ -1,5 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { Link } from 'react-router-dom';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import {
   Brain,
   Calendar,
@@ -17,10 +21,18 @@ import {
   FolderKanban
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { getMemories } from '../api/memories';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { getUpcomingReminders } from '../api/reminders';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { getUserUrlPages } from '../api/urlPages';
 
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 export function DashboardPage() {
   const { user } = useAuth();
 
@@ -289,6 +301,13 @@ export function DashboardPage() {
           </div>
         </div>
       )}
+      {/* Help Popup */}
+      <HelpPopup
+        pageKey="feed"
+        isOpen={helpPopup.isOpen}
+        onClose={helpPopup.closePopup}
+      />
+
     </div>
   );
 }

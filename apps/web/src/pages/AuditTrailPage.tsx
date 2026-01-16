@@ -1,5 +1,9 @@
 import { useState } from 'react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useQuery } from '@tanstack/react-query';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import {
   getAuditTrail,
   getAuditStats,
@@ -26,6 +30,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 export function AuditTrailPage() {
   const navigate = useNavigate();
   const [filters, setFilters] = useState<AuditTrailFilters>({
@@ -659,6 +665,13 @@ export function AuditTrailPage() {
           </div>
         </div>
       )}
+      {/* Help Popup */}
+      <HelpPopup
+        pageKey="audit-trail"
+        isOpen={helpPopup.isOpen}
+        onClose={helpPopup.closePopup}
+      />
+
     </div>
   );
 }

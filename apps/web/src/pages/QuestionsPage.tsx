@@ -1,7 +1,15 @@
 import { useState } from 'react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useNavigate } from 'react-router-dom';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { getAllQuestions, deleteQuestion } from '../api/questions';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import {
   Eye,
   Search,
@@ -12,9 +20,15 @@ import {
   Brain
 } from 'lucide-react';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useHaptics } from '../hooks/useHaptics';
 
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 export function QuestionsPage() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -238,6 +252,13 @@ export function QuestionsPage() {
           </button>
         </div>
       )}
+      {/* Help Popup */}
+      <HelpPopup
+        pageKey="questions"
+        isOpen={helpPopup.isOpen}
+        onClose={helpPopup.closePopup}
+      />
+
     </div>
   );
 }

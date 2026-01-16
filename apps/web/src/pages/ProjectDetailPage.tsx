@@ -1,6 +1,12 @@
 import { useState } from 'react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import {
   getProjectById,
   updateProject,
@@ -26,17 +32,39 @@ import {
   Film,
 } from 'lucide-react';
 import { ProjectEditModal } from '../components/ProjectEditModal';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { ProjectLinkMemoryModal } from '../components/ProjectLinkMemoryModal';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { AddMemoryToProjectModal } from '../components/AddMemoryToProjectModal';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { ProjectLinkImageModal } from '../components/ProjectLinkImageModal';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { ProjectLinkUrlPageModal } from '../components/ProjectLinkUrlPageModal';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { ProjectLinkYouTubeVideoModal } from '../components/ProjectLinkYouTubeVideoModal';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { ProjectLinkTikTokVideoModal } from '../components/ProjectLinkTikTokVideoModal';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { AddImageToProjectModal } from '../components/AddImageToProjectModal';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { AddUrlToProjectModal } from '../components/AddUrlToProjectModal';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { AddYouTubeToProjectModal } from '../components/AddYouTubeToProjectModal';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { AddTikTokToProjectModal } from '../components/AddTikTokToProjectModal';
 
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 type TabType = 'memories' | 'images' | 'urls' | 'youtube' | 'tiktok';
 
 export function ProjectDetailPage() {
@@ -727,6 +755,13 @@ export function ProjectDetailPage() {
         isOpen={isAddTikTokModalOpen}
         onClose={() => setIsAddTikTokModalOpen(false)}
       />
+      {/* Help Popup */}
+      <HelpPopup
+        pageKey="project-detail"
+        isOpen={helpPopup.isOpen}
+        onClose={helpPopup.closePopup}
+      />
+
     </div>
   );
 }
