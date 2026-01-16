@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
-import { getRemindersInbox, getUpcomingReminders, markReminderAsRead, dismissReminder } from '../api/reminders';
-import { Bell, Clock, Check, RefreshCw } from 'lucide-react';
+import { getRemindersInbox, getUpcomingReminders, markReminderAsRead, dismissReminder, deleteReminder } from '../api/reminders';
+import { Bell, Clock, Check, RefreshCw, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
@@ -97,6 +97,13 @@ const queryClient = useQueryClient();
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: deleteReminder,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+    },
+  });
+
   const isLoading = loadingInbox || loadingUpcoming;
   const hasUpcoming = upcomingData && upcomingData.length > 0;
   const hasInbox = inboxData && inboxData.reminders && inboxData.reminders.length > 0;
@@ -184,13 +191,15 @@ const queryClient = useQueryClient();
               return (
                 <div
                   key={reminder.reminderId}
-                  className={`p-3 md:p-4 border rounded-lg cursor-pointer hover:shadow-md active:shadow-lg transition-shadow ${
+                  className={`p-3 md:p-4 border rounded-lg hover:shadow-md transition-shadow ${
                     isPast ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'
                   }`}
-                  onClick={() => navigate(`/app/memories/${reminder.memoryId}`)}
                 >
                   <div className="flex items-start justify-between gap-2 md:gap-3">
-                    <div className="flex-1 min-w-0">
+                    <div
+                      className="flex-1 min-w-0 cursor-pointer"
+                      onClick={() => navigate(`/app/memories/${reminder.memoryId}`)}
+                    >
                       <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2 mb-2">
                         {reminder.memoryType && (
                           <span
@@ -214,6 +223,19 @@ const queryClient = useQueryClient();
                         <span className="hidden md:inline">Scheduled for: {scheduledDate.toLocaleString()}</span>
                       </p>
                     </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm('Delete this reminder?')) {
+                          deleteMutation.mutate(reminder.reminderId);
+                        }
+                      }}
+                      className="min-w-[48px] min-h-[48px] md:min-w-[40px] md:min-h-[40px] p-2 md:p-1 flex items-center justify-center text-gray-400 hover:text-red-600 active:text-red-700 transition-colors"
+                      aria-label="Delete reminder"
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash2 className="h-5 w-5 md:h-4 md:w-4" />
+                    </button>
                   </div>
                 </div>
               );
@@ -276,12 +298,15 @@ const queryClient = useQueryClient();
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    dismissMutation.mutate(reminder.reminderId);
+                    if (window.confirm('Delete this reminder?')) {
+                      deleteMutation.mutate(reminder.reminderId);
+                    }
                   }}
-                  className="min-w-[48px] min-h-[48px] md:min-w-[40px] md:min-h-[40px] p-2 md:p-1 flex items-center justify-center text-gray-400 hover:text-gray-600 active:text-gray-700 text-xl md:text-lg"
-                  aria-label="Dismiss reminder"
+                  className="min-w-[48px] min-h-[48px] md:min-w-[40px] md:min-h-[40px] p-2 md:p-1 flex items-center justify-center text-gray-400 hover:text-red-600 active:text-red-700 transition-colors"
+                  aria-label="Delete reminder"
+                  disabled={deleteMutation.isPending}
                 >
-                  ×
+                  <Trash2 className="h-5 w-5 md:h-4 md:w-4" />
                 </button>
               </div>
               </SwipableReminderCard>

@@ -20,7 +20,7 @@ export class RemindersController {
   @Get('upcoming')
   @ApiOperation({ summary: 'Get upcoming reminders' })
   async getUpcoming(@User() user: any) {
-    return this.remindersService.getUpcoming(user.id, 5);
+    return this.remindersService.getUpcoming(user.id, 1000);
   }
 
   @Post(':id/read')
