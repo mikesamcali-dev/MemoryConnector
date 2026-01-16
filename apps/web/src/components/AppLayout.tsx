@@ -192,6 +192,20 @@ export function AppLayout({ children }: AppLayoutProps) {
 
             {/* User Menu */}
             <div className="flex items-center gap-3">
+              {/* Reminder Notification Bell */}
+              <Link
+                to="/app/reminders"
+                className="relative p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                title={dueCount && dueCount.count > 0 ? `${dueCount.count} due reminder${dueCount.count > 1 ? 's' : ''}` : 'Reminders'}
+              >
+                <Bell className="h-5 w-5" />
+                {dueCount && dueCount.count > 0 && (
+                  <span className="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-xs font-bold rounded-full">
+                    {dueCount.count > 99 ? '99+' : dueCount.count}
+                  </span>
+                )}
+              </Link>
+
               <div className="hidden sm:flex items-center gap-2 text-sm text-gray-600">
                 <span className="font-medium">{user?.email}</span>
                 <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs font-medium uppercase">
@@ -215,10 +229,24 @@ export function AppLayout({ children }: AppLayoutProps) {
       {/* Mobile Header - Mobile only */}
       {isMobile && (
         <div className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
-          <div className="flex items-center justify-center h-14 px-4">
+          <div className="flex items-center justify-between h-14 px-4">
+            <div className="w-10"></div> {/* Spacer for centering */}
             <Link to="/app/feed" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <Brain className="h-7 w-7 text-blue-600" />
               <span className="text-lg font-bold text-gray-900">MC</span>
+            </Link>
+            {/* Reminder Bell */}
+            <Link
+              to="/app/reminders"
+              className="relative p-2 text-gray-600 hover:text-blue-600 active:bg-blue-50 rounded-lg transition-all min-w-[40px] min-h-[40px] flex items-center justify-center"
+              title={dueCount && dueCount.count > 0 ? `${dueCount.count} due reminder${dueCount.count > 1 ? 's' : ''}` : 'Reminders'}
+            >
+              <Bell className="h-6 w-6" />
+              {dueCount && dueCount.count > 0 && (
+                <span className="absolute top-0 right-0 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-xs font-bold rounded-full">
+                  {dueCount.count > 99 ? '99+' : dueCount.count}
+                </span>
+              )}
             </Link>
           </div>
         </div>
