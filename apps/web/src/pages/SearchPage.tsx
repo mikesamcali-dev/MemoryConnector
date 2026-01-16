@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useHelpPopup } from '../hooks/useHelpPopup';
+import { HelpPopup } from '../components/HelpPopup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useHelpPopup } from '../hooks/useHelpPopup';
@@ -27,7 +29,8 @@ import { BottomSheet } from '../components/mobile/BottomSheet';
 import { SwipeableMemoryCard } from '../components/SwipeableMemoryCard';
 
 export function SearchPage() {
-  const navigate = useNavigate();
+    const helpPopup = useHelpPopup('search');
+const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { haptic } = useHaptics();
   const queryClient = useQueryClient();

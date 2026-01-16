@@ -47,7 +47,8 @@ function MapUpdater({ center }: { center: [number, number] }) {
 }
 
 export function AtlasPage() {
-  const navigate = useNavigate();
+    const helpPopup = useHelpPopup('atlas');
+const navigate = useNavigate();
   const [selectedLocation, setSelectedLocation] = useState<[number, number] | null>(null);
 
   // Fetch all memories with location data

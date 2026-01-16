@@ -15,7 +15,8 @@ import { ArrowLeft, Plus, Loader, Sparkles } from 'lucide-react';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function TikTokBuilderPage() {
-  const navigate = useNavigate();
+    const helpPopup = useHelpPopup('tiktok-builder');
+const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [url, setUrl] = useState('');

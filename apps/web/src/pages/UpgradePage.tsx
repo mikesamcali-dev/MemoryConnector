@@ -6,7 +6,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function UpgradePage() {
-  const { user } = useAuth();
+    const helpPopup = useHelpPopup('upgrade');
+const { user } = useAuth();
   const currentTier = user?.tier || 'free';
 
   return (

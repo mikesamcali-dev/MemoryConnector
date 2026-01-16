@@ -26,7 +26,8 @@ import { HelpPopup } from '../components/HelpPopup';
 type Phase = 'showing' | 'recall' | 'revealed';
 
 export function SlideDeckViewerPage() {
-  const { id } = useParams<{ id: string }>();
+    const helpPopup = useHelpPopup('slidedeck-viewer');
+const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [currentIndex, setCurrentIndex] = useState(0);

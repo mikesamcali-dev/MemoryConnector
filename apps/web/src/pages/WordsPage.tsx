@@ -15,7 +15,8 @@ import { BookOpen, Search, ArrowLeft } from 'lucide-react';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function WordsPage() {
-  const navigate = useNavigate();
+    const helpPopup = useHelpPopup('words');
+const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
 
   const { data: words, isLoading, isError } = useQuery({

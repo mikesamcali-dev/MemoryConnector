@@ -41,7 +41,8 @@ const nodeTypes: NodeTypes = {
 };
 
 export function RelationshipGraphPage() {
-  const navigate = useNavigate();
+    const helpPopup = useHelpPopup('relationships');
+const navigate = useNavigate();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   // Fetch graph data

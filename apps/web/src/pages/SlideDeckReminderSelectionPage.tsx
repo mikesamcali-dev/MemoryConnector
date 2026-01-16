@@ -26,7 +26,8 @@ interface ReminderForSelection {
 }
 
 export function SlideDeckReminderSelectionPage() {
-  const navigate = useNavigate();
+    const helpPopup = useHelpPopup('slidedecks');
+const navigate = useNavigate();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
 

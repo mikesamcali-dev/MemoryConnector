@@ -18,7 +18,8 @@ import { useHaptics } from '../hooks/useHaptics';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function ReminderSchedulePage() {
-  const navigate = useNavigate();
+    const helpPopup = useHelpPopup('reminder-schedule');
+const navigate = useNavigate();
   const location = useLocation();
   const { haptic } = useHaptics();
   const queryClient = useQueryClient();

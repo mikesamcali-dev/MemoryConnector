@@ -36,7 +36,8 @@ import {
 } from 'lucide-react';
 
 export function TwitterPostsListPage() {
-  const navigate = useNavigate();
+    const helpPopup = useHelpPopup('twitter-posts');
+const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   // Add form state

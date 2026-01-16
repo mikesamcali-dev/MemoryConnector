@@ -12,7 +12,8 @@ import { ArrowLeft, BookOpen, Volume2, Tag, Clock, FileText, ExternalLink } from
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function WordDetailPage() {
-  const { id } = useParams<{ id: string }>();
+    const helpPopup = useHelpPopup('word-detail');
+const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const { data: word, isLoading, isError } = useQuery({

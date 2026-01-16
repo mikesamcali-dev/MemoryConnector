@@ -15,7 +15,8 @@ import { useState } from 'react';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function YouTubeVideoMemoriesPage() {
-  const { videoId } = useParams<{ videoId: string }>();
+    const helpPopup = useHelpPopup('youtube-videos');
+const { videoId } = useParams<{ videoId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showFullTranscript, setShowFullTranscript] = useState(false);

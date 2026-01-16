@@ -36,7 +36,8 @@ const updateMemorySchema = z.object({
 });
 
 export function MemoryDetailPage() {
-  const { id } = useParams<{ id: string }>();
+    const helpPopup = useHelpPopup('memory-detail');
+const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);

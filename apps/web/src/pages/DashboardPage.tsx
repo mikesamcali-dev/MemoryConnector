@@ -34,7 +34,8 @@ import { getUserUrlPages } from '../api/urlPages';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function DashboardPage() {
-  const { user } = useAuth();
+    const helpPopup = useHelpPopup('feed');
+const { user } = useAuth();
 
   // Fetch recent memories
   const { data: memoriesData } = useQuery({

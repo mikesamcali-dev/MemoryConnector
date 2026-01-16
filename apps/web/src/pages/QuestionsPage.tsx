@@ -30,7 +30,8 @@ import { useHaptics } from '../hooks/useHaptics';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function QuestionsPage() {
-  const navigate = useNavigate();
+    const helpPopup = useHelpPopup('questions');
+const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { haptic } = useHaptics();
   const queryClient = useQueryClient();

@@ -27,7 +27,8 @@ import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function TrainingDeckViewerPage() {
-  const { id } = useParams<{ id: string }>();
+    const helpPopup = useHelpPopup('training-deck-viewer');
+const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();

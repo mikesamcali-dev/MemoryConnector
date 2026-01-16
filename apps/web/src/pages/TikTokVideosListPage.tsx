@@ -34,7 +34,8 @@ import {
 } from 'lucide-react';
 
 export function TikTokVideosListPage() {
-  const navigate = useNavigate();
+    const helpPopup = useHelpPopup('tiktok-videos');
+const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   // Add form state

@@ -42,7 +42,8 @@ import { WordEditModal } from '../components/admin/WordEditModal';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function AdminPanelPage() {
-  const queryClient = useQueryClient();
+    const helpPopup = useHelpPopup('admin');
+const queryClient = useQueryClient();
   const [loadingUserId, setLoadingUserId] = useState<string | null>(null);
   const [isWordModalOpen, setIsWordModalOpen] = useState(false);
   const [editingWord, setEditingWord] = useState<any | null>(null);

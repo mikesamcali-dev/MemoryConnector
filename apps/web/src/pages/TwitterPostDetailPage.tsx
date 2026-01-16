@@ -12,7 +12,8 @@ import { ArrowLeft, Twitter, Calendar, Eye, ThumbsUp, Repeat2, MessageCircle, Ex
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function TwitterPostDetailPage() {
-  const { postId } = useParams<{ postId: string }>();
+    const helpPopup = useHelpPopup('twitter-posts');
+const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 

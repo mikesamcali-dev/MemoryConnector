@@ -72,7 +72,8 @@ function SwipableReminderCard({
 }
 
 export function RemindersPage() {
-  const queryClient = useQueryClient();
+    const helpPopup = useHelpPopup('reminders');
+const queryClient = useQueryClient();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 

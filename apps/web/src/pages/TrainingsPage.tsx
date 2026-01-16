@@ -18,7 +18,8 @@ import { TrainingEditModal } from '../components/TrainingEditModal';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function TrainingsPage() {
-  const navigate = useNavigate();
+    const helpPopup = useHelpPopup('trainings');
+const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);

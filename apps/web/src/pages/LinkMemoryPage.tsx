@@ -31,7 +31,8 @@ import { ArrowLeft, Save, Link as LinkIcon, Plus, X, Trash2, MapPin, Video, Book
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function LinkMemoryPage() {
-  const { id } = useParams<{ id: string }>();
+    const helpPopup = useHelpPopup('memory-detail');
+const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 

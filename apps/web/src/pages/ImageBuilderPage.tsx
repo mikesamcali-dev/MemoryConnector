@@ -18,7 +18,8 @@ import { ImageLinkProjectModal } from '../components/ImageLinkProjectModal';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function ImageBuilderPage() {
-  const navigate = useNavigate();
+    const helpPopup = useHelpPopup('images');
+const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

@@ -15,7 +15,8 @@ import { useNavigate } from 'react-router-dom';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function PersonBuilderPage() {
-  const navigate = useNavigate();
+    const helpPopup = useHelpPopup('people');
+const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState('');

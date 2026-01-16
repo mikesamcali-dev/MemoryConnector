@@ -12,7 +12,8 @@ import { ArrowLeft, Video, Calendar, Eye, ThumbsUp, Share2, MessageCircle, FileT
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function TikTokVideoDetailPage() {
-  const { videoId } = useParams<{ videoId: string }>();
+    const helpPopup = useHelpPopup('tiktok-videos');
+const { videoId } = useParams<{ videoId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 

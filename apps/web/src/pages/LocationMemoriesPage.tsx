@@ -12,7 +12,8 @@ import { ArrowLeft, MapPin, Calendar, FileText } from 'lucide-react';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function LocationMemoriesPage() {
-  const { locationId } = useParams<{ locationId: string }>();
+    const helpPopup = useHelpPopup('locations');
+const { locationId } = useParams<{ locationId: string }>();
   const navigate = useNavigate();
 
   // Fetch location details

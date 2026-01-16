@@ -15,7 +15,8 @@ import { ArrowLeft, Trash2, Calendar, Brain, MessageSquare } from 'lucide-react'
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function QuestionDetailPage() {
-  const { id } = useParams<{ id: string }>();
+    const helpPopup = useHelpPopup('question-detail');
+const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);

@@ -68,7 +68,8 @@ import { HelpPopup } from '../components/HelpPopup';
 type TabType = 'memories' | 'images' | 'urls' | 'youtube' | 'tiktok';
 
 export function ProjectDetailPage() {
-  const { id } = useParams<{ id: string }>();
+    const helpPopup = useHelpPopup('project-detail');
+const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabType>('memories');

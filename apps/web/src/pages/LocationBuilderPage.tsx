@@ -18,7 +18,8 @@ import { AutoLocationModal } from '../components/AutoLocationModal';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function LocationBuilderPage() {
-  const navigate = useNavigate();
+    const helpPopup = useHelpPopup('locations');
+const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState('');

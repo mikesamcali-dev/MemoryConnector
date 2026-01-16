@@ -15,7 +15,8 @@ import { addUrl, getUserUrlPages } from '../api/urlPages';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function UrlBuilderPage() {
-  const navigate = useNavigate();
+    const helpPopup = useHelpPopup('urls');
+const navigate = useNavigate();
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

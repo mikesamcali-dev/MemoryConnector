@@ -18,7 +18,8 @@ import { ProjectEditModal } from '../components/ProjectEditModal';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function ProjectsPage() {
-  const navigate = useNavigate();
+    const helpPopup = useHelpPopup('projects');
+const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);

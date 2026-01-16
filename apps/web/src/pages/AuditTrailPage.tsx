@@ -33,7 +33,8 @@ import { useNavigate } from 'react-router-dom';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function AuditTrailPage() {
-  const navigate = useNavigate();
+    const helpPopup = useHelpPopup('audit-trail');
+const navigate = useNavigate();
   const [filters, setFilters] = useState<AuditTrailFilters>({
     page: 1,
     limit: 50,

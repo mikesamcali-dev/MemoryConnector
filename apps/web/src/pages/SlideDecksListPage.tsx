@@ -20,7 +20,8 @@ import { format } from 'date-fns';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function SlideDecksListPage() {
-  const navigate = useNavigate();
+    const helpPopup = useHelpPopup('slidedecks');
+const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);

@@ -18,7 +18,8 @@ import { useHaptics } from '../hooks/useHaptics';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 export function SynapseReviewPage() {
-  const navigate = useNavigate();
+    const helpPopup = useHelpPopup('review');
+const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { haptic } = useHaptics();
   const [currentIndex, setCurrentIndex] = useState(0);
