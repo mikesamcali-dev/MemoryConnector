@@ -402,16 +402,11 @@ Return ONLY valid JSON, no additional text.`;
       // Single word: look up and link
       await this.processAndLinkWord(memoryId, words[0]);
     } else if (wordCount === 2) {
-      // Two words: process phrase + individual words
+      // Two words: process phrase only (DO NOT process individual words)
       await this.processAndLinkPhrase(memoryId, normalizedText);
-      await this.processAndLinkWord(memoryId, words[0]);
-      await this.processAndLinkWord(memoryId, words[1]);
     } else if (wordCount === 3) {
-      // Three words: process phrase + individual words
+      // Three words: process phrase only (DO NOT process individual words)
       await this.processAndLinkPhrase(memoryId, normalizedText);
-      await this.processAndLinkWord(memoryId, words[0]);
-      await this.processAndLinkWord(memoryId, words[1]);
-      await this.processAndLinkWord(memoryId, words[2]);
     }
 
     console.log('[PHRASE LINKING] Processing complete');

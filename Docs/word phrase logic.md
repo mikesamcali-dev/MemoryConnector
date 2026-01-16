@@ -11,18 +11,14 @@
 Example: "Red Herring"
 - if the phrase doesn't exist, use open ai to get the definition of the phrase and add it to the word table and then link it to the memory. 
 -  if it does exist in the table, do not use openai to get the definition and just link the word to the memory
--  look up the each word in the phrase in the word table
-- if either of the words don't exist in the table, use open ai to get the definition and add it to the word table and then link it to the memory for each word.
--  if either of the word exists in the table, do not use openai to get the definition and just link the word to the memory.
+-  DO NOT look up the each word 
 
 ## if the textarea on the capture page is 3 words
 -  look up all three words in the word table (multiple words together is a phrase and will still be added in the word table as if it's a word)
 Example: "on the way"
 - if the phrase doesn't exist, use open ai to get the definition of the phrase and add it to the word table and then link it to the memory. 
 -  if it does exist in the table, do not use openai to get the definition and just link the phrase to the memory
--  look up the each word in the phrase in the word table
-- if either of the words don't exist in the table, use open ai to get the definition and add it to the word table and then link it to the memory for each word.
--  if either of the word exists in the table, do not use openai to get the definition and just link the word to the memory.
+- DO NOT look up the each word in the phrase 
 
 ## if the textarea on the capture page is more than 3 words
 - do not look up any of the words and do not link any words to the memory
