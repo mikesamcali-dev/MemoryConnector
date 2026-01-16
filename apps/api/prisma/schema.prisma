@@ -111,6 +111,7 @@ model User {
   usage               UserUsage?
   stats               UserStats?
   reminderPreferences UserReminderPreferences?
+  helpViews           UserHelpView[]
   idempotencyKeys     IdempotencyKey[]
   aiCostTracking      AiCostTracking[]
   excludedWords       ExcludedWord[]
@@ -200,6 +201,22 @@ model UserReminderPreferences {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_reminder_preferences")
+}
+
+model UserHelpView {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  pageKey    String    @map("page_key") @db.VarChar(100)
+  viewCount  Int       @default(0) @map("view_count")
+  lastViewAt DateTime? @map("last_view_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, pageKey])
+  @@index([userId])
+  @@map("user_help_views")
 }
 
 model TierLimit {

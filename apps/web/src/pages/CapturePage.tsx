@@ -20,7 +20,9 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Clock, AlertCircle, Calendar, Loader, Users, MapPinned, Video, Image as ImageIcon, Link as LinkIcon, X, Mic, FolderKanban, GraduationCap, Bell, MessageSquare } from 'lucide-react';
 import { useHaptics } from '../hooks/useHaptics';
 import { useVoiceInput } from '../hooks/useVoiceInput';
+import { useHelpPopup } from '../hooks/useHelpPopup';
 import { FeedbackModal } from '../components/FeedbackModal';
+import { HelpPopup } from '../components/HelpPopup';
 import { submitFeedback } from '../api/transcription';
 
 const memorySchema = z.object({
@@ -33,6 +35,7 @@ export function CapturePage() {
   const location = useLocation();
   const { haptic } = useHaptics();
   const queryClient = useQueryClient();
+  const helpPopup = useHelpPopup('capture');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isRateLimitError, setIsRateLimitError] = useState(false);
@@ -2012,6 +2015,13 @@ export function CapturePage() {
         rawTranscript={feedbackTranscript}
         sessionId={voiceSessionId || ''}
         onSubmit={handleFeedbackSubmit}
+      />
+
+      {/* Help Popup */}
+      <HelpPopup
+        pageKey="capture"
+        isOpen={helpPopup.isOpen}
+        onClose={helpPopup.closePopup}
       />
     </div>
   );
