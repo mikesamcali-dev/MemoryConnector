@@ -38,13 +38,19 @@ const navigate = useNavigate();
     },
   });
 
-  // Filter reminders based on search query
+  // Filter reminders to only past due, then by search query
   const filteredReminders = useMemo(() => {
     if (!reminders) return [];
-    if (!searchQuery.trim()) return reminders;
+
+    // Filter to only past due reminders
+    const pastDueReminders = reminders.filter(reminder =>
+      isPast(new Date(reminder.scheduledAt))
+    );
+
+    if (!searchQuery.trim()) return pastDueReminders;
 
     const query = searchQuery.toLowerCase();
-    return reminders.filter((reminder) =>
+    return pastDueReminders.filter((reminder) =>
       reminder.memoryPreview.toLowerCase().includes(query)
     );
   }, [reminders, searchQuery]);
