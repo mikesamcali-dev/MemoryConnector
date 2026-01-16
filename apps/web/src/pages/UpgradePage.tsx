@@ -3,8 +3,6 @@ import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 import { useAuth } from '../contexts/AuthContext';
 
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 export function UpgradePage() {
     const helpPopup = useHelpPopup('upgrade');
 const { user } = useAuth();

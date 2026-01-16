@@ -2,27 +2,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 import { getRemindersInbox, getUpcomingReminders, markReminderAsRead, dismissReminder } from '../api/reminders';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { Bell, Clock, Check, RefreshCw } from 'lucide-react';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { formatDistanceToNow } from 'date-fns';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { useNavigate } from 'react-router-dom';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { useIsMobile } from '../hooks/useIsMobile';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
 
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 // Swipable wrapper component for inbox reminders
 function SwipableReminderCard({
   children,

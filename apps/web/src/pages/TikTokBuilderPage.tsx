@@ -2,18 +2,10 @@ import { useState } from 'react';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 import { useNavigate } from 'react-router-dom';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { useQueryClient } from '@tanstack/react-query';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { createTikTokVideo, extractTikTokMetadata } from '../api/tiktok';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { ArrowLeft, Plus, Loader, Sparkles } from 'lucide-react';
 
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 export function TikTokBuilderPage() {
     const helpPopup = useHelpPopup('tiktok-builder');
 const navigate = useNavigate();

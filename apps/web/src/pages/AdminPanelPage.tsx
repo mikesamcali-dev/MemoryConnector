@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import {
   getAllUsers,
   updateUserEnabled,
@@ -39,8 +37,6 @@ import {
 } from 'lucide-react';
 import { WordEditModal } from '../components/admin/WordEditModal';
 
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 export function AdminPanelPage() {
     const helpPopup = useHelpPopup('admin');
 const queryClient = useQueryClient();

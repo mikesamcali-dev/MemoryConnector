@@ -2,21 +2,11 @@ import { useState, useMemo } from 'react';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { useNavigate } from 'react-router-dom';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { ArrowLeft, Check, Presentation, Calendar, Search, Loader } from 'lucide-react';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { getRecentRemindersForSelection, createSlideDeckFromSelected } from '../api/slidedecks';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { format, isPast } from 'date-fns';
 
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 interface ReminderForSelection {
   id: string;
   memoryId: string;

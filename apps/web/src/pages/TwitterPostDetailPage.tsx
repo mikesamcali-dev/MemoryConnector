@@ -2,15 +2,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { getTwitterPost, getTwitterPostMemories, enrichTwitterPost } from '../api/twitter';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { ArrowLeft, Twitter, Calendar, Eye, ThumbsUp, Repeat2, MessageCircle, ExternalLink, Sparkles, Loader, Plus, Quote, Bookmark } from 'lucide-react';
 
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 export function TwitterPostDetailPage() {
     const helpPopup = useHelpPopup('twitter-posts');
 const { postId } = useParams<{ postId: string }>();

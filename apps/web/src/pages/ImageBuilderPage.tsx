@@ -2,21 +2,11 @@ import { useState } from 'react';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 import { useNavigate } from 'react-router-dom';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { useQuery } from '@tanstack/react-query';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { ArrowLeft, Upload, Loader, Image as ImageIcon, MapPin, Calendar, Tag, FolderKanban } from 'lucide-react';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { uploadImage, getUserImages } from '../api/images';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { ImageLinkProjectModal } from '../components/ImageLinkProjectModal';
 
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 export function ImageBuilderPage() {
     const helpPopup = useHelpPopup('images');
 const navigate = useNavigate();

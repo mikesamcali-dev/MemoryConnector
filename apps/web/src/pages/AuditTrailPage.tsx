@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 import { useQuery } from '@tanstack/react-query';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import {
   getAuditTrail,
   getAuditStats,
@@ -30,8 +28,6 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 export function AuditTrailPage() {
     const helpPopup = useHelpPopup('audit-trail');
 const navigate = useNavigate();

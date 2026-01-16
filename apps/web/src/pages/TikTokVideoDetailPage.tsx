@@ -2,15 +2,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { getTikTokVideo, getTikTokVideoMemories, enrichTikTokVideo } from '../api/tiktok';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { ArrowLeft, Video, Calendar, Eye, ThumbsUp, Share2, MessageCircle, FileText, ExternalLink, Sparkles, Loader, Plus } from 'lucide-react';
 
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 export function TikTokVideoDetailPage() {
     const helpPopup = useHelpPopup('tiktok-videos');
 const { videoId } = useParams<{ videoId: string }>();

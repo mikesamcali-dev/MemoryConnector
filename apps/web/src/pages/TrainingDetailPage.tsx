@@ -2,11 +2,7 @@ import { useState } from 'react';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import {
   getTrainingById,
   updateTraining,
@@ -18,8 +14,6 @@ import {
   unlinkTikTokVideoFromTraining,
 } from '../api/trainings';
 import { createTrainingDeck } from '../api/training-decks';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import {
   ArrowLeft,
   GraduationCap,
@@ -32,8 +26,6 @@ import {
 } from 'lucide-react';
 import { TrainingEditModal } from '../components/TrainingEditModal';
 
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 type TabType = 'memories' | 'images' | 'urls' | 'youtube' | 'tiktok';
 
 export function TrainingDetailPage() {

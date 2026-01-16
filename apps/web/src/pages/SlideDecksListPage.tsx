@@ -2,14 +2,8 @@ import { useState } from 'react';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { useNavigate } from 'react-router-dom';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { Presentation, Trash2, Eye, Plus, Edit2, Check, X } from 'lucide-react';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import {
   getAllSlideDecks,
   updateSlideDeck,
@@ -17,8 +11,6 @@ import {
 } from '../api/slidedecks';
 import { format } from 'date-fns';
 
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 export function SlideDecksListPage() {
     const helpPopup = useHelpPopup('slidedecks');
 const navigate = useNavigate();

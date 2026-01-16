@@ -2,15 +2,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 import { useQuery } from '@tanstack/react-query';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { getWordById } from '../api/words';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { ArrowLeft, BookOpen, Volume2, Tag, Clock, FileText, ExternalLink } from 'lucide-react';
 
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 export function WordDetailPage() {
     const helpPopup = useHelpPopup('word-detail');
 const { id } = useParams<{ id: string }>();

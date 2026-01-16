@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import {
   getAllYouTubeVideos,
   createYouTubeVideoFromUrl,
@@ -11,12 +9,8 @@ import {
   YouTubeVideo,
 } from '../api/admin';
 import { ArrowLeft, Video, Search, Trash2, ExternalLink, Clock } from 'lucide-react';
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 import { useNavigate } from 'react-router-dom';
 
-import { useHelpPopup } from '../hooks/useHelpPopup';
-import { HelpPopup } from '../components/HelpPopup';
 export function YouTubeBuilderPage() {
     const helpPopup = useHelpPopup('youtube-videos');
 const navigate = useNavigate();
