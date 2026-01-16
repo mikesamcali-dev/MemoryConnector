@@ -47,7 +47,7 @@ export function SearchPage() {
   // Search query - now searches across all entity types
   const { data: searchResults, isLoading: searching, isError, refetch: refetchSearch } = useQuery({
     queryKey: ['search-all', searchTerm],
-    queryFn: () => searchAll(searchTerm, 5),
+    queryFn: () => searchAll(searchTerm, 100),
     enabled: searchTerm.length > 0,
   });
 

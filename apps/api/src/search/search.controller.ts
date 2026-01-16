@@ -63,7 +63,7 @@ export class SearchController {
     const results = await this.searchService.searchAll(
       user.id,
       query,
-      limit ? Math.min(parseInt(limit), 10) : 5
+      limit ? Math.min(parseInt(limit), 100) : 50
     );
 
     // Increment usage
