@@ -48,12 +48,24 @@ export class MemoriesController {
   async findAll(
     @User() user: any,
     @Query('skip') skip?: string,
-    @Query('take') take?: string
+    @Query('take') take?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: string,
+    @Query('filterByType') filterByType?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string
   ) {
     return this.memoriesService.findAll(
       user.id,
       skip ? parseInt(skip) : 0,
-      take ? parseInt(take) : 20
+      take ? parseInt(take) : 20,
+      {
+        sortBy: sortBy || 'createdAt',
+        sortOrder: (sortOrder === 'asc' || sortOrder === 'desc') ? sortOrder : 'desc',
+        filterByType: filterByType || undefined,
+        dateFrom: dateFrom ? new Date(dateFrom) : undefined,
+        dateTo: dateTo ? new Date(dateTo) : undefined,
+      }
     );
   }
 

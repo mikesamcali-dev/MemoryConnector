@@ -52,6 +52,11 @@ export interface Memory {
   longitude?: number;
   typeId?: string;
   type?: MemoryType;
+  typeAssignments?: {
+    id: string;
+    memoryType: MemoryType;
+    confidence: number;
+  }[];
   wordLinks?: {
     id: string;
     createdAt: string;
@@ -288,6 +293,31 @@ export async function createMemory(draft: {
 
 export async function getMemories(skip = 0, take = 20): Promise<Memory[]> {
   const response = await fetchWithAuth(`/memories?skip=${skip}&take=${take}`);
+  return response.json();
+}
+
+export interface GetMemoriesParams {
+  skip?: number;
+  take?: number;
+  sortBy?: 'createdAt' | 'updatedAt' | 'body';
+  sortOrder?: 'asc' | 'desc';
+  filterByType?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export async function getMemoriesFiltered(params: GetMemoriesParams = {}): Promise<Memory[]> {
+  const queryParams = new URLSearchParams();
+
+  if (params.skip !== undefined) queryParams.set('skip', params.skip.toString());
+  if (params.take !== undefined) queryParams.set('take', params.take.toString());
+  if (params.sortBy) queryParams.set('sortBy', params.sortBy);
+  if (params.sortOrder) queryParams.set('sortOrder', params.sortOrder);
+  if (params.filterByType) queryParams.set('filterByType', params.filterByType);
+  if (params.dateFrom) queryParams.set('dateFrom', params.dateFrom);
+  if (params.dateTo) queryParams.set('dateTo', params.dateTo);
+
+  const response = await fetchWithAuth(`/memories?${queryParams.toString()}`);
   return response.json();
 }
 

@@ -15,6 +15,7 @@ const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage').then(
 const OAuthCallbackPage = lazy(() => import('./pages/OAuthCallbackPage').then(m => ({ default: m.OAuthCallbackPage })));
 const CapturePage = lazy(() => import('./pages/CapturePage').then(m => ({ default: m.CapturePage })));
 const SearchPage = lazy(() => import('./pages/SearchPage').then(m => ({ default: m.SearchPage })));
+const MemoriesPage = lazy(() => import('./pages/MemoriesPage').then(m => ({ default: m.MemoriesPage })));
 const MemoryDetailPage = lazy(() => import('./pages/MemoryDetailPage').then(m => ({ default: m.MemoryDetailPage })));
 const RemindersPage = lazy(() => import('./pages/RemindersPage').then(m => ({ default: m.RemindersPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
@@ -105,6 +106,16 @@ function App() {
                 <ProtectedRoute>
                   <AppLayout>
                     <SearchPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/memories"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <MemoriesPage />
                   </AppLayout>
                 </ProtectedRoute>
               }

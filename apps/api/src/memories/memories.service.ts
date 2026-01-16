@@ -206,14 +206,61 @@ export class MemoriesService {
     }
   }
 
-  async findAll(userId: string, skip: number = 0, take: number = 20) {
-    const memories = await this.prisma.memory.findMany({
-      where: {
-        userId,
-        state: {
-          not: MemoryState.DELETED,
-        },
+  async findAll(
+    userId: string,
+    skip: number = 0,
+    take: number = 20,
+    options?: {
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+      filterByType?: string;
+      dateFrom?: Date;
+      dateTo?: Date;
+    }
+  ) {
+    // Build where clause
+    const where: any = {
+      userId,
+      state: {
+        not: MemoryState.DELETED,
       },
+    };
+
+    // Add type filter if provided
+    if (options?.filterByType) {
+      where.typeAssignments = {
+        some: {
+          memoryTypeId: options.filterByType,
+        },
+      };
+    }
+
+    // Add date range filter if provided
+    if (options?.dateFrom || options?.dateTo) {
+      where.createdAt = {};
+      if (options.dateFrom) {
+        where.createdAt.gte = options.dateFrom;
+      }
+      if (options.dateTo) {
+        where.createdAt.lte = options.dateTo;
+      }
+    }
+
+    // Build orderBy clause
+    const orderBy: any = {};
+    const sortBy = options?.sortBy || 'createdAt';
+    const sortOrder = options?.sortOrder || 'desc';
+
+    // Validate sortBy field to prevent injection
+    const allowedSortFields = ['createdAt', 'updatedAt', 'body'];
+    if (allowedSortFields.includes(sortBy)) {
+      orderBy[sortBy] = sortOrder;
+    } else {
+      orderBy.createdAt = 'desc'; // Default fallback
+    }
+
+    const memories = await this.prisma.memory.findMany({
+      where,
       include: {
         typeAssignments: {
           include: {
@@ -226,9 +273,7 @@ export class MemoriesService {
           },
         },
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy,
       skip,
       take,
     });
