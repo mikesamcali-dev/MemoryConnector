@@ -53,7 +53,7 @@ export class RemindersService {
       orderBy: {
         scheduledAt: 'desc',
       },
-      take: 50,
+      take: 1000,
     });
 
     return {

@@ -104,6 +104,22 @@ const queryClient = useQueryClient();
     mutationFn: deleteReminder,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      queryClient.invalidateQueries({ queryKey: ['due-reminders-count'] });
+    },
+  });
+
+  // Bulk delete mutation - doesn't invalidate queries until all are done
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      // Delete all reminders without invalidating queries between each deletion
+      for (const id of ids) {
+        await deleteReminder(id);
+      }
+    },
+    onSuccess: () => {
+      // Only invalidate queries once after all deletions are complete
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      queryClient.invalidateQueries({ queryKey: ['due-reminders-count'] });
     },
   });
 
@@ -153,13 +169,17 @@ const queryClient = useQueryClient();
     if (selectedIds.size === 0) return;
 
     if (window.confirm(`Delete ${selectedIds.size} selected reminder${selectedIds.size > 1 ? 's' : ''}?`)) {
-      for (const id of Array.from(selectedIds)) {
-        await deleteMutation.mutateAsync(id);
-      }
-      if (section === 'upcoming') {
-        setSelectedUpcoming(new Set());
-      } else {
-        setSelectedInbox(new Set());
+      try {
+        await bulkDeleteMutation.mutateAsync(Array.from(selectedIds));
+        // Clear selection after successful deletion
+        if (section === 'upcoming') {
+          setSelectedUpcoming(new Set());
+        } else {
+          setSelectedInbox(new Set());
+        }
+      } catch (error) {
+        console.error('Error deleting reminders:', error);
+        alert('Failed to delete some reminders. Please try again.');
       }
     }
   };
@@ -255,9 +275,9 @@ const queryClient = useQueryClient();
                 <button
                   onClick={() => deleteSelected('upcoming')}
                   className="text-xs md:text-sm text-red-600 hover:text-red-700 font-medium"
-                  disabled={deleteMutation.isPending}
+                  disabled={bulkDeleteMutation.isPending}
                 >
-                  Delete ({selectedUpcoming.size})
+                  {bulkDeleteMutation.isPending ? 'Deleting...' : `Delete (${selectedUpcoming.size})`}
                 </button>
               )}
             </div>
@@ -365,9 +385,9 @@ const queryClient = useQueryClient();
                 <button
                   onClick={() => deleteSelected('inbox')}
                   className="text-xs md:text-sm text-red-600 hover:text-red-700 font-medium"
-                  disabled={deleteMutation.isPending}
+                  disabled={bulkDeleteMutation.isPending}
                 >
-                  Delete ({selectedInbox.size})
+                  {bulkDeleteMutation.isPending ? 'Deleting...' : `Delete (${selectedInbox.size})`}
                 </button>
               )}
             </div>
