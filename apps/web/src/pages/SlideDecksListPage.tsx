@@ -50,8 +50,10 @@ const navigate = useNavigate();
       queryClient.invalidateQueries({ queryKey: ['slidedecks'] });
       setDeleteConfirmId(null);
     },
-    onError: () => {
-      alert('Failed to delete slide deck');
+    onError: (error: any) => {
+      console.error('Delete error:', error);
+      alert(`Failed to delete slide deck: ${error.message || 'Unknown error'}`);
+      setDeleteConfirmId(null); // Reset confirmation state on error
     },
   });
 
@@ -78,11 +80,17 @@ const navigate = useNavigate();
   };
 
   const handleDelete = (id: string) => {
+    console.log('handleDelete called', { id, deleteConfirmId, isPending: deleteMutation.isPending });
     if (deleteConfirmId === id) {
+      console.log('Confirming delete for:', id);
       deleteMutation.mutate(id);
     } else {
+      console.log('Setting deleteConfirmId to:', id);
       setDeleteConfirmId(id);
-      setTimeout(() => setDeleteConfirmId(null), 3000);
+      setTimeout(() => {
+        console.log('Clearing deleteConfirmId');
+        setDeleteConfirmId(null);
+      }, 3000);
     }
   };
 
