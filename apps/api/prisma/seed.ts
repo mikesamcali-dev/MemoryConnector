@@ -271,9 +271,8 @@ async function main() {
   });
 
   // Create structured word data
-  await prisma.word.create({
+  const serendipityWord = await prisma.word.create({
     data: {
-      memoryId: wordMemory.id,
       word: 'serendipity',
       description: 'The occurrence of events by chance in a happy or beneficial way',
       phonetic: '/ˌser.ənˈdɪp.ə.ti/',
@@ -283,6 +282,14 @@ async function main() {
       synonyms: JSON.parse('["chance", "fortune", "luck", "happenstance"]'),
       antonyms: JSON.parse('["misfortune", "bad luck"]'),
       difficulty: 'medium',
+    },
+  });
+
+  // Link word to memory
+  await prisma.memoryWordLink.create({
+    data: {
+      memoryId: wordMemory.id,
+      wordId: serendipityWord.id,
     },
   });
 
