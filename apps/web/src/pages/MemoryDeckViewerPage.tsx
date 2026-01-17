@@ -227,7 +227,7 @@ const { id } = useParams<{ id: string }>();
       >
         <div className="w-full md:max-w-4xl">
           {phase === 'showing' && (
-            <SlideCard slide={items[currentIndex]} />
+            <MemoryDeckCard item={items[currentIndex]} />
           )}
 
           {phase === 'recall' && (
@@ -251,7 +251,7 @@ const { id } = useParams<{ id: string }>();
                   Here's what it said:
                 </p>
               </div>
-              <SlideCard slide={items[currentIndex]} />
+              <MemoryDeckCard item={items[currentIndex]} />
             </div>
           )}
         </div>
