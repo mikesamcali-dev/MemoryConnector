@@ -17,7 +17,7 @@ import { createDraft } from '../utils/idempotency';
 import { compressImage, getSizeReduction } from '../utils/imageCompression';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Clock, AlertCircle, Calendar, Loader, Users, MapPinned, Video, Image as ImageIcon, Link as LinkIcon, X, Mic, FolderKanban, GraduationCap, Bell, MessageSquare } from 'lucide-react';
+import { Clock, AlertCircle, Calendar, Loader, Users, MapPinned, Video, Image as ImageIcon, Link as LinkIcon, X, Mic, FolderKanban, GraduationCap, Bell, MessageSquare, Camera } from 'lucide-react';
 import { useHaptics } from '../hooks/useHaptics';
 import { useVoiceInput } from '../hooks/useVoiceInput';
 import { useHelpPopup } from '../hooks/useHelpPopup';
@@ -1534,27 +1534,51 @@ export function CapturePage() {
             <Mic className={`h-4 w-4 ${voiceState === 'recording' ? 'animate-pulse' : ''}`} />
           </button>
 
-          {/* Image upload */}
+          {/* Camera capture button */}
           {!imagePreview ? (
-            <label
-              htmlFor="image-upload"
-              className={`inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border border-gray-300 rounded-md shadow-sm text-base md:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500 ${compressingImage ? 'opacity-50 cursor-wait' : ''}`}
-              title="Add image"
-            >
-              {compressingImage ? (
-                <Loader className="h-5 w-5 md:h-4 md:w-4 animate-spin" />
-              ) : (
-                <ImageIcon className="h-5 w-5 md:h-4 md:w-4" />
-              )}
-              <input
-                id="image-upload"
-                type="file"
-                accept="image/*"
-                onChange={handleImageSelect}
-                className="sr-only"
-                disabled={compressingImage}
-              />
-            </label>
+            <>
+              <label
+                htmlFor="camera-capture"
+                className={`inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border border-blue-300 rounded-md shadow-sm text-base md:text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500 ${compressingImage ? 'opacity-50 cursor-wait' : ''}`}
+                title="Take photo"
+              >
+                {compressingImage ? (
+                  <Loader className="h-5 w-5 md:h-4 md:w-4 animate-spin" />
+                ) : (
+                  <Camera className="h-5 w-5 md:h-4 md:w-4" />
+                )}
+                <input
+                  id="camera-capture"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleImageSelect}
+                  className="sr-only"
+                  disabled={compressingImage}
+                />
+              </label>
+
+              {/* Image upload from gallery */}
+              <label
+                htmlFor="image-upload"
+                className={`inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border border-gray-300 rounded-md shadow-sm text-base md:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500 ${compressingImage ? 'opacity-50 cursor-wait' : ''}`}
+                title="Choose from gallery"
+              >
+                {compressingImage ? (
+                  <Loader className="h-5 w-5 md:h-4 md:w-4 animate-spin" />
+                ) : (
+                  <ImageIcon className="h-5 w-5 md:h-4 md:w-4" />
+                )}
+                <input
+                  id="image-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  className="sr-only"
+                  disabled={compressingImage}
+                />
+              </label>
+            </>
           ) : (
             <div className="flex items-center gap-2">
               <div className="relative">
