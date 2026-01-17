@@ -57,6 +57,17 @@ export const HELP_CONTENT: Record<string, HelpContent> = {
       'Designed specifically for active learning and review',
     ],
   },
+  'memory-decks': {
+    title: 'Memory Decks',
+    description: 'Weekly auto-created collections for active recall training. Add memories via "Save to Memory" button on capture page.',
+    keyFeatures: [
+      'Auto-created every Sunday (archives previous week)',
+      'Manually populated via "Save to Memory" button',
+      '3-phase training cycle: Show (2s) → Recall (5s) → Revealed',
+      'Keyboard navigation and mobile swipe gestures',
+      'Proven to strengthen memory retention',
+    ],
+  },
   slidedecks: {
     title: 'Slide Decks',
     description: 'Active recall training using your reminders. Transform passive review into active memory strengthening.',
@@ -318,6 +329,16 @@ export const HELP_CONTENT: Record<string, HelpContent> = {
       'Add contact information',
       'Define relationships',
       'Link to memories',
+    ],
+  },
+  'memory-deck-viewer': {
+    title: 'Memory Deck Viewer',
+    description: 'Active recall training with your memory deck.',
+    keyFeatures: [
+      'Full-screen presentation mode',
+      '3-phase cycle: Show → Recall → Revealed',
+      'Arrow keys or swipe to navigate',
+      'Pause/resume with spacebar or button',
     ],
   },
   'slidedeck-viewer': {

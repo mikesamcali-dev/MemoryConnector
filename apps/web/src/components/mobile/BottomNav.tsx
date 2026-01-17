@@ -14,7 +14,7 @@ export function BottomNav({ onMoreClick }: BottomNavProps) {
 
   const navItems = [
     { path: '/app/capture', icon: Plus, label: 'Capture' },
-    { path: '/app/memory-decks', icon: Presentation, label: 'Decks' },
+    { path: '/app/memory-decks', icon: Presentation, label: 'Memories' },
     { path: '/app/training-decks', icon: GraduationCap, label: 'Train' },
     { path: '/app/search', icon: Search, label: 'Search' },
   ];

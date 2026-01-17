@@ -49,7 +49,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const baseNavItems = [
     { path: '/app/capture', icon: Plus, label: 'Capture' },
-    { path: '/app/memory-decks', icon: Presentation, label: 'Decks' },
+    { path: '/app/memory-decks', icon: Presentation, label: 'Memories' },
     { path: '/app/search', icon: Search, label: 'Search' },
     { path: '/app/memories', icon: Database, label: 'Memories' },
     { path: '/app/projects', icon: FolderKanban, label: 'Topics' },
