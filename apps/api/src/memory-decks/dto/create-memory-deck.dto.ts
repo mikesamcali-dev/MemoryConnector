@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString, MaxLength } from 'class-validator';
 
-export class UpdateSlideDeckDto {
+export class CreateMemoryDeckDto {
   @ApiProperty({
-    description: 'Custom title for the slide deck',
-    example: 'Review Deck - Jan 2025',
+    description: 'Optional custom title for the memory deck',
+    example: 'Week of Jan 17, 2026',
     required: false,
   })
   @IsOptional()

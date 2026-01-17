@@ -43,6 +43,36 @@ export class MemoriesController {
     };
   }
 
+  @Post('with-keyword-expansion')
+  @UseGuards(UsageLimitGuard)
+  @UsageResource('memories')
+  @ApiOperation({ summary: 'Create a new memory with AI keyword expansion for single words' })
+  @ApiResponse({ status: 201, description: 'Memory created successfully with expanded keywords' })
+  @ApiResponse({ status: 409, description: 'Duplicate content or idempotency conflict' })
+  @ApiResponse({ status: 429, description: 'Usage limit exceeded' })
+  async createWithKeywordExpansion(
+    @Body() createMemoryDto: CreateMemoryDto,
+    @Query('addToDeck') addToDeck: string | undefined,
+    @User() user: any,
+  ) {
+    const addToDeckBool = addToDeck === 'true' || addToDeck === '1';
+    const result = await this.memoriesService.createWithKeywordExpansion(
+      user.id,
+      createMemoryDto,
+      addToDeckBool,
+    );
+
+    return {
+      ...result.memory,
+      expandedKeywords: result.expandedKeywords,
+      enrichmentQueued: result.memory.enrichmentStatus === 'queued_budget',
+      enrichmentNote:
+        result.memory.enrichmentStatus === 'queued_budget'
+          ? 'Classification will be processed when capacity is available'
+          : undefined,
+    };
+  }
+
   @Get()
   @ApiOperation({ summary: 'Get user memories' })
   async findAll(

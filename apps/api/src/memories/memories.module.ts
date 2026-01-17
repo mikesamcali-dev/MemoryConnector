@@ -7,6 +7,8 @@ import { EnrichmentModule } from '../enrichment/enrichment.module';
 import { DuplicateDetectionModule } from '../duplicate-detection/duplicate-detection.module';
 import { GamificationModule } from '../gamification/gamification.module';
 import { WordsModule } from '../words/words.module';
+import { KeywordsModule } from '../keywords/keywords.module';
+import { MemoryDecksModule } from '../memory-decks/memory-decks.module';
 import { EventsModule } from '../events/events.module';
 import { LocationsModule } from '../locations/locations.module';
 import { UserPreferencesModule } from '../user-preferences/user-preferences.module';
@@ -20,6 +22,8 @@ import { SpellCheckModule } from '../spell-check/spell-check.module';
     DuplicateDetectionModule,
     GamificationModule,
     WordsModule,
+    KeywordsModule,
+    MemoryDecksModule,
     EventsModule,
     LocationsModule,
     UserPreferencesModule,

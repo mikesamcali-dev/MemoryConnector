@@ -291,6 +291,46 @@ export async function createMemory(draft: {
   return response.json();
 }
 
+export async function createMemoryWithKeywordExpansion(draft: {
+  text?: string;
+  imageUrl?: string;
+  latitude?: number;
+  longitude?: number;
+  typeId?: string;
+  locationId?: string;
+  personId?: string;
+  youtubeVideoId?: string;
+  tiktokVideoId?: string;
+  addToDeck?: boolean;
+  idempotencyKey: string;
+}): Promise<Memory & { expandedKeywords?: string[] }> {
+  const addToDeckParam = draft.addToDeck ? '?addToDeck=true' : '';
+  const response = await fetchWithAuth(`/memories/with-keyword-expansion${addToDeckParam}`, {
+    method: 'POST',
+    headers: {
+      'Idempotency-Key': draft.idempotencyKey,
+    },
+    body: JSON.stringify({
+      textContent: draft.text,
+      imageUrl: draft.imageUrl,
+      latitude: draft.latitude,
+      longitude: draft.longitude,
+      typeId: draft.typeId,
+      locationId: draft.locationId,
+      personId: draft.personId,
+      youtubeVideoId: draft.youtubeVideoId,
+      tiktokVideoId: draft.tiktokVideoId,
+    }),
+  });
+
+  const replayed = response.headers.get('X-Idempotency-Replayed') === 'true';
+  if (replayed) {
+    console.log('Idempotent replay detected');
+  }
+
+  return response.json();
+}
+
 export async function getMemories(skip = 0, take = 20): Promise<Memory[]> {
   const response = await fetchWithAuth(`/memories?skip=${skip}&take=${take}`);
   return response.json();

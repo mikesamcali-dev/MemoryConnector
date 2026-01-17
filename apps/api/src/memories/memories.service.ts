@@ -5,6 +5,8 @@ import { DuplicateDetectionService } from '../duplicate-detection/duplicate-dete
 import { EnrichmentQueueService } from '../enrichment/enrichment-queue.service';
 import { GamificationService } from '../gamification/gamification.service';
 import { WordsService } from '../words/words.service';
+import { KeywordExpansionService } from '../keywords/keyword-expansion.service';
+import { MemoryDecksService } from '../memory-decks/memory-decks.service';
 import { EventsService } from '../events/events.service';
 import { LocationsService } from '../locations/locations.service';
 import { UserPreferencesService } from '../user-preferences/user-preferences.service';
@@ -21,6 +23,8 @@ export class MemoriesService {
     private enrichmentQueue: EnrichmentQueueService,
     private gamificationService: GamificationService,
     private wordsService: WordsService,
+    private keywordExpansionService: KeywordExpansionService,
+    private memoryDecksService: MemoryDecksService,
     private eventsService: EventsService,
     private locationsService: LocationsService,
     private userPreferencesService: UserPreferencesService,
@@ -162,6 +166,90 @@ export class MemoriesService {
       enrichmentQueued: queued,
       newAchievements: newAchievements.map(a => ({ id: a.id, name: a.name, icon: a.icon })),
     };
+  }
+
+  /**
+   * Create memory with keyword expansion for single-word inputs
+   * @param userId - The user ID
+   * @param createMemoryDto - The memory creation data
+   * @param addToDeck - Whether to add the memory to the current memory deck (will be implemented in Phase 4)
+   * @returns The created memory with expanded keywords
+   */
+  async createWithKeywordExpansion(
+    userId: string,
+    createMemoryDto: CreateMemoryDto,
+    addToDeck: boolean = false,
+  ): Promise<{ memory: any; expandedKeywords: string[] }> {
+    const textContent = createMemoryDto.textContent?.trim() || '';
+    const words = textContent.split(/\s+/).filter(w => w.length > 0);
+
+    let expandedKeywords: string[] = [];
+
+    // Only expand if single word
+    if (words.length === 1 && textContent.length > 0) {
+      const originalWord = words[0];
+
+      // Generate 2 additional keywords
+      const { keywords } = await this.keywordExpansionService.expandKeyword(originalWord);
+      expandedKeywords = keywords;
+
+      // Create memory first
+      const memoryResult = await this.create(userId, createMemoryDto);
+
+      // Create and link all words (original + 2 generated)
+      const allWords = [originalWord, ...expandedKeywords].filter(w => w && w.trim().length > 0);
+
+      for (const wordText of allWords) {
+        try {
+          // Find or create the word
+          const word = await this.wordsService.findOrCreate(
+            wordText.trim(),
+            '' // Empty description - will be enriched by AI later
+          );
+
+          // Link to memory
+          await this.prisma.memoryWordLink.upsert({
+            where: {
+              memoryId_wordId: {
+                memoryId: memoryResult.id,
+                wordId: word.id,
+              },
+            },
+            create: {
+              memoryId: memoryResult.id,
+              wordId: word.id,
+            },
+            update: {},
+          });
+        } catch (error) {
+          console.error(`Error creating/linking word "${wordText}":`, error);
+          // Don't fail the whole operation if one word fails
+        }
+      }
+
+      // Add to memory deck if requested
+      if (addToDeck) {
+        await this.memoryDecksService.addMemoryToCurrentDeck(userId, memoryResult.id);
+      }
+
+      return {
+        memory: memoryResult,
+        expandedKeywords,
+      };
+    } else {
+      // Multi-word or empty: regular save without keyword expansion
+      const memoryResult = await this.create(userId, createMemoryDto);
+
+      // Add to memory deck if requested
+      if (addToDeck) {
+        await this.memoryDecksService.addMemoryToCurrentDeck(userId, memoryResult.id);
+      }
+
+      return {
+        memory: memoryResult,
+        expandedKeywords: [],
+      };
+    }
   }
 
   /**

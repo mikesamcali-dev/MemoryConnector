@@ -44,7 +44,6 @@ enum ReminderStatus {
   pending
   sent
   cancelled
-  slide // Reminder has been added to a slide deck
 }
 
 enum LinkType {
@@ -117,7 +116,7 @@ model User {
   excludedWords       ExcludedWord[]
   images              Image[]
   urlPages            UrlPage[]
-  slideDecks          SlideDeck[]
+  memoryDecks         MemoryDeck[]
   projects            Project[]
   trainings           Training[]
   trainingDecks       TrainingDeck[]
@@ -317,12 +316,12 @@ model Memory {
   wordLinks       MemoryWordLink[]
   imageLinks      MemoryImageLink[]
   urlPageLinks    MemoryUrlPageLink[]
-  projectLinks    MemoryProjectLink[]
-  personLinks     MemoryPersonLink[]
-  trainingLinks   MemoryTrainingLink[]
-  slides          Slide[]
-  trainingLessons TrainingLesson[]
-  questions       Question[]
+  projectLinks     MemoryProjectLink[]
+  personLinks      MemoryPersonLink[]
+  trainingLinks    MemoryTrainingLink[]
+  memoryDeckItems  MemoryDeckItem[]
+  trainingLessons  TrainingLesson[]
+  questions        Question[]
 
   @@index([userId, state])
   @@index([userId, contentHash, createdAt])
@@ -849,6 +848,27 @@ model ExcludedWord {
 }
 
 // ============================================================================
+// CONCEPT MAPPING - AI Keyword Expansion
+// ============================================================================
+
+model ConceptMapping {
+  id              String   @id @default(uuid()) @db.Uuid
+  term            String   @unique @db.VarChar(100)
+  normalizedTerm  String   @map("normalized_term") @db.VarChar(100)
+  domains         Json // Array of domain strings
+  relatedKeywords Json     @map("related_keywords") // Array of keyword strings
+  source          String   @db.VarChar(20) // 'static' | 'openai'
+  confidence      Float    @default(1.0)
+  usageCount      Int      @default(0) @map("usage_count")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([normalizedTerm])
+  @@index([source])
+  @@map("concept_mappings")
+}
+
+// ============================================================================
 // YOUTUBE VIDEOS - Shared/Reusable Entity
 // ============================================================================
 
@@ -1165,7 +1185,6 @@ model Reminder {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
-  slide  Slide?
 
   @@index([userId, status, readAt])
   @@index([userId, status, readAt, dismissedAt])
@@ -1300,38 +1319,40 @@ model AuditTrail {
 }
 
 // ============================================================================
-// SLIDE DECKS & SLIDES
+// MEMORY DECKS
 // ============================================================================
 
-model SlideDeck {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  title     String?  @db.VarChar(200)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+model MemoryDeck {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  title         String?   @db.VarChar(200)
+  isArchived    Boolean   @default(false) @map("is_archived")
+  autoCreated   Boolean   @default(false) @map("auto_created")
+  weekStartDate DateTime? @map("week_start_date")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  slides Slide[]
+  user  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items MemoryDeckItem[]
 
   @@index([userId, createdAt(sort: Desc)])
-  @@map("slide_decks")
+  @@index([userId, isArchived])
+  @@map("memory_decks")
 }
 
-model Slide {
-  id          String   @id @default(uuid()) @db.Uuid
-  slideDeckId String   @map("slide_deck_id") @db.Uuid
-  reminderId  String   @unique @map("reminder_id") @db.Uuid
-  memoryId    String   @map("memory_id") @db.Uuid
-  sortOrder   Int      @map("sort_order")
-  createdAt   DateTime @default(now()) @map("created_at")
+model MemoryDeckItem {
+  id           String   @id @default(uuid()) @db.Uuid
+  memoryDeckId String   @map("memory_deck_id") @db.Uuid
+  memoryId     String   @map("memory_id") @db.Uuid
+  sortOrder    Int      @map("sort_order")
+  createdAt    DateTime @default(now()) @map("created_at")
 
-  slideDeck SlideDeck @relation(fields: [slideDeckId], references: [id], onDelete: Cascade)
-  reminder  Reminder  @relation(fields: [reminderId], references: [id], onDelete: Cascade)
-  memory    Memory    @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  memoryDeck MemoryDeck @relation(fields: [memoryDeckId], references: [id], onDelete: Cascade)
+  memory     Memory     @relation(fields: [memoryId], references: [id], onDelete: Cascade)
 
-  @@index([slideDeckId, sortOrder])
+  @@index([memoryDeckId, sortOrder])
   @@index([memoryId])
-  @@map("slides")
+  @@map("memory_deck_items")
 }
 
 // ============================================================================

@@ -4,15 +4,15 @@ import { HelpPopup } from '../components/HelpPopup';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { X, ChevronLeft, ChevronRight, ExternalLink, Play, Pause } from 'lucide-react';
-import { getSlides } from '../api/slidedecks';
-import { SlideCard } from '../components/SlideCard';
+import { getMemoryDeckItems } from '../api/memoryDecks';
+import { MemoryDeckCard } from '../components/MemoryDeckCard';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
 
 type Phase = 'showing' | 'recall' | 'revealed';
 
-export function SlideDeckViewerPage() {
-    const helpPopup = useHelpPopup('slidedeck-viewer');
+export function MemoryDeckViewerPage() {
+    const helpPopup = useHelpPopup('memory-deck-viewer');
 const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -23,20 +23,20 @@ const { id } = useParams<{ id: string }>();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch slides
+  // Fetch memory deck items
   const {
-    data: slides,
+    data: items,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['slides', id],
-    queryFn: () => getSlides(id!),
+    queryKey: ['memory-deck-items', id],
+    queryFn: () => getMemoryDeckItems(id!),
     enabled: !!id,
   });
 
   // Timer management
   useEffect(() => {
-    if (isPaused || !slides) return;
+    if (isPaused || !items) return;
 
     // Clear existing timers
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -81,7 +81,7 @@ const { id } = useParams<{ id: string }>();
       if (timerRef.current) clearTimeout(timerRef.current);
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
-  }, [phase, isPaused, slides]);
+  }, [phase, isPaused, items]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -100,10 +100,10 @@ const { id } = useParams<{ id: string }>();
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentIndex, slides]);
+  }, [currentIndex, items]);
 
   const handlePrevious = () => {
-    if (slides && currentIndex > 0) {
+    if (items && currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
       setPhase('showing');
       setIsPaused(false);
@@ -113,7 +113,7 @@ const { id } = useParams<{ id: string }>();
   const handleNext = () => {
     if (phase === 'revealed') {
       // Only allow moving to next slide when in revealed phase
-      if (slides && currentIndex < slides.length - 1) {
+      if (items && currentIndex < items.length - 1) {
         setCurrentIndex(currentIndex + 1);
         setPhase('showing');
         setIsPaused(false);
@@ -145,18 +145,18 @@ const { id } = useParams<{ id: string }>();
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p className="text-white">Loading slides...</p>
+          <p className="text-white">Loading items...</p>
         </div>
       </div>
     );
   }
 
-  if (error || !slides || slides.length === 0) {
+  if (error || !items || items.length === 0) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <p className="text-white mb-4">
-            {error ? 'Failed to load slides' : 'No slides found'}
+            {error ? 'Failed to load items' : 'No items found'}
           </p>
           <button
             onClick={handleExit}
@@ -169,7 +169,7 @@ const { id } = useParams<{ id: string }>();
     );
   }
 
-  const currentSlide = slides[currentIndex];
+  const currentSlide = items[currentIndex];
 
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col">
@@ -177,7 +177,7 @@ const { id } = useParams<{ id: string }>();
       <div className="p-3 md:p-4 flex justify-between items-center bg-gray-800 border-b border-gray-700">
         <div className="flex items-center gap-3">
           <div className="text-white font-medium text-sm md:text-base">
-            Slide {currentIndex + 1} of {slides.length}
+            Slide {currentIndex + 1} of {items.length}
           </div>
           <div className="text-sm text-gray-400">
             {phase === 'showing' && `Showing (${timeRemaining}s)`}
@@ -227,7 +227,7 @@ const { id } = useParams<{ id: string }>();
       >
         <div className="w-full md:max-w-4xl">
           {phase === 'showing' && (
-            <SlideCard slide={slides[currentIndex]} />
+            <SlideCard slide={items[currentIndex]} />
           )}
 
           {phase === 'recall' && (
@@ -251,7 +251,7 @@ const { id } = useParams<{ id: string }>();
                   Here's what it said:
                 </p>
               </div>
-              <SlideCard slide={slides[currentIndex]} />
+              <SlideCard slide={items[currentIndex]} />
             </div>
           )}
         </div>
@@ -272,7 +272,7 @@ const { id } = useParams<{ id: string }>();
 
           {/* Progress indicator */}
           <div className="flex gap-2 flex-1 justify-center overflow-x-auto px-2">
-            {slides.map((_, index) => (
+            {items.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentIndex(index)}
@@ -286,7 +286,7 @@ const { id } = useParams<{ id: string }>();
 
           <button
             onClick={handleNext}
-            disabled={phase !== 'revealed' || currentIndex === slides.length - 1}
+            disabled={phase !== 'revealed' || currentIndex === items.length - 1}
             className="flex items-center justify-center gap-1 md:gap-2 px-3 md:px-4 py-3 md:py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors min-w-[80px] md:min-w-[100px]"
           >
             <span className="text-sm md:text-base">Next</span>

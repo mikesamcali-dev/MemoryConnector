@@ -3,66 +3,62 @@ import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Presentation, Trash2, Eye, Plus, Edit2, Check, X } from 'lucide-react';
+import { Presentation, Trash2, Eye, Edit2, Check, X } from 'lucide-react';
 import {
-  getAllSlideDecks,
-  updateSlideDeck,
-  deleteSlideDeck,
-} from '../api/slidedecks';
+  getAllMemoryDecks,
+  updateMemoryDeck,
+  deleteMemoryDeck,
+} from '../api/memoryDecks';
 import { format } from 'date-fns';
 
-export function SlideDecksListPage() {
-    const helpPopup = useHelpPopup('slidedecks');
+export function MemoryDecksListPage() {
+    const helpPopup = useHelpPopup('memory-decks');
 const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
 
-  // Fetch slide decks
+  // Fetch memory decks
   const {
-    data: slideDecks,
+    data: memoryDecks,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['slidedecks'],
-    queryFn: getAllSlideDecks,
+    queryKey: ['memory-decks'],
+    queryFn: getAllMemoryDecks,
   });
 
-  // Update slide deck mutation
+  // Update memory deck mutation
   const updateMutation = useMutation({
     mutationFn: ({ id, title }: { id: string; title: string }) =>
-      updateSlideDeck(id, { title }),
+      updateMemoryDeck(id, { title }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['slidedecks'] });
+      queryClient.invalidateQueries({ queryKey: ['memory-decks'] });
       setEditingId(null);
       setEditTitle('');
     },
     onError: () => {
-      alert('Failed to update slide deck');
+      alert('Failed to update memory deck');
     },
   });
 
-  // Delete slide deck mutation
+  // Delete memory deck mutation
   const deleteMutation = useMutation({
-    mutationFn: deleteSlideDeck,
+    mutationFn: deleteMemoryDeck,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['slidedecks'] });
+      queryClient.invalidateQueries({ queryKey: ['memory-decks'] });
       setDeleteConfirmId(null);
     },
     onError: (error: any) => {
       console.error('Delete error:', error);
-      alert(`Failed to delete slide deck: ${error.message || 'Unknown error'}`);
+      alert(`Failed to delete memory deck: ${error.message || 'Unknown error'}`);
       setDeleteConfirmId(null); // Reset confirmation state on error
     },
   });
 
-  const handleCreate = () => {
-    navigate('/app/slidedecks/select-reminders');
-  };
-
   const handleView = (id: string) => {
-    navigate(`/app/slidedecks/${id}/view`);
+    navigate(`/app/memory-decks/${id}/view`);
   };
 
   const handleStartEdit = (id: string, currentTitle: string | null) => {
@@ -99,7 +95,7 @@ const navigate = useNavigate();
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading slide decks...</p>
+          <p className="text-gray-600">Loading memory decks...</p>
         </div>
       </div>
     );
@@ -109,7 +105,7 @@ const navigate = useNavigate();
     return (
       <div className="p-8">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800">Failed to load slide decks</p>
+          <p className="text-red-800">Failed to load memory decks</p>
         </div>
       </div>
     );
@@ -119,34 +115,24 @@ const navigate = useNavigate();
     <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
       {/* Header */}
       <div className="mb-6 md:mb-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2 md:gap-3">
-            <Presentation className="w-6 h-6 md:w-8 md:h-8 text-blue-600" />
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Slide Decks</h1>
-          </div>
-          <button
-            onClick={handleCreate}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base"
-          >
-            <Plus className="w-4 h-4 md:w-5 md:h-5" />
-            <span className="hidden sm:inline">Create from Reminders</span>
-            <span className="sm:hidden">Create</span>
-          </button>
+        <div className="flex items-center gap-2 md:gap-3">
+          <Presentation className="w-6 h-6 md:w-8 md:h-8 text-blue-600" />
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Memory Decks</h1>
         </div>
         <p className="text-gray-600 mt-2 text-sm md:text-base">
-          Review your memories in a slideshow format
+          Your memory decks are auto-created weekly. Add memories using "Save to Memory" on the capture page.
         </p>
       </div>
 
-      {/* Slide Decks List */}
-      {!slideDecks || slideDecks.length === 0 ? (
+      {/* Memory Decks List */}
+      {!memoryDecks || memoryDecks.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
           <Presentation className="w-12 h-12 md:w-16 md:h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg md:text-xl font-semibold text-gray-700 mb-2">
-            No slide decks yet
+            No memory decks yet
           </h3>
           <p className="text-sm md:text-base text-gray-500 mb-4 px-4">
-            Create a slide deck from your overdue reminders to get started
+            Memory decks are auto-created weekly. Start adding memories using "Save to Memory" on the capture page.
           </p>
         </div>
       ) : (
@@ -171,14 +157,14 @@ const navigate = useNavigate();
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {slideDecks.map((deck) => (
+                {memoryDecks.map((deck) => (
                   <tr key={deck.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {format(new Date(deck.createdAt), 'MMM d, yyyy')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {deck.slideCount} {deck.slideCount === 1 ? 'slide' : 'slides'}
+                      {deck.itemCount} {deck.itemCount === 1 ? 'slide' : 'items'}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm">
@@ -260,7 +246,7 @@ const navigate = useNavigate();
 
           {/* Mobile Card View */}
           <div className="md:hidden space-y-3">
-            {slideDecks.map((deck) => (
+            {memoryDecks.map((deck) => (
               <div key={deck.id} className="bg-white rounded-lg shadow p-4">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1">
@@ -310,7 +296,7 @@ const navigate = useNavigate();
                     )}
                   </div>
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {deck.slideCount} {deck.slideCount === 1 ? 'slide' : 'slides'}
+                    {deck.itemCount} {deck.itemCount === 1 ? 'slide' : 'items'}
                   </span>
                 </div>
                 <div className="flex gap-2">

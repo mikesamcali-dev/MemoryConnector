@@ -49,7 +49,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const baseNavItems = [
     { path: '/app/capture', icon: Plus, label: 'Capture' },
-    { path: '/app/slidedecks', icon: Presentation, label: 'Slides' },
+    { path: '/app/memory-decks', icon: Presentation, label: 'Decks' },
     { path: '/app/search', icon: Search, label: 'Search' },
     { path: '/app/memories', icon: Database, label: 'Memories' },
     { path: '/app/projects', icon: FolderKanban, label: 'Topics' },
@@ -75,10 +75,10 @@ export function AppLayout({ children }: AppLayoutProps) {
     : baseNavItems;
 
   // Items shown in bottom nav (mobile) - defined in BottomNav component
-  const bottomNavPaths = ['/app/capture', '/app/slidedecks', '/app/training-decks', '/app/search'];
+  const bottomNavPaths = ['/app/capture', '/app/memory-decks', '/app/training-decks', '/app/search'];
 
   // Primary nav items for desktop (in order: Capture, Slides, Train, Search)
-  const desktopPrimaryPaths = ['/app/capture', '/app/slidedecks', '/app/training-decks', '/app/search'];
+  const desktopPrimaryPaths = ['/app/capture', '/app/memory-decks', '/app/training-decks', '/app/search'];
 
   // Desktop "More" menu items (excluding primary paths and admin)
   const desktopMoreItems = navItems.filter(

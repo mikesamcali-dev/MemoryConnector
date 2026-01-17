@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { Slide } from '../api/slidedecks';
+import { MemoryDeckItem } from '../api/memoryDecks';
 import { ExternalLink, X } from 'lucide-react';
 
-interface SlideCardProps {
-  slide: Slide;
+interface MemoryDeckCardProps {
+  item: MemoryDeckItem;
 }
 
-export function SlideCard({ slide }: SlideCardProps) {
-  const { memory } = slide;
+export function MemoryDeckCard({ item }: MemoryDeckCardProps) {
+  const { memory } = item;
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   return (

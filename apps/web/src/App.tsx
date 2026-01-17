@@ -36,9 +36,8 @@ const PersonDetailPage = lazy(() => import('./pages/PersonDetailPage').then(m =>
 const RelationshipGraphPage = lazy(() => import('./pages/RelationshipGraphPage').then(m => ({ default: m.RelationshipGraphPage })));
 const ImageBuilderPage = lazy(() => import('./pages/ImageBuilderPage').then(m => ({ default: m.ImageBuilderPage })));
 const UrlBuilderPage = lazy(() => import('./pages/UrlBuilderPage').then(m => ({ default: m.UrlBuilderPage })));
-const SlideDecksListPage = lazy(() => import('./pages/SlideDecksListPage').then(m => ({ default: m.SlideDecksListPage })));
-const SlideDeckViewerPage = lazy(() => import('./pages/SlideDeckViewerPage').then(m => ({ default: m.SlideDeckViewerPage })));
-const SlideDeckReminderSelectionPage = lazy(() => import('./pages/SlideDeckReminderSelectionPage').then(m => ({ default: m.SlideDeckReminderSelectionPage })));
+const MemoryDecksListPage = lazy(() => import('./pages/MemoryDecksListPage').then(m => ({ default: m.MemoryDecksListPage })));
+const MemoryDeckViewerPage = lazy(() => import('./pages/MemoryDeckViewerPage').then(m => ({ default: m.MemoryDeckViewerPage })));
 const AtlasPage = lazy(() => import('./pages/AtlasPage').then(m => ({ default: m.AtlasPage })));
 const AdminPanelPage = lazy(() => import('./pages/AdminPanelPage').then(m => ({ default: m.AdminPanelPage })));
 const WordsPage = lazy(() => import('./pages/WordsPage').then(m => ({ default: m.WordsPage })));
@@ -259,30 +258,20 @@ function App() {
               }
             />
             <Route
-              path="/app/slidedecks"
+              path="/app/memory-decks"
               element={
                 <ProtectedRoute>
                   <AppLayout>
-                    <SlideDecksListPage />
+                    <MemoryDecksListPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/app/slidedecks/select-reminders"
+              path="/app/memory-decks/:id/view"
               element={
                 <ProtectedRoute>
-                  <AppLayout>
-                    <SlideDeckReminderSelectionPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/app/slidedecks/:id/view"
-              element={
-                <ProtectedRoute>
-                  <SlideDeckViewerPage />
+                  <MemoryDeckViewerPage />
                 </ProtectedRoute>
               }
             />

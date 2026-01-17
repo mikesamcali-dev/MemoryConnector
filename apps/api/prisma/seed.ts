@@ -1,5 +1,6 @@
 import { PrismaClient, StorageStrategy } from '@prisma/client';
 import * as argon2 from 'argon2';
+import { conceptMappingsSeed } from './seeds/concept-mappings.seed';
 
 const prisma = new PrismaClient();
 
@@ -381,6 +382,19 @@ async function main() {
   console.log('  - 1 structured person');
   console.log('  - 1 generic idea');
   console.log('  - 1 memory link (event at location)');
+
+  // Seed concept mappings for keyword expansion
+  console.log('\nSeeding concept mappings...');
+  let mappingsCreated = 0;
+  for (const mapping of conceptMappingsSeed) {
+    await prisma.conceptMapping.upsert({
+      where: { term: mapping.term },
+      create: mapping,
+      update: mapping,
+    });
+    mappingsCreated++;
+  }
+  console.log(`  - ${mappingsCreated} concept mappings`);
 }
 
 main()
