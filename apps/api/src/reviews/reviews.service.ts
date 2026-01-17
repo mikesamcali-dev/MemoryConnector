@@ -1,15 +1,33 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ReviewRating } from './dto/submit-review.dto';
+import { UserMemoryService } from '../modules/user-memory/user-memory.service';
 
 @Injectable()
 export class ReviewsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private userMemoryService: UserMemoryService,
+  ) {}
 
   /**
-   * Get memories due for review using SRS algorithm
+   * Get memories due for review using SRS algorithm (with adaptive content if onboarded)
    */
   async getDueReviews(userId: string, limit: number = 20) {
+    // Check if user has completed onboarding
+    const profile = await this.userMemoryService.getProfile(userId);
+
+    if (profile?.onboardingCompleted) {
+      // Use adaptive retrieval
+      const reviews = await this.userMemoryService.getAdaptiveDueReviews(userId, limit);
+      return {
+        reviews,
+        count: reviews.length,
+        adaptive: true,
+      };
+    }
+
+    // Fallback to standard SRS
     const now = new Date();
 
     const dueMemories = await this.prisma.memory.findMany({
@@ -53,6 +71,7 @@ export class ReviewsService {
     return {
       reviews: dueMemories,
       count: dueMemories.length,
+      adaptive: false,
     };
   }
 
@@ -85,7 +104,7 @@ export class ReviewsService {
   }
 
   /**
-   * Submit a review rating and update SRS intervals using SM-2 algorithm
+   * Submit a review rating and update SRS intervals using SM-2 algorithm (with personalization if onboarded)
    */
   async submitReview(userId: string, memoryId: string, rating: ReviewRating) {
     // Verify memory belongs to user
@@ -101,13 +120,24 @@ export class ReviewsService {
       throw new ForbiddenException('Not authorized to review this memory');
     }
 
+    // Get personalized config if available
+    const config = await this.userMemoryService.getPersonalizedReviewConfig(userId);
+    const profile = await this.userMemoryService.getProfile(userId);
+
     // Calculate new interval and ease factor using SM-2 algorithm
-    const { newInterval, newEaseFactor } = this.calculateSM2(
+    let { newInterval, newEaseFactor } = this.calculateSM2(
       rating,
       memory.reviewCount || 0,
       memory.reviewInterval || 1,
       memory.easeFactor || 2.5,
     );
+
+    // Apply personalization if available
+    if (config && profile?.onboardingCompleted) {
+      newInterval = Math.round(newInterval * config.intervalMultiplier * profile.optimalReviewInterval);
+      newInterval = Math.min(newInterval, config.maxInterval);
+      newInterval = Math.max(newInterval, 1);
+    }
 
     const now = new Date();
     const nextReviewAt = new Date(now.getTime() + newInterval * 24 * 60 * 60 * 1000);
@@ -128,10 +158,16 @@ export class ReviewsService {
     // Update user stats
     await this.updateUserStats(userId, rating);
 
+    // Record for daily check-in tracking
+    if (profile?.onboardingCompleted) {
+      await this.userMemoryService.recordReviewCompletion(userId, memoryId, rating);
+    }
+
     return {
       memory: updatedMemory,
       nextReviewAt,
       intervalDays: newInterval,
+      personalized: profile?.onboardingCompleted || false,
     };
   }
 

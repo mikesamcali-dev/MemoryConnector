@@ -21,6 +21,8 @@ import { EventsModule } from './events/events.module';
 import { LocationsModule } from './locations/locations.module';
 import { PeopleModule } from './people/people.module';
 import { UserPreferencesModule } from './user-preferences/user-preferences.module';
+import { UserMemoryModule } from './modules/user-memory/user-memory.module';
+import { ImplementationIntentionsModule } from './modules/implementation-intentions/implementation-intentions.module';
 import { HelpViewsModule } from './help-views/help-views.module';
 import { YouTubeVideosModule } from './youtube-videos/youtube-videos.module';
 import { TikTokVideosModule } from './tiktok-videos/tiktok-videos.module';
@@ -89,6 +91,8 @@ import { AuditLoggingInterceptor } from './audit-trail/interceptors/audit-loggin
     LocationsModule,
     PeopleModule,
     UserPreferencesModule,
+    UserMemoryModule,
+    ImplementationIntentionsModule,
     HelpViewsModule,
     YouTubeVideosModule,
     TikTokVideosModule,

@@ -71,6 +71,52 @@ enum TranscriptSource {
   unknown
 }
 
+enum LearningStyle {
+  VISUAL // Images, dual coding, visual mnemonics
+  HANDS_ON // Interactive practice, errorless learning
+  THEORETICAL // Elaborative encoding, conceptual understanding
+  MIXED // Balanced approach
+}
+
+enum SkillLevel {
+  BEGINNER // More support, errorless learning, recognition-based
+  INTERMEDIATE // Balanced challenge, mixed recall types
+  ADVANCED // Free recall, complex elaboration, higher intervals
+}
+
+enum PrimaryGoal {
+  RETENTION // Optimize for long-term memory retention
+  LEARNING // Focus on acquiring new information quickly
+  ORGANIZATION // Emphasis on structure, projects, and connections
+  HABIT_BUILDING // Consistency, streaks, daily routines
+}
+
+enum PreferredPace {
+  INTENSIVE // High daily volume, shorter intervals
+  MODERATE // Balanced workload, standard intervals
+  GRADUAL // Lower volume, extended intervals
+}
+
+enum TriggerType {
+  TIME // Specific time of day
+  LOCATION // Geofence trigger (requires location permission)
+  ROUTINE // After/before a routine event (meal, work, sleep)
+  CONTEXT // Activity-based (e.g., commute, exercise)
+}
+
+enum Frequency {
+  DAILY // Every day
+  WEEKDAYS // Monday-Friday
+  WEEKENDS // Saturday-Sunday
+  CUSTOM // Specific days defined in customDays
+}
+
+enum CheckInType {
+  WEEKLY // Periodic check-in after 7 days
+  MONTHLY // Periodic check-in after 30 days
+  TRIGGERED // Triggered by performance metrics
+}
+
 enum IngestionStatus {
   queued
   ingested
@@ -125,6 +171,11 @@ model User {
   userLexicon         UserLexicon[]
   transcriptFeedback  TranscriptFeedback[]
   questions           Question[]
+  memoryProfile       UserMemoryProfile?
+  adaptiveReviewConfig AdaptiveReviewConfig?
+  implementationIntentions ImplementationIntention[]
+  dailyCheckIns       DailyCheckIn[]
+  profileCheckIns     ProfileCheckIn[]
 
   @@map("users")
 }
@@ -216,6 +267,178 @@ model UserHelpView {
   @@unique([userId, pageKey])
   @@index([userId])
   @@map("user_help_views")
+}
+
+// ============================================================================
+// USER MEMORY & PERSONALIZATION SYSTEM
+// ============================================================================
+
+model UserMemoryProfile {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+
+  // Onboarding Data
+  learningStyle       LearningStyle @map("learning_style")
+  skillLevel          SkillLevel    @map("skill_level")
+  primaryGoal         PrimaryGoal   @map("primary_goal")
+  preferredPace       PreferredPace @map("preferred_pace")
+  dailyTimeCommitment Int           @map("daily_time_commitment") // Minutes per day
+  areasOfInterest     String[]      @map("areas_of_interest")
+  cognitivePreferences Json?        @map("cognitive_preferences") // Extended preferences
+
+  // Adaptive Performance Tracking
+  averageRecallRate    Float    @default(0.0) @map("average_recall_rate") // 0.0-1.0
+  averageReviewTime    Int      @default(0) @map("average_review_time") // Avg seconds per review
+  optimalReviewInterval Float   @default(1.0) @map("optimal_review_interval") // Base interval multiplier
+  preferredReviewTime  String?  @map("preferred_review_time") @db.VarChar(20) // e.g., "morning"
+  lastAdaptationUpdate DateTime @default(now()) @map("last_adaptation_update")
+
+  // Engagement Patterns
+  peakActivityHours   Int[] @map("peak_activity_hours") // Hours of day (0-23)
+  consecutiveMissedDays Int @default(0) @map("consecutive_missed_days")
+  totalCheckIns       Int   @default(0) @map("total_check_ins")
+
+  // State
+  onboardingCompleted Boolean   @default(false) @map("onboarding_completed")
+  lastCheckInDate     DateTime? @map("last_check_in_date")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, onboardingCompleted])
+  @@map("user_memory_profiles")
+}
+
+model ImplementationIntention {
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+
+  // If-Then Structure
+  triggerType  TriggerType @map("trigger_type")
+  triggerValue String      @map("trigger_value") @db.VarChar(255)
+  action       String      @db.VarChar(500)
+  ifThenPhrase String      @map("if_then_phrase") @db.Text
+
+  // Configuration
+  enabled    Boolean   @default(true)
+  frequency  Frequency @default(DAILY)
+  customDays Int[]     @map("custom_days") // Days of week (0-6) for CUSTOM frequency
+
+  // Tracking & Adaptation
+  completionCount Int       @default(0) @map("completion_count")
+  missedCount     Int       @default(0) @map("missed_count")
+  lastTriggeredAt DateTime? @map("last_triggered_at")
+  lastCompletedAt DateTime? @map("last_completed_at")
+
+  // Escalation
+  firstReminderMinutes  Int @default(0) @map("first_reminder_minutes")
+  secondReminderMinutes Int @default(120) @map("second_reminder_minutes")
+  thirdReminderMinutes  Int @default(1440) @map("third_reminder_minutes")
+
+  // State
+  isPaused Boolean   @default(false) @map("is_paused")
+  pausedAt DateTime? @map("paused_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, enabled])
+  @@index([userId, triggerType])
+  @@index([lastTriggeredAt])
+  @@map("implementation_intentions")
+}
+
+model AdaptiveReviewConfig {
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @unique @map("user_id") @db.Uuid
+
+  // Spaced Repetition Parameters
+  initialInterval   Float @default(1.0) @map("initial_interval") // Days
+  easeFactorDefault Float @default(2.3) @map("ease_factor_default")
+  maxInterval       Int   @default(30) @map("max_interval") // Days
+  minEaseFactor     Float @default(1.3) @map("min_ease_factor")
+
+  // Personalized Multipliers (auto-adjusted)
+  intervalMultiplier  Float @default(1.0) @map("interval_multiplier") // 0.5-2.0
+  difficultyThreshold Float @default(0.8) @map("difficulty_threshold")
+
+  // Review Session Preferences
+  maxReviewsPerSession Int     @default(20) @map("max_reviews_per_session")
+  preferRecognition    Boolean @default(false) @map("prefer_recognition")
+  showContext          Boolean @default(true) @map("show_context")
+  enableHapticFeedback Boolean @default(true) @map("enable_haptic_feedback")
+
+  // Adaptive Scheduling Rules
+  adaptiveScheduling Boolean @default(true) @map("adaptive_scheduling")
+  forgivenessFactor  Float   @default(0.5) @map("forgiveness_factor")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("adaptive_review_configs")
+}
+
+model DailyCheckIn {
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+
+  checkInDate DateTime @map("check_in_date") @db.Date
+
+  // Completion Data
+  reviewsDue          Int @default(0) @map("reviews_due")
+  reviewsCompleted    Int @default(0) @map("reviews_completed")
+  intentionsTriggered Int @default(0) @map("intentions_triggered")
+  intentionsCompleted Int @default(0) @map("intentions_completed")
+
+  // Self-Report (optional)
+  confidenceLevel  Int? @map("confidence_level") // 1-5 scale
+  difficultyLevel  Int? @map("difficulty_level") // 1-5 scale
+  timeSpentMinutes Int? @map("time_spent_minutes")
+
+  // Adaptive Insights
+  suggestedAdjustment String?  @map("suggested_adjustment") @db.VarChar(100)
+  userAcknowledged    Boolean  @default(false) @map("user_acknowledged")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, checkInDate])
+  @@index([userId])
+  @@index([checkInDate])
+  @@map("daily_check_ins")
+}
+
+model ProfileCheckIn {
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+
+  checkInType   CheckInType @map("check_in_type")
+  triggerReason String?     @map("trigger_reason") @db.VarChar(255)
+
+  // Questions Asked (dynamic)
+  questions Json
+
+  // Resulting Profile Changes
+  profileUpdatesBefore Json @map("profile_updates_before")
+  profileUpdatesAfter  Json @map("profile_updates_after")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([checkInType])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("profile_check_ins")
 }
 
 model TierLimit {
