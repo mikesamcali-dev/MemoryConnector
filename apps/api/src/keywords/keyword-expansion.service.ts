@@ -20,7 +20,7 @@ export class KeywordExpansionService {
     const normalized = this.normalizeWord(word);
 
     // 2. Check concept_mappings table for cached result
-    const cached = await this.prisma.conceptMapping.findUnique({
+    const cached = await this.prisma.conceptMapping.findFirst({
       where: { normalizedTerm: normalized },
     });
 

@@ -202,10 +202,7 @@ export class MemoriesService {
       for (const wordText of allWords) {
         try {
           // Find or create the word
-          const word = await this.wordsService.findOrCreate(
-            wordText.trim(),
-            '' // Empty description - will be enriched by AI later
-          );
+          const { word } = await this.wordsService.createOrFind(wordText.trim());
 
           // Link to memory
           await this.prisma.memoryWordLink.upsert({
