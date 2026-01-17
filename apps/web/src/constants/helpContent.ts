@@ -34,7 +34,7 @@ export const HELP_CONTENT: Record<string, HelpContent> = {
       'Mark reminders as read or dismiss them',
       'Due reminder count shown in navigation badge',
       'Schedule custom reminders for specific dates/times',
-      'Convert reminders to slide decks for active recall training',
+      'Convert reminders to memory decks for active recall training',
     ],
   },
   projects: {
@@ -65,17 +65,6 @@ export const HELP_CONTENT: Record<string, HelpContent> = {
       'Manually populated via "Save to Memory" button',
       '3-phase training cycle: Show (2s) → Recall (5s) → Revealed',
       'Keyboard navigation and mobile swipe gestures',
-      'Proven to strengthen memory retention',
-    ],
-  },
-  slidedecks: {
-    title: 'Slide Decks',
-    description: 'Active recall training using your reminders. Transform passive review into active memory strengthening.',
-    keyFeatures: [
-      'Select reminders to include in a deck',
-      '3-phase cycle: Show (2s) → Recall (5s) → Revealed',
-      'Pause/Resume, Skip to Answer, Navigate slides',
-      'Next button only enabled after answer revealed',
       'Proven to strengthen memory retention',
     ],
   },
@@ -339,16 +328,6 @@ export const HELP_CONTENT: Record<string, HelpContent> = {
       '3-phase cycle: Show → Recall → Revealed',
       'Arrow keys or swipe to navigate',
       'Pause/resume with spacebar or button',
-    ],
-  },
-  'slidedeck-viewer': {
-    title: 'Slide Deck Viewer',
-    description: 'Present and train with your slide decks.',
-    keyFeatures: [
-      'Full-screen presentation mode',
-      '3-phase training cycle',
-      'Navigation controls',
-      'Pause/resume functionality',
     ],
   },
   'training-deck-viewer': {

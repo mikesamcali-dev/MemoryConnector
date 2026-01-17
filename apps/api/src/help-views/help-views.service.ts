@@ -14,7 +14,7 @@ export class HelpViewsService {
 
   /**
    * Get help view state for a specific page
-   * Returns view count and whether to show popup (viewCount < 3)
+   * Returns view count and whether to show popup (viewCount < 1)
    */
   async getHelpViewState(
     userId: string,
@@ -27,7 +27,7 @@ export class HelpViewsService {
     });
 
     const viewCount = helpView?.viewCount ?? 0;
-    const shouldShow = viewCount < 3;
+    const shouldShow = viewCount < 1;
 
     return {
       pageKey,
@@ -39,7 +39,7 @@ export class HelpViewsService {
 
   /**
    * Increment view count for a page (upsert pattern)
-   * Only increments if viewCount < 3 (no need to track beyond max)
+   * Only increments if viewCount < 1 (no need to track beyond max)
    */
   async incrementViewCount(
     userId: string,
@@ -49,8 +49,8 @@ export class HelpViewsService {
       where: { userId_pageKey: { userId, pageKey } },
     });
 
-    // Don't increment beyond 3
-    if (current && current.viewCount >= 3) {
+    // Don't increment beyond 1
+    if (current && current.viewCount >= 1) {
       return this.getHelpViewState(userId, pageKey);
     }
 
@@ -101,7 +101,7 @@ export class HelpViewsService {
     return helpViews.map((hv) => ({
       pageKey: hv.pageKey,
       viewCount: hv.viewCount,
-      shouldShow: hv.viewCount < 3,
+      shouldShow: hv.viewCount < 1,
       lastViewAt: hv.lastViewAt,
     }));
   }

@@ -1,11 +1,12 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Brain, Plus, Search, Database, Bell, Settings, LogOut, ShieldCheck, MapPin, User, Network, Video, Film, Image, Link as LinkIcon, Presentation, MoreHorizontal, ChevronDown, BookOpen, FolderKanban, GraduationCap, Twitter, MessageSquare } from 'lucide-react';
+import { Brain, Plus, Search, Database, Bell, Settings, LogOut, ShieldCheck, MapPin, User, Network, Video, Film, Image, Link as LinkIcon, Presentation, MoreHorizontal, ChevronDown, BookOpen, FolderKanban, GraduationCap, Twitter, MessageSquare, HelpCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { BottomNav } from './mobile/BottomNav';
 import { BottomSheet } from './mobile/BottomSheet';
+import { HelpPopup } from './HelpPopup';
 import { getDueRemindersCount } from '../api/reminders';
 
 interface AppLayoutProps {
@@ -19,6 +20,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const isMobile = useIsMobile();
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isDesktopMoreOpen, setIsDesktopMoreOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   // Fetch due reminders count
   const { data: dueCount } = useQuery({
@@ -31,6 +33,45 @@ export function AppLayout({ children }: AppLayoutProps) {
     logout();
     navigate('/login');
   };
+
+  // Determine page key for help popup based on current route
+  const getPageKey = (): string | null => {
+    const path = location.pathname;
+
+    // Map routes to help content keys
+    const routeMap: Record<string, string> = {
+      '/app/capture': 'capture',
+      '/app/search': 'search',
+      '/app/reminders': 'reminders',
+      '/app/memories': 'memories',
+      '/app/projects': 'projects',
+      '/app/memory-decks': 'memory-decks',
+      '/app/training-decks': 'training-decks',
+      '/app/words': 'words',
+      '/app/questions': 'questions',
+      '/app/locations': 'locations',
+      '/app/people': 'people',
+      '/app/relationships': 'relationships',
+      '/app/images': 'images',
+      '/app/urls': 'urls',
+      '/app/youtube-videos': 'youtube-videos',
+      '/app/tiktok-videos': 'tiktok-videos',
+      '/app/twitter-posts': 'twitter-posts',
+      '/app/settings': 'settings',
+    };
+
+    // Check for viewer pages
+    if (path.includes('/memory-decks/') && path.includes('/view')) {
+      return 'memory-deck-viewer';
+    }
+    if (path.includes('/training-decks/') && path.includes('/view')) {
+      return 'training-deck-viewer';
+    }
+
+    return routeMap[path] || null;
+  };
+
+  const currentPageKey = getPageKey();
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -193,6 +234,17 @@ export function AppLayout({ children }: AppLayoutProps) {
 
             {/* User Menu */}
             <div className="flex items-center gap-3">
+              {/* Help Button */}
+              {currentPageKey && (
+                <button
+                  onClick={() => setIsHelpOpen(true)}
+                  className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                  title="Show help for this page"
+                >
+                  <HelpCircle className="h-5 w-5" />
+                </button>
+              )}
+
               {/* Reminder Notification Bell */}
               <Link
                 to="/app/reminders"
@@ -231,11 +283,24 @@ export function AppLayout({ children }: AppLayoutProps) {
       {isMobile && (
         <div className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
           <div className="flex items-center justify-between h-14 px-4">
-            <div className="w-10"></div> {/* Spacer for centering */}
+            {/* Help Button */}
+            {currentPageKey ? (
+              <button
+                onClick={() => setIsHelpOpen(true)}
+                className="p-2 text-gray-600 hover:text-blue-600 active:bg-blue-50 rounded-lg transition-all min-w-[40px] min-h-[40px] flex items-center justify-center"
+                title="Show help for this page"
+              >
+                <HelpCircle className="h-6 w-6" />
+              </button>
+            ) : (
+              <div className="w-10"></div>
+            )}
+
             <Link to="/app/feed" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <Brain className="h-7 w-7 text-blue-600" />
               <span className="text-lg font-bold text-gray-900">MC</span>
             </Link>
+
             {/* Reminder Bell */}
             <Link
               to="/app/reminders"
@@ -321,6 +386,15 @@ export function AppLayout({ children }: AppLayoutProps) {
           </button>
         </div>
       </BottomSheet>
+
+      {/* Help Popup */}
+      {currentPageKey && (
+        <HelpPopup
+          pageKey={currentPageKey}
+          isOpen={isHelpOpen}
+          onClose={() => setIsHelpOpen(false)}
+        />
+      )}
     </div>
   );
 }

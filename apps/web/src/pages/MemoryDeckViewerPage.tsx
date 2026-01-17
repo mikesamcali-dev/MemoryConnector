@@ -162,7 +162,7 @@ const { id } = useParams<{ id: string }>();
             onClick={handleExit}
             className="px-4 py-2 bg-white text-gray-900 rounded-lg hover:bg-gray-100"
           >
-            Back to Slide Decks
+            Back to Memory Decks
           </button>
         </div>
       </div>

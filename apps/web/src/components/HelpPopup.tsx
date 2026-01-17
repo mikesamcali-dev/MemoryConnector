@@ -85,7 +85,7 @@ export function HelpPopup({ pageKey, isOpen, onClose }: HelpPopupProps) {
         {/* Footer */}
         <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-200">
           <p className="text-xs text-gray-500">
-            This helper shows 3 times per page
+            This helper shows once per page
           </p>
           <button
             onClick={onClose}
