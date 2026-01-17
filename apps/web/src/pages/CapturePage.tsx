@@ -217,56 +217,91 @@ export function CapturePage() {
 
   // Handle image file selection
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setError('Please select a valid image file');
-      return;
-    }
-
-    // Validate file size (max 50MB)
-    const maxSize = 50 * 1024 * 1024; // 50MB
-    if (file.size > maxSize) {
-      setError('Image size must be less than 50MB');
-      return;
-    }
-
-    setCompressingImage(true);
-    setCompressionInfo('');
-
     try {
-      // Compress image
-      const originalSize = file.size;
-      const compressedFile = await compressImage(file);
-      const compressedSize = compressedFile.size;
-      const reduction = getSizeReduction(originalSize, compressedSize);
+      const file = e.target.files?.[0];
+      if (!file) {
+        // Reset the input so the same file can be selected again
+        e.target.value = '';
+        return;
+      }
 
-      setSelectedImage(compressedFile);
-      setCompressionInfo(`Compressed ${reduction}% (${(originalSize / 1024 / 1024).toFixed(2)}MB → ${(compressedSize / 1024 / 1024).toFixed(2)}MB)`);
+      console.log('Image selected:', file.name, 'Size:', file.size, 'Type:', file.type);
 
-      // Create preview from compressed file
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(compressedFile);
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select a valid image file');
+        e.target.value = '';
+        return;
+      }
 
-      haptic('success');
+      // Validate file size (max 50MB)
+      const maxSize = 50 * 1024 * 1024; // 50MB
+      if (file.size > maxSize) {
+        setError('Image size must be less than 50MB');
+        e.target.value = '';
+        return;
+      }
+
+      setCompressingImage(true);
+      setCompressionInfo('');
+      setError('');
+
+      try {
+        // Compress image
+        const originalSize = file.size;
+        console.log('Starting compression...');
+        const compressedFile = await compressImage(file);
+        console.log('Compression complete');
+        const compressedSize = compressedFile.size;
+        const reduction = getSizeReduction(originalSize, compressedSize);
+
+        setSelectedImage(compressedFile);
+        setCompressionInfo(`Compressed ${reduction}% (${(originalSize / 1024 / 1024).toFixed(2)}MB → ${(compressedSize / 1024 / 1024).toFixed(2)}MB)`);
+
+        // Create preview from compressed file
+        console.log('Creating preview...');
+        const reader = new FileReader();
+        reader.onerror = (error) => {
+          console.error('FileReader error:', error);
+          setError('Failed to read image file');
+          setCompressingImage(false);
+        };
+        reader.onloadend = () => {
+          console.log('Preview created successfully');
+          setImagePreview(reader.result as string);
+          setCompressingImage(false);
+        };
+        reader.readAsDataURL(compressedFile);
+
+        haptic('success');
+      } catch (err) {
+        console.error('Image compression failed:', err);
+        // Fall back to original file
+        setSelectedImage(file);
+
+        // Create preview
+        console.log('Creating preview from original file...');
+        const reader = new FileReader();
+        reader.onerror = (error) => {
+          console.error('FileReader error:', error);
+          setError('Failed to read image file');
+          setCompressingImage(false);
+        };
+        reader.onloadend = () => {
+          console.log('Preview created from original file');
+          setImagePreview(reader.result as string);
+          setCompressingImage(false);
+        };
+        reader.readAsDataURL(file);
+      }
+
+      // Reset the input
+      e.target.value = '';
     } catch (err) {
-      console.error('Image compression failed:', err);
-      // Fall back to original file
-      setSelectedImage(file);
-
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    } finally {
+      console.error('Critical error in handleImageSelect:', err);
+      setError('An error occurred while processing the image');
       setCompressingImage(false);
+      e.target.value = '';
     }
   };
 
@@ -276,6 +311,62 @@ export function CapturePage() {
     setImagePreview(null);
     setCompressionInfo('');
   };
+
+  // Save current state before opening camera (in case page refreshes)
+  const handleCameraButtonClick = () => {
+    try {
+      // Save current text and state to localStorage
+      const stateBackup = {
+        text: textValue,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem('cameraStateBackup', JSON.stringify(stateBackup));
+      console.log('Saved state before camera:', stateBackup);
+    } catch (err) {
+      console.error('Failed to save state:', err);
+    }
+  };
+
+  // Restore state if returning from camera
+  useEffect(() => {
+    try {
+      const backup = localStorage.getItem('cameraStateBackup');
+      if (backup) {
+        const parsed = JSON.parse(backup);
+        // Only restore if less than 5 minutes old
+        if (Date.now() - parsed.timestamp < 5 * 60 * 1000) {
+          console.log('Restoring state from backup:', parsed);
+          if (parsed.text && !textValue) {
+            setTextValue(parsed.text);
+          }
+        }
+        // Clean up backup
+        localStorage.removeItem('cameraStateBackup');
+      }
+    } catch (err) {
+      console.error('Failed to restore state:', err);
+    }
+
+    // Add visibility change listener to detect when returning from camera
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('Page became visible - user may have returned from camera');
+        // Verify auth token is still valid
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+          console.error('Auth token missing after returning from camera!');
+        } else {
+          console.log('Auth token still present');
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   // Handle URL addition
   const handleAddUrl = async () => {
@@ -1539,6 +1630,7 @@ export function CapturePage() {
             <>
               <label
                 htmlFor="camera-capture"
+                onClick={handleCameraButtonClick}
                 className={`inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border border-blue-300 rounded-md shadow-sm text-base md:text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500 ${compressingImage ? 'opacity-50 cursor-wait' : ''}`}
                 title="Take photo"
               >
