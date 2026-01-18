@@ -594,10 +594,17 @@ export class AdminController {
     });
 
     if (!profile) {
-      throw new HttpException(
-        'User has not completed onboarding yet',
-        HttpStatus.BAD_REQUEST
-      );
+      // User hasn't completed onboarding yet - they're already in the state
+      // where they'll be prompted on next login
+      return {
+        success: true,
+        message: `User ${user.email} has not completed onboarding. They will be prompted to complete their profile on next login.`,
+        user: {
+          id: user.id,
+          email: user.email,
+        },
+        profile: null,
+      };
     }
 
     // Reset onboarding status while preserving existing profile data
