@@ -10,6 +10,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { WordsService } from '../words/words.service';
 import { EventsService } from '../events/events.service';
 import { LocationsService } from '../locations/locations.service';
+import { UserMemoryService } from '../modules/user-memory/user-memory.service';
 import { CreateMemoryTypeDto } from './dto/create-memory-type.dto';
 import { UpdateMemoryTypeDto } from './dto/update-memory-type.dto';
 import { MemoryState } from '@prisma/client';
@@ -28,6 +29,7 @@ export class AdminController {
     private wordsService: WordsService,
     private eventsService: EventsService,
     private locationsService: LocationsService,
+    private userMemoryService: UserMemoryService,
   ) {}
 
   @Get('stats')
@@ -573,6 +575,53 @@ export class AdminController {
         id: user.id,
         email: user.email,
         memoriesDeleted: user._count.memories,
+      },
+    };
+  }
+
+  @Post('users/:id/reset-onboarding')
+  @ApiOperation({ summary: 'Reset user onboarding to prompt them to update their memory profile' })
+  async resetUserOnboarding(@Param('id') id: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    // Check if user has a profile
+    const profile = await this.prisma.userMemoryProfile.findUnique({
+      where: { userId: id },
+    });
+
+    if (!profile) {
+      throw new HttpException(
+        'User has not completed onboarding yet',
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    // Reset onboarding status while preserving existing profile data
+    const updatedProfile = await this.prisma.userMemoryProfile.update({
+      where: { userId: id },
+      data: {
+        onboardingCompleted: false,
+        // Don't delete the profile data - just mark as needing re-onboarding
+        // This allows the user to see their previous answers when re-onboarding
+      },
+    });
+
+    return {
+      success: true,
+      message: `Onboarding reset for user ${user.email}. They will be prompted to update their profile on next login.`,
+      user: {
+        id: user.id,
+        email: user.email,
+      },
+      profile: {
+        onboardingCompleted: updatedProfile.onboardingCompleted,
+        learningStyle: updatedProfile.learningStyle,
+        skillLevel: updatedProfile.skillLevel,
+        primaryGoal: updatedProfile.primaryGoal,
       },
     };
   }

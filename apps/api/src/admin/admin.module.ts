@@ -6,6 +6,7 @@ import { EnrichmentModule } from '../enrichment/enrichment.module';
 import { WordsModule } from '../words/words.module';
 import { EventsModule } from '../events/events.module';
 import { LocationsModule } from '../locations/locations.module';
+import { UserMemoryModule } from '../modules/user-memory/user-memory.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { LocationsModule } from '../locations/locations.module';
     WordsModule,
     EventsModule,
     LocationsModule,
+    UserMemoryModule,
   ],
   controllers: [AdminController],
 })
