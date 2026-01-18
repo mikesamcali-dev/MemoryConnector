@@ -26,10 +26,6 @@ import {
   Play,
   TrendingUp,
   BookOpen,
-  Plus,
-  Edit,
-  Trash2,
-  Sparkles,
   RefreshCw,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
