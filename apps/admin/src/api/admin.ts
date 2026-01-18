@@ -326,6 +326,25 @@ export async function deleteUser(userId: string, token: string): Promise<void> {
   }
 }
 
+export async function resetUserOnboarding(userId: string, token: string): Promise<any> {
+  const headers = new Headers();
+  headers.set('Authorization', `Bearer ${token}`);
+  headers.set('Content-Type', 'application/json');
+
+  const response = await fetch(`${API_BASE}/admin/users/${userId}/reset-onboarding`, {
+    method: 'POST',
+    headers,
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to reset onboarding' }));
+    throw new Error(error.message || 'Failed to reset onboarding');
+  }
+
+  return response.json();
+}
+
 export async function getAllMemoriesByUser(): Promise<any[]> {
   const response = await fetchWithAuth('/admin/memories-by-user');
   return response.json();

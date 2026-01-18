@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getUsers, updateUserRoles, updateUserTier, deleteUser } from '../api/admin';
-import { Users, Shield, Trash2, Crown, User as UserIcon, Calendar, Database } from 'lucide-react';
+import { getUsers, updateUserRoles, updateUserTier, deleteUser, resetUserOnboarding } from '../api/admin';
+import { Users, Shield, Trash2, Crown, User as UserIcon, Calendar, Database, RefreshCw } from 'lucide-react';
 
 interface User {
   id: string;
@@ -16,6 +16,7 @@ interface User {
 
 export function UsersPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const { data: users = [], isLoading, error } = useQuery({
@@ -61,6 +62,18 @@ export function UsersPage() {
     },
   });
 
+  const resetOnboardingMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) throw new Error('No access token');
+      return resetUserOnboarding(userId, token);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      setShowResetConfirm(null);
+    },
+  });
+
   const toggleRole = (user: User, role: string) => {
     const newRoles = user.roles.includes(role)
       ? user.roles.filter(r => r !== role)
@@ -75,6 +88,10 @@ export function UsersPage() {
 
   const handleDelete = (userId: string) => {
     deleteMutation.mutate(userId);
+  };
+
+  const handleResetOnboarding = (userId: string) => {
+    resetOnboardingMutation.mutate(userId);
   };
 
   if (isLoading) {
@@ -232,31 +249,59 @@ export function UsersPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {showDeleteConfirm === user.id ? (
-                      <div className="flex items-center justify-end space-x-2">
+                    <div className="flex items-center justify-end space-x-3">
+                      {showResetConfirm === user.id ? (
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => handleResetOnboarding(user.id)}
+                            className="text-blue-600 hover:text-blue-900 font-medium"
+                            disabled={resetOnboardingMutation.isPending}
+                          >
+                            Confirm Reset
+                          </button>
+                          <button
+                            onClick={() => setShowResetConfirm(null)}
+                            className="text-gray-600 hover:text-gray-900"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
                         <button
-                          onClick={() => handleDelete(user.id)}
-                          className="text-red-600 hover:text-red-900 font-medium"
-                          disabled={deleteMutation.isPending}
+                          onClick={() => setShowResetConfirm(user.id)}
+                          className="text-blue-600 hover:text-blue-900"
+                          title="Reset onboarding - user will be prompted to update their memory profile"
                         >
-                          Confirm
+                          <RefreshCw className="h-4 w-4" />
                         </button>
+                      )}
+
+                      {showDeleteConfirm === user.id ? (
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => handleDelete(user.id)}
+                            className="text-red-600 hover:text-red-900 font-medium"
+                            disabled={deleteMutation.isPending}
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            onClick={() => setShowDeleteConfirm(null)}
+                            className="text-gray-600 hover:text-gray-900"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
                         <button
-                          onClick={() => setShowDeleteConfirm(null)}
-                          className="text-gray-600 hover:text-gray-900"
+                          onClick={() => setShowDeleteConfirm(user.id)}
+                          className="text-red-600 hover:text-red-900"
+                          title="Delete user"
                         >
-                          Cancel
+                          <Trash2 className="h-4 w-4" />
                         </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setShowDeleteConfirm(user.id)}
-                        className="text-red-600 hover:text-red-900"
-                        title="Delete user"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -278,6 +323,7 @@ export function UsersPage() {
         <ul className="text-sm text-blue-700 space-y-1">
           <li>• Click tier dropdown to upgrade/downgrade user subscription</li>
           <li>• Click "Admin" badge to toggle admin permissions</li>
+          <li>• Click refresh icon to reset user onboarding (prompts user to update their memory profile)</li>
           <li>• Deleting a user will permanently remove all their memories</li>
           <li>• Admin role allows access to this admin panel</li>
         </ul>
