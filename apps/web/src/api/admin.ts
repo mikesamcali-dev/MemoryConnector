@@ -250,6 +250,13 @@ export async function updateUserTier(userId: string, tier: 'free' | 'premium'): 
   return response.json();
 }
 
+export async function resetUserOnboarding(userId: string): Promise<any> {
+  const response = await fetchWithAuth(`/admin/users/${userId}/reset-onboarding`, {
+    method: 'POST',
+  });
+  return response.json();
+}
+
 export async function getAllMemoriesByUser(): Promise<any[]> {
   const response = await fetchWithAuth('/admin/memories-by-user');
   return response.json();

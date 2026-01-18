@@ -6,6 +6,7 @@ import {
   getAllUsers,
   updateUserEnabled,
   updateUserTier,
+  resetUserOnboarding,
   getSystemStats,
   getAICostTracking,
   getEnrichmentWorkerStatus,
@@ -34,6 +35,7 @@ import {
   Edit,
   Trash2,
   Sparkles,
+  RefreshCw,
 } from 'lucide-react';
 import { WordEditModal } from '../components/admin/WordEditModal';
 
@@ -41,6 +43,7 @@ export function AdminPanelPage() {
     const helpPopup = useHelpPopup('admin');
 const queryClient = useQueryClient();
   const [loadingUserId, setLoadingUserId] = useState<string | null>(null);
+  const [resetUserId, setResetUserId] = useState<string | null>(null);
   const [isWordModalOpen, setIsWordModalOpen] = useState(false);
   const [editingWord, setEditingWord] = useState<any | null>(null);
 
@@ -106,6 +109,19 @@ const queryClient = useQueryClient();
     },
   });
 
+  // Mutation to reset user onboarding
+  const resetOnboardingMutation = useMutation({
+    mutationFn: (userId: string) => resetUserOnboarding(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      setResetUserId(null);
+      alert('User onboarding has been reset. They will be prompted to update their profile on next login.');
+    },
+    onError: (error: any) => {
+      alert(`Failed to reset onboarding: ${error.message}`);
+    },
+  });
+
   // Word mutations
   const createWordMutation = useMutation({
     mutationFn: (wordText: string) => createWord(wordText),
@@ -164,6 +180,13 @@ const queryClient = useQueryClient();
 
   const handleTierChange = (userId: string, newTier: 'free' | 'premium') => {
     updateTierMutation.mutate({ userId, tier: newTier });
+  };
+
+  const handleResetOnboarding = (userId: string) => {
+    if (confirm('Reset user onboarding? The user will be prompted to update their memory profile on next login.')) {
+      setResetUserId(userId);
+      resetOnboardingMutation.mutate(userId);
+    }
   };
 
   const handleCreateWord = () => {
@@ -471,23 +494,37 @@ const queryClient = useQueryClient();
                       {new Date(user.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <button
-                        onClick={() => handleToggleUser(user.id, user.isEnabled)}
-                        disabled={loadingUserId === user.id}
-                        className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                          user.isEnabled
-                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                            : 'bg-green-100 text-green-700 hover:bg-green-200'
-                        } disabled:opacity-50`}
-                      >
-                        {loadingUserId === user.id ? (
-                          <Loader className="h-3 w-3 animate-spin" />
-                        ) : user.isEnabled ? (
-                          <><ShieldX className="h-3 w-3" /> Disable</>
-                        ) : (
-                          <><ShieldCheck className="h-3 w-3" /> Enable</>
-                        )}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleResetOnboarding(user.id)}
+                          disabled={resetOnboardingMutation.isPending && resetUserId === user.id}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-50"
+                          title="Reset onboarding - user will update their memory profile on next login"
+                        >
+                          {resetOnboardingMutation.isPending && resetUserId === user.id ? (
+                            <Loader className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-3 w-3" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleToggleUser(user.id, user.isEnabled)}
+                          disabled={loadingUserId === user.id}
+                          className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                            user.isEnabled
+                              ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          } disabled:opacity-50`}
+                        >
+                          {loadingUserId === user.id ? (
+                            <Loader className="h-3 w-3 animate-spin" />
+                          ) : user.isEnabled ? (
+                            <><ShieldX className="h-3 w-3" /> Disable</>
+                          ) : (
+                            <><ShieldCheck className="h-3 w-3" /> Enable</>
+                          )}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
