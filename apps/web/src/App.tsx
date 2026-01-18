@@ -40,6 +40,7 @@ const MemoryDecksListPage = lazy(() => import('./pages/MemoryDecksListPage').the
 const MemoryDeckViewerPage = lazy(() => import('./pages/MemoryDeckViewerPage').then(m => ({ default: m.MemoryDeckViewerPage })));
 const AtlasPage = lazy(() => import('./pages/AtlasPage').then(m => ({ default: m.AtlasPage })));
 const AdminPanelPage = lazy(() => import('./pages/AdminPanelPage').then(m => ({ default: m.AdminPanelPage })));
+const WordsManagementPage = lazy(() => import('./pages/WordsManagementPage').then(m => ({ default: m.WordsManagementPage })));
 const WordsPage = lazy(() => import('./pages/WordsPage').then(m => ({ default: m.WordsPage })));
 const WordDetailPage = lazy(() => import('./pages/WordDetailPage').then(m => ({ default: m.WordDetailPage })));
 const QuestionsPage = lazy(() => import('./pages/QuestionsPage').then(m => ({ default: m.QuestionsPage })));
@@ -451,6 +452,16 @@ function App() {
                 <ProtectedRoute requireAdmin={true}>
                   <AppLayout>
                     <AdminPanelPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/admin/words"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AppLayout>
+                    <WordsManagementPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
