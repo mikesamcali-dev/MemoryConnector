@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmbeddingsService } from '../embeddings/embeddings.service';
 import { CreateSamMemoryDto } from './dto/create-sam-memory.dto';
 import { SamAuditService } from './sam-audit.service';
+import { SamReviewSchedulingService } from './sam-review-scheduling.service';
 import { logger } from '../common/logger';
 import OpenAI from 'openai';
 
@@ -15,7 +16,9 @@ export class SamService {
     private prisma: PrismaService,
     private embeddings: EmbeddingsService,
     private audit: SamAuditService,
-    private config: ConfigService
+    private config: ConfigService,
+    @Inject(forwardRef(() => SamReviewSchedulingService))
+    private reviewScheduling: SamReviewSchedulingService
   ) {
     const apiKey = this.config.get<string>('OPENAI_API_KEY');
     if (apiKey) {
@@ -88,6 +91,13 @@ export class SamService {
 
     // Audit
     await this.audit.logEvent(memory.id, 'created', { title: memory.title });
+
+    // Schedule first review (1 day from now)
+    try {
+      await this.reviewScheduling.createSchedule(memory.id, userId);
+    } catch (error) {
+      logger.error(`Failed to create review schedule for SAM memory ${memory.id}:`, error);
+    }
 
     return memory;
   }

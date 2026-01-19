@@ -1,13 +1,14 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Brain, Plus, Search, Database, Bell, Settings, LogOut, ShieldCheck, MapPin, User, Network, Video, Film, Image, Link as LinkIcon, Presentation, MoreHorizontal, ChevronDown, BookOpen, FolderKanban, GraduationCap, Twitter, MessageSquare, HelpCircle, Sparkles } from 'lucide-react';
+import { Brain, Plus, Search, Database, Bell, Settings, LogOut, ShieldCheck, MapPin, User, Network, Video, Film, Image, Link as LinkIcon, Presentation, MoreHorizontal, ChevronDown, BookOpen, FolderKanban, GraduationCap, Twitter, MessageSquare, HelpCircle, Sparkles, BookMarked } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { BottomNav } from './mobile/BottomNav';
 import { BottomSheet } from './mobile/BottomSheet';
 import { HelpPopup } from './HelpPopup';
 import { getDueRemindersCount } from '../api/reminders';
+import { getDueReviewCount } from '../api/samReviews';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -29,6 +30,13 @@ export function AppLayout({ children }: AppLayoutProps) {
     refetchInterval: 60000, // Refetch every minute
   });
 
+  // Fetch due reviews count
+  const { data: dueReviewsCount } = useQuery({
+    queryKey: ['due-reviews-count'],
+    queryFn: getDueReviewCount,
+    refetchInterval: 60000, // Refetch every minute
+  });
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -45,6 +53,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       '/app/reminders': 'reminders',
       '/app/memories': 'memories',
       '/app/sam': 'sam',
+      '/app/reviews': 'reviews',
       '/app/projects': 'projects',
       '/app/memory-decks': 'memory-decks',
       '/app/training-decks': 'training-decks',
@@ -86,6 +95,13 @@ export function AppLayout({ children }: AppLayoutProps) {
         </span>
       );
     }
+    if (path === '/app/reviews' && dueReviewsCount && dueReviewsCount.count > 0) {
+      return (
+        <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-blue-500 text-white text-xs font-bold rounded-full">
+          {dueReviewsCount.count > 99 ? '99+' : dueReviewsCount.count}
+        </span>
+      );
+    }
     return null;
   };
 
@@ -95,6 +111,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     { path: '/app/search', icon: Search, label: 'Search' },
     { path: '/app/memories', icon: Database, label: 'Memories' },
     { path: '/app/sam', icon: Sparkles, label: 'SAM' },
+    { path: '/app/reviews', icon: BookMarked, label: 'Reviews' },
     { path: '/app/projects', icon: FolderKanban, label: 'Topics' },
     { path: '/app/trainings', icon: GraduationCap, label: 'Trainings' },
     { path: '/app/training-decks', icon: GraduationCap, label: 'Train' },

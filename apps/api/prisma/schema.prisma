@@ -178,6 +178,8 @@ model User {
   dailyCheckIns            DailyCheckIn[]
   profileCheckIns          ProfileCheckIn[]
   samMemories              SamMemory[]
+  samReviewSchedules       SamReviewSchedule[]
+  samReviewAttempts        SamReviewAttempt[]
 
   @@map("users")
 }
@@ -1906,6 +1908,7 @@ model SamMemory {
   trainingExamples  SamTrainingExample[]
   versionHistory    SamMemoryVersion[]
   auditEvents       SamAuditEvent[]
+  reviewSchedule    SamReviewSchedule?
 
   @@index([userId])
   @@index([userId, archiveFlag])
@@ -1995,3 +1998,75 @@ model SamAuditEvent {
 // Add relation to User model - place this near the User model definition
 // user:
 //   samMemories SamMemory[]
+
+// ============================================================================
+// SAM REVIEW SYSTEM - Spaced Repetition for Memory Retention
+// ============================================================================
+
+// Review Schedule - Tracks spaced repetition schedule for each SAM memory
+model SamReviewSchedule {
+  id                   String    @id @default(uuid()) @db.Uuid
+  memoryId             String    @map("memory_id") @db.Uuid
+  userId               String    @map("user_id") @db.Uuid
+
+  // Spaced repetition algorithm state
+  currentInterval      Int       @default(1) @map("current_interval") // Days until next review
+  easeFactor           Float     @default(2.3) @map("ease_factor") @db.Real // Multiplier for interval growth
+  nextReviewDate       DateTime  @map("next_review_date")
+
+  // Performance tracking
+  totalReviews         Int       @default(0) @map("total_reviews")
+  successfulReviews    Int       @default(0) @map("successful_reviews")
+  consecutiveSuccesses Int       @default(0) @map("consecutive_successes")
+  consecutiveFailures  Int       @default(0) @map("consecutive_failures")
+
+  // State
+  isPaused             Boolean   @default(false) @map("is_paused")
+  lastReviewedAt       DateTime? @map("last_reviewed_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  memory      SamMemory          @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attempts    SamReviewAttempt[]
+
+  @@unique([memoryId]) // One schedule per memory
+  @@index([userId, nextReviewDate]) // Find due reviews for user
+  @@index([nextReviewDate, isPaused]) // Find all due reviews
+  @@map("sam_review_schedules")
+}
+
+// Review Type enum
+enum SamReviewType {
+  recognition  // Multiple choice, easier
+  free_recall  // User must recall without hints
+}
+
+// Review Attempt - Logs each review session
+model SamReviewAttempt {
+  id             String        @id @default(uuid()) @db.Uuid
+  scheduleId     String        @map("schedule_id") @db.Uuid
+  memoryId       String        @map("memory_id") @db.Uuid
+  userId         String        @map("user_id") @db.Uuid
+
+  // Attempt details
+  wasSuccessful  Boolean       @map("was_successful")
+  reviewType     SamReviewType @map("review_type")
+  responseTimeMs Int?          @map("response_time_ms") // Milliseconds to answer
+
+  // Context
+  intervalBefore Int           @map("interval_before") // Days before this review
+  intervalAfter  Int           @map("interval_after") // Days scheduled for next
+
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  // Relations
+  schedule SamReviewSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt]) // User's review history
+  @@index([memoryId, createdAt]) // Memory's review history
+  @@index([scheduleId])
+  @@map("sam_review_attempts")
+}

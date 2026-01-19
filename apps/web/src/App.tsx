@@ -49,6 +49,7 @@ const WordDetailPage = lazy(() => import('./pages/WordDetailPage').then(m => ({ 
 const QuestionsPage = lazy(() => import('./pages/QuestionsPage').then(m => ({ default: m.QuestionsPage })));
 const QuestionDetailPage = lazy(() => import('./pages/QuestionDetailPage').then(m => ({ default: m.QuestionDetailPage })));
 const SamMemoriesPage = lazy(() => import('./pages/SamMemoriesPage').then(m => ({ default: m.SamMemoriesPage })));
+const ReviewsPage = lazy(() => import('./pages/ReviewsPage').then(m => ({ default: m.ReviewsPage })));
 const ReminderSchedulePage = lazy(() => import('./pages/ReminderSchedulePage').then(m => ({ default: m.ReminderSchedulePage })));
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage').then(m => ({ default: m.ProjectsPage })));
 const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage').then(m => ({ default: m.ProjectDetailPage })));
@@ -150,6 +151,16 @@ function App() {
                 <ProtectedRoute>
                   <AppLayout>
                     <SamMemoriesPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/reviews"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ReviewsPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
