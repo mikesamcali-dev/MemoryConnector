@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../api/client';
 import '../styles/sam-memories.css';
 
