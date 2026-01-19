@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { createMemory } from '../api/memories';
+import { createMemory, createMemoryWithKeywordExpansion } from '../api/memories';
 import { getAllPeople, getAllLocationsForUser } from '../api/admin';
 import { createQuestion } from '../api/questions';
 import { processMemoryPhrase } from '../api/words';
@@ -588,13 +588,13 @@ export function CapturePage() {
       setDraft(memoryDraft);
       localStorage.setItem('memoryDraft', JSON.stringify(memoryDraft));
 
-      const createdMemory = await createMemory({
+      const createdMemory = await createMemoryWithKeywordExpansion({
         ...memoryDraft,
         locationId: linkedEntities.locations[0] || undefined,
         personId: linkedEntities.persons[0] || undefined,
         youtubeVideoId: linkedEntities.youtubeVideos[0] || undefined,
         tiktokVideoId: linkedEntities.tiktokVideos[0] || undefined,
-        createReminder: false,
+        addToDeck: true, // Add to memory deck
       });
 
       // Upload and link image if one was selected
@@ -706,13 +706,13 @@ export function CapturePage() {
       setDraft(memoryDraft);
       localStorage.setItem('memoryDraft', JSON.stringify(memoryDraft));
 
-      const createdMemory = await createMemory({
+      const createdMemory = await createMemoryWithKeywordExpansion({
         ...memoryDraft,
         locationId: linkedEntities.locations[0] || undefined,
         personId: linkedEntities.persons[0] || undefined,
         youtubeVideoId: linkedEntities.youtubeVideos[0] || undefined,
         tiktokVideoId: linkedEntities.tiktokVideos[0] || undefined,
-        createReminder: false,
+        addToDeck: true, // Add to memory deck
       });
 
       // Upload and link image if one was selected
