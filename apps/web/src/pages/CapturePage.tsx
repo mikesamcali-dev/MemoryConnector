@@ -179,6 +179,7 @@ export function CapturePage() {
     formState: { errors },
     reset,
     setValue,
+    clearErrors,
   } = useForm({
     resolver: zodResolver(memorySchema),
     defaultValues: { text: '' },
@@ -196,6 +197,7 @@ export function CapturePage() {
     if (wordCount >= 1 && wordCount <= 3 && !textValue.trim() && !loadingDefinition) {
       setLoadingDefinition(true);
       setError('');
+      clearErrors('text'); // Clear validation error while fetching definition
 
       try {
         const definition = await generateDefinition(trimmedTitle);
