@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, AlertCircle, CheckCircle } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../contexts/AuthContext';
 
 export function ChangePasswordPage() {
   const navigate = useNavigate();
