@@ -46,19 +46,22 @@ export class AuthController {
       });
     }
 
-    // Set refresh token in httpOnly cookie for self-signup
-    res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      path: '/api/v1/auth/refresh',
-    });
+    // Type guard: if not admin-created, result has refreshToken and accessToken
+    if ('refreshToken' in result && 'accessToken' in result) {
+      // Set refresh token in httpOnly cookie for self-signup
+      res.cookie('refreshToken', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        path: '/api/v1/auth/refresh',
+      });
 
-    return res.status(HttpStatus.CREATED).json({
-      accessToken: result.accessToken,
-      user: result.user,
-    });
+      return res.status(HttpStatus.CREATED).json({
+        accessToken: result.accessToken,
+        user: result.user,
+      });
+    }
   }
 
   @Post('login')
