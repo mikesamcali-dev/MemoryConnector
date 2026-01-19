@@ -53,11 +53,12 @@ export class UserMemoryService {
     );
     const maxInterval = this.getMaxIntervalForPace(answers.preferredPace);
 
-    // Create profile and config in transaction
+    // Create or update profile and config in transaction
     const result = await this.prisma.$transaction(async (tx) => {
-      // Create profile
-      const profile = await tx.userMemoryProfile.create({
-        data: {
+      // Upsert profile (create if not exists, update if exists)
+      const profile = await tx.userMemoryProfile.upsert({
+        where: { userId },
+        create: {
           userId,
           learningStyle: answers.learningStyle,
           skillLevel: answers.skillLevel,
@@ -70,12 +71,33 @@ export class UserMemoryService {
           peakActivityHours: [],
           onboardingCompleted: true,
         },
+        update: {
+          learningStyle: answers.learningStyle,
+          skillLevel: answers.skillLevel,
+          primaryGoal: answers.primaryGoal,
+          preferredPace: answers.preferredPace,
+          dailyTimeCommitment: answers.dailyTimeCommitment,
+          areasOfInterest: answers.areasOfInterest || [],
+          cognitivePreferences: answers.cognitivePreferences || {},
+          preferredReviewTime: answers.preferredReviewTime || null,
+          onboardingCompleted: true,
+        },
       });
 
-      // Create adaptive review config
-      await tx.adaptiveReviewConfig.create({
-        data: {
+      // Upsert adaptive review config (create if not exists, update if exists)
+      await tx.adaptiveReviewConfig.upsert({
+        where: { userId },
+        create: {
           userId,
+          maxReviewsPerSession,
+          preferRecognition,
+          showContext,
+          enableHapticFeedback: answers.enableHapticFeedback ?? true,
+          intervalMultiplier,
+          maxInterval,
+          difficultyThreshold,
+        },
+        update: {
           maxReviewsPerSession,
           preferRecognition,
           showContext,
