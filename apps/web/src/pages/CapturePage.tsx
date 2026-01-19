@@ -678,8 +678,7 @@ export function CapturePage() {
       // Pre-populate the query cache with the created memory
       queryClient.setQueryData(['memory', createdMemory.id], createdMemory);
 
-      // Navigate to link page
-      navigate(`/app/memories/${createdMemory.id}/link`);
+      // Stay on capture page - ready for next memory
     } catch (err: any) {
       console.error('Create memory error:', err);
       setError(err.message || 'Failed to create memory');
@@ -804,8 +803,7 @@ export function CapturePage() {
       // Pre-populate the query cache with the created memory
       queryClient.setQueryData(['memory', createdMemory.id], createdMemory);
 
-      // Navigate to link page
-      navigate(`/app/memories/${createdMemory.id}/link`);
+      // Stay on capture page - ready for next memory
     } catch (err: any) {
       console.error('Create memory/question error:', err);
       setError(err.message || 'Failed to create memory');
@@ -1032,8 +1030,7 @@ export function CapturePage() {
       // Pre-populate the query cache with the created memory
       queryClient.setQueryData(['memory', createdMemory.id], createdMemory);
 
-      // Navigate directly to link page
-      navigate(`/app/memories/${createdMemory.id}/link`);
+      // Stay on capture page - ready for next memory
     } catch (err: any) {
       // Error haptic feedback
       haptic('error');
