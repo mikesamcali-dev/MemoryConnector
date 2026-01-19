@@ -1,7 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Brain, Plus, Search, Database, Bell, Settings, LogOut, ShieldCheck, MapPin, User, Network, Video, Film, Image, Link as LinkIcon, Presentation, MoreHorizontal, ChevronDown, BookOpen, FolderKanban, GraduationCap, Twitter, MessageSquare, HelpCircle } from 'lucide-react';
+import { Brain, Plus, Search, Database, Bell, Settings, LogOut, ShieldCheck, MapPin, User, Network, Video, Film, Image, Link as LinkIcon, Presentation, MoreHorizontal, ChevronDown, BookOpen, FolderKanban, GraduationCap, Twitter, MessageSquare, HelpCircle, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { BottomNav } from './mobile/BottomNav';
@@ -44,6 +44,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       '/app/search': 'search',
       '/app/reminders': 'reminders',
       '/app/memories': 'memories',
+      '/app/sam': 'sam',
       '/app/projects': 'projects',
       '/app/memory-decks': 'memory-decks',
       '/app/training-decks': 'training-decks',
@@ -93,6 +94,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     { path: '/app/memory-decks', icon: Presentation, label: 'Memories' },
     { path: '/app/search', icon: Search, label: 'Search' },
     { path: '/app/memories', icon: Database, label: 'Memories' },
+    { path: '/app/sam', icon: Sparkles, label: 'SAM' },
     { path: '/app/projects', icon: FolderKanban, label: 'Topics' },
     { path: '/app/trainings', icon: GraduationCap, label: 'Trainings' },
     { path: '/app/training-decks', icon: GraduationCap, label: 'Train' },
