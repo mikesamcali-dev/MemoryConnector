@@ -5,7 +5,6 @@ import { z } from 'zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createMemory } from '../api/memories';
 import { getAllPeople, getAllLocationsForUser } from '../api/admin';
-import { getUpcomingReminders } from '../api/reminders';
 import { createQuestion } from '../api/questions';
 import { processMemoryPhrase } from '../api/words';
 import { uploadImage, linkImageToMemory } from '../api/images';
@@ -17,7 +16,7 @@ import { createDraft } from '../utils/idempotency';
 import { compressImage, getSizeReduction } from '../utils/imageCompression';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Clock, AlertCircle, Calendar, Loader, Users, MapPinned, Video, Image as ImageIcon, Link as LinkIcon, X, Mic, FolderKanban, GraduationCap, Bell, MessageSquare, Camera } from 'lucide-react';
+import { Loader, Users, MapPinned, Video, Image as ImageIcon, Link as LinkIcon, X, Mic, FolderKanban, GraduationCap, MessageSquare, Camera, BookOpen, BookMarked } from 'lucide-react';
 import { useHaptics } from '../hooks/useHaptics';
 import { useVoiceInput } from '../hooks/useVoiceInput';
 import { useHelpPopup } from '../hooks/useHelpPopup';
@@ -112,12 +111,6 @@ export function CapturePage() {
   // Textarea ref for auto-grow
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Fetch upcoming reminders
-  const { data: upcomingReminders, isLoading: loadingReminders, error: remindersError } = useQuery({
-    queryKey: ['upcoming-reminders'],
-    queryFn: getUpcomingReminders,
-  });
-
   // Fetch all topics for suggestion matching
   const { data: allTopics } = useQuery({
     queryKey: ['projects'],
@@ -129,16 +122,6 @@ export function CapturePage() {
     queryKey: ['trainings'],
     queryFn: getAllTrainings,
   });
-
-  // Debug: Log reminders data
-  useEffect(() => {
-    if (upcomingReminders) {
-      console.log('Upcoming reminders:', upcomingReminders);
-    }
-    if (remindersError) {
-      console.error('Error fetching reminders:', remindersError);
-    }
-  }, [upcomingReminders, remindersError]);
 
   // Clear draft and form when navigating to capture page
   useEffect(() => {
@@ -590,12 +573,12 @@ export function CapturePage() {
     }));
   };
 
-  // Handle reminder button click - saves memory with reminder
-  const handleReminderButtonClick = async () => {
+  // Handle save to memory deck button click - saves memory to deck
+  const handleSaveToMemoryDeck = async () => {
     if (!textValue.trim()) {
       return;
     }
-    
+
     haptic('light');
     setError('');
     setIsRateLimitError(false);
@@ -612,7 +595,7 @@ export function CapturePage() {
         personId: linkedEntities.persons[0] || undefined,
         youtubeVideoId: linkedEntities.youtubeVideos[0] || undefined,
         tiktokVideoId: linkedEntities.tiktokVideos[0] || undefined,
-        createReminder: true,
+        createReminder: false,
       });
 
       // Upload and link image if one was selected
@@ -689,11 +672,14 @@ export function CapturePage() {
 
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['memories'] });
-      queryClient.invalidateQueries({ queryKey: ['upcoming-reminders'] });
 
       haptic('success');
-      // Navigate to reminder schedule page to set due date
-      navigate('/app/reminder-schedule', { state: { memoryId: createdMemory.id } });
+
+      // Pre-populate the query cache with the created memory
+      queryClient.setQueryData(['memory', createdMemory.id], createdMemory);
+
+      // Navigate to link page
+      navigate(`/app/memories/${createdMemory.id}/link`);
     } catch (err: any) {
       console.error('Create memory error:', err);
       setError(err.message || 'Failed to create memory');
@@ -706,7 +692,7 @@ export function CapturePage() {
     }
   };
 
-  // Handle Ask button click - saves memory with reminders and asks OpenAI
+  // Handle Ask button click - saves memory and asks OpenAI
   const handleAskButtonClick = async () => {
     if (!textValue.trim()) {
       return;
@@ -728,7 +714,7 @@ export function CapturePage() {
         personId: linkedEntities.persons[0] || undefined,
         youtubeVideoId: linkedEntities.youtubeVideos[0] || undefined,
         tiktokVideoId: linkedEntities.tiktokVideos[0] || undefined,
-        createReminder: true,
+        createReminder: false,
       });
 
       // Upload and link image if one was selected
@@ -811,12 +797,15 @@ export function CapturePage() {
 
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['memories'] });
-      queryClient.invalidateQueries({ queryKey: ['upcoming-reminders'] });
       queryClient.invalidateQueries({ queryKey: ['questions'] });
 
       haptic('success');
-      // Navigate to reminder schedule page to set due date
-      navigate('/app/reminder-schedule', { state: { memoryId: createdMemory.id } });
+
+      // Pre-populate the query cache with the created memory
+      queryClient.setQueryData(['memory', createdMemory.id], createdMemory);
+
+      // Navigate to link page
+      navigate(`/app/memories/${createdMemory.id}/link`);
     } catch (err: any) {
       console.error('Create memory/question error:', err);
       setError(err.message || 'Failed to create memory');
@@ -1064,22 +1053,6 @@ export function CapturePage() {
     }
   };
 
-  const formatReminderTime = (scheduledAt: string, isOverdue?: boolean) => {
-    const date = new Date(scheduledAt);
-    const now = new Date();
-    const diff = date.getTime() - now.getTime();
-    const hours = Math.abs(Math.floor(diff / (1000 * 60 * 60)));
-    const days = Math.abs(Math.floor(diff / (1000 * 60 * 60 * 24)));
-
-    if (isOverdue) {
-      if (hours < 24) return `${hours}h overdue`;
-      return `${days}d overdue`;
-    }
-
-    if (hours < 1) return 'Due soon';
-    if (hours < 24) return `In ${hours}h`;
-    return `In ${days}d`;
-  };
 
   // Handle text input change with auto-grow
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -1452,13 +1425,13 @@ export function CapturePage() {
         </button>
         <button
           type="button"
-          onClick={handleReminderButtonClick}
+          onClick={handleSaveToMemoryDeck}
           disabled={loading || !textValue.trim() || uploadingImage || addingUrl || addingTikTok || addingYouTube}
           className="flex-1 inline-flex items-center justify-center gap-2 h-12 px-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-base font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 shadow-md transition-all active:scale-95"
         >
-          <Bell className="h-5 w-5" />
-          <span className="hidden xs:inline">Save w/Reminders</span>
-          <span className="xs:hidden">w/Reminders</span>
+          <BookMarked className="h-5 w-5" />
+          <span className="hidden xs:inline">Save → Memory</span>
+          <span className="xs:hidden">→ Memory</span>
         </button>
         <button
           type="button"
@@ -1860,12 +1833,12 @@ export function CapturePage() {
           </button>
           <button
             type="button"
-            onClick={handleReminderButtonClick}
+            onClick={handleSaveToMemoryDeck}
             disabled={loading || !textValue.trim() || uploadingImage || addingUrl || addingTikTok || addingYouTube}
             className="flex-1 inline-flex items-center justify-center gap-2 h-10 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-md hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            <Bell className="h-4 w-4" />
-            Save w/Reminders
+            <BookMarked className="h-4 w-4" />
+            Save → Memory
           </button>
           <button
             type="button"
@@ -1878,89 +1851,6 @@ export function CapturePage() {
           </button>
         </div>
       </form>
-
-      {/* Upcoming Reminders Section - Now at the bottom */}
-      <div className="border-t border-gray-200 pt-4 md:pt-6">
-        <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4">
-          <span className="hidden md:inline">Upcoming Reminders</span>
-          <span className="md:hidden">Reminders</span>
-        </h2>
-
-        {loadingReminders && (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <p className="text-sm text-gray-600">Loading reminders...</p>
-          </div>
-        )}
-
-        {remindersError && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-sm text-yellow-800">
-              Debug: Error loading reminders - Check console for details
-            </p>
-          </div>
-        )}
-
-        {!loadingReminders && upcomingReminders && upcomingReminders.length === 0 && (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <p className="text-sm text-gray-600">
-              No upcoming reminders. Create a memory with type "Word" to see reminders here!
-            </p>
-          </div>
-        )}
-
-        {!loadingReminders && upcomingReminders && upcomingReminders.length > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Clock className="h-5 w-5 text-blue-600" />
-              <p className="text-sm font-medium text-blue-900">
-                You have {upcomingReminders.length} upcoming {upcomingReminders.length === 1 ? 'reminder' : 'reminders'}
-              </p>
-            </div>
-            <div className="space-y-2">
-              {upcomingReminders.map((reminder) => (
-                <div
-                  key={reminder.reminderId}
-                  className="bg-white rounded-md p-3 cursor-pointer hover:bg-gray-50 transition-colors"
-                  onClick={() => navigate(`/app/memories/${reminder.memoryId}`)}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-900 line-clamp-2">{reminder.memoryPreview}</p>
-                      {reminder.memoryType && (
-                        <div className="mt-1">
-                          <span
-                            className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
-                            style={{
-                              backgroundColor: reminder.memoryType.color + '20',
-                              color: reminder.memoryType.color,
-                            }}
-                          >
-                            <span>{reminder.memoryType.icon}</span>
-                            <span>{reminder.memoryType.name}</span>
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-shrink-0">
-                      {reminder.isOverdue ? (
-                        <div className="flex items-center gap-1 text-xs text-red-600 font-medium">
-                          <AlertCircle className="h-3 w-3" />
-                          {formatReminderTime(reminder.scheduledAt, true)}
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1 text-xs text-blue-600">
-                          <Calendar className="h-3 w-3" />
-                          {formatReminderTime(reminder.scheduledAt, false)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* Person selection modal */}
       {showPersonSelector && (
