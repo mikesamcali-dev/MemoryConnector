@@ -111,10 +111,17 @@ const queryClient = useQueryClient();
   // Bulk delete mutation - doesn't invalidate queries until all are done
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids: string[]) => {
-      // Delete all reminders without invalidating queries between each deletion
-      for (const id of ids) {
-        await deleteReminder(id);
+      const results = await Promise.allSettled(
+        ids.map(id => deleteReminder(id))
+      );
+
+      const failed = results.filter(r => r.status === 'rejected');
+      if (failed.length > 0) {
+        console.error('Some deletions failed:', failed);
+        throw new Error(`Failed to delete ${failed.length} of ${ids.length} reminders`);
       }
+
+      return results;
     },
     onSuccess: () => {
       // Only invalidate queries once after all deletions are complete
