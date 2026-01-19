@@ -812,13 +812,11 @@ export function CapturePage() {
         // Continue anyway - memory was saved successfully
       }
 
-      // Process phrase/word linking if text is 1-3 words
+      // Process phrase/word linking in background (fire and forget)
       if (textValue.trim().split(/\s+/).length <= 3) {
-        try {
-          await processMemoryPhrase(createdMemory.id, textValue.trim());
-        } catch (phraseError) {
-          console.error('Failed to process phrase:', phraseError);
-        }
+        processMemoryPhrase(createdMemory.id, textValue.trim()).catch(error => {
+          console.error('Failed to process phrase:', error);
+        });
       }
 
       // Handle training input - create or find training by name

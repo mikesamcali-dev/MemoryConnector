@@ -183,70 +183,69 @@ export class MemoriesService {
     const textContent = createMemoryDto.textContent?.trim() || '';
     const words = textContent.split(/\s+/).filter(w => w.length > 0);
 
-    let expandedKeywords: string[] = [];
+    // Create memory first (always fast)
+    const memoryResult = await this.create(userId, createMemoryDto);
 
-    // Only expand if single word
+    // Add to memory deck if requested
+    if (addToDeck) {
+      await this.memoryDecksService.addMemoryToCurrentDeck(userId, memoryResult.id);
+    }
+
+    // Only expand if single word - but do it in the background
     if (words.length === 1 && textContent.length > 0) {
       const originalWord = words[0];
 
-      // Generate 2 additional keywords
-      const { keywords } = await this.keywordExpansionService.expandKeyword(originalWord);
-      expandedKeywords = keywords;
-
-      // Create memory first
-      const memoryResult = await this.create(userId, createMemoryDto);
-
-      // Create and link all words (original + 2 generated)
-      const allWords = [originalWord, ...expandedKeywords].filter(w => w && w.trim().length > 0);
-
-      for (const wordText of allWords) {
+      // Queue keyword expansion and word linking in background
+      setImmediate(async () => {
         try {
-          // Find or create the word
-          const { word } = await this.wordsService.createOrFind(wordText.trim());
+          // Generate 2 additional keywords
+          const { keywords } = await this.keywordExpansionService.expandKeyword(originalWord);
 
-          // Link to memory
-          await this.prisma.memoryWordLink.upsert({
-            where: {
-              memoryId_wordId: {
-                memoryId: memoryResult.id,
-                wordId: word.id,
-              },
-            },
-            create: {
-              memoryId: memoryResult.id,
-              wordId: word.id,
-            },
-            update: {},
-          });
+          // Create and link all words (original + 2 generated)
+          const allWords = [originalWord, ...keywords].filter(w => w && w.trim().length > 0);
+
+          for (const wordText of allWords) {
+            try {
+              // Find or create the word
+              const { word } = await this.wordsService.createOrFind(wordText.trim());
+
+              // Link to memory
+              await this.prisma.memoryWordLink.upsert({
+                where: {
+                  memoryId_wordId: {
+                    memoryId: memoryResult.id,
+                    wordId: word.id,
+                  },
+                },
+                create: {
+                  memoryId: memoryResult.id,
+                  wordId: word.id,
+                },
+                update: {},
+              });
+            } catch (error) {
+              console.error(`Error creating/linking word "${wordText}":`, error);
+              // Don't fail the whole operation if one word fails
+            }
+          }
         } catch (error) {
-          console.error(`Error creating/linking word "${wordText}":`, error);
-          // Don't fail the whole operation if one word fails
+          console.error('Error in background keyword expansion:', error);
         }
-      }
+      });
 
-      // Add to memory deck if requested
-      if (addToDeck) {
-        await this.memoryDecksService.addMemoryToCurrentDeck(userId, memoryResult.id);
-      }
-
-      return {
-        memory: memoryResult,
-        expandedKeywords,
-      };
-    } else {
-      // Multi-word or empty: regular save without keyword expansion
-      const memoryResult = await this.create(userId, createMemoryDto);
-
-      // Add to memory deck if requested
-      if (addToDeck) {
-        await this.memoryDecksService.addMemoryToCurrentDeck(userId, memoryResult.id);
-      }
-
+      // Return immediately with empty expanded keywords
+      // (they'll be added in the background)
       return {
         memory: memoryResult,
         expandedKeywords: [],
       };
     }
+
+    // Multi-word: return immediately
+    return {
+      memory: memoryResult,
+      expandedKeywords: [],
+    };
   }
 
   /**
