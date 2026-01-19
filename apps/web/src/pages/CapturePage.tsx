@@ -658,10 +658,49 @@ export function CapturePage() {
         // Topic linking is handled separately via the topic input
       }
 
+      // Handle training input - create or find training by name
+      if (trainingInput.trim()) {
+        try {
+          const { createTraining, getAllTrainings, linkMemoryToTraining } = await import('../api/trainings');
+
+          // Get all trainings to check if training already exists
+          const allTrainings = await getAllTrainings();
+          let trainingId: string | null = null;
+
+          // Check if a training with this name already exists (case-insensitive)
+          const existingTraining = allTrainings.find(
+            t => t.name.toLowerCase() === trainingInput.trim().toLowerCase()
+          );
+
+          if (existingTraining) {
+            // Training exists, use its ID
+            trainingId = existingTraining.id;
+            console.log('Found existing training:', existingTraining.name);
+          } else {
+            // Training doesn't exist, create it
+            const newTraining = await createTraining({ name: trainingInput.trim() });
+            trainingId = newTraining.id;
+            console.log('Created new training:', newTraining.name);
+          }
+
+          // Link memory to training
+          if (trainingId) {
+            await linkMemoryToTraining(trainingId, createdMemory.id);
+            console.log('Memory linked to training:', trainingId);
+          }
+        } catch (trainingError) {
+          console.error('Failed to create/link training:', trainingError);
+          // Don't fail the whole operation if training creation/linking fails
+        }
+      }
+
       // Reset form
       reset({ text: '' });
       setTextValue('');
       setTopicInput('');
+      setSuggestedTopic(null);
+      setTrainingInput('');
+      setSuggestedTraining(null);
       setSelectedImage(null);
       setImagePreview(null);
       setCompressionInfo('');
@@ -782,10 +821,49 @@ export function CapturePage() {
         }
       }
 
+      // Handle training input - create or find training by name
+      if (trainingInput.trim()) {
+        try {
+          const { createTraining, getAllTrainings, linkMemoryToTraining } = await import('../api/trainings');
+
+          // Get all trainings to check if training already exists
+          const allTrainings = await getAllTrainings();
+          let trainingId: string | null = null;
+
+          // Check if a training with this name already exists (case-insensitive)
+          const existingTraining = allTrainings.find(
+            t => t.name.toLowerCase() === trainingInput.trim().toLowerCase()
+          );
+
+          if (existingTraining) {
+            // Training exists, use its ID
+            trainingId = existingTraining.id;
+            console.log('Found existing training:', existingTraining.name);
+          } else {
+            // Training doesn't exist, create it
+            const newTraining = await createTraining({ name: trainingInput.trim() });
+            trainingId = newTraining.id;
+            console.log('Created new training:', newTraining.name);
+          }
+
+          // Link memory to training
+          if (trainingId) {
+            await linkMemoryToTraining(trainingId, createdMemory.id);
+            console.log('Memory linked to training:', trainingId);
+          }
+        } catch (trainingError) {
+          console.error('Failed to create/link training:', trainingError);
+          // Don't fail the whole operation if training creation/linking fails
+        }
+      }
+
       // Reset form
       reset({ text: '' });
       setTextValue('');
       setTopicInput('');
+      setSuggestedTopic(null);
+      setTrainingInput('');
+      setSuggestedTraining(null);
       setSelectedImage(null);
       setImagePreview(null);
       setCompressionInfo('');
