@@ -206,7 +206,10 @@ export function CapturePage() {
         haptic('light');
       } catch (err) {
         console.error('Failed to generate definition:', err);
-        // Don't show error to user - they can still type manually
+        // Fallback: set a basic definition so buttons can still be enabled
+        const fallbackDef = `Definition for: ${trimmedTitle}`;
+        setTextValue(fallbackDef);
+        setValue('text', fallbackDef, { shouldValidate: true });
       } finally {
         setLoadingDefinition(false);
       }
