@@ -27,6 +27,7 @@ import {
   TrendingUp,
   BookOpen,
   RefreshCw,
+  UserPlus,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -436,31 +437,61 @@ export function AdminPanelPage() {
         </div>
       </div>
 
-      {/* Words Management Link */}
-      <div className="mt-6 bg-white rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
-        <button
-          onClick={() => navigate('/app/admin/words')}
-          className="w-full p-6 text-left"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-green-100 rounded-lg">
-                <BookOpen className="h-8 w-8 text-green-600" />
+      {/* Admin Actions Grid */}
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Create User Account Link */}
+        <div className="bg-white rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
+          <button
+            onClick={() => navigate('/app/admin/register')}
+            className="w-full p-6 text-left"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-100 rounded-lg">
+                  <UserPlus className="h-8 w-8 text-blue-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">Create User Account</h2>
+                  <p className="text-sm text-gray-600">
+                    Register a new user in the system
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 mb-1">Words Management</h2>
-                <p className="text-sm text-gray-600">
-                  Create, edit, and manage vocabulary words
-                </p>
+              <div className="text-blue-600">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </div>
             </div>
-            <div className="text-blue-600">
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+          </button>
+        </div>
+
+        {/* Words Management Link */}
+        <div className="bg-white rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
+          <button
+            onClick={() => navigate('/app/admin/words')}
+            className="w-full p-6 text-left"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-green-100 rounded-lg">
+                  <BookOpen className="h-8 w-8 text-green-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">Words Management</h2>
+                  <p className="text-sm text-gray-600">
+                    Create, edit, and manage vocabulary words
+                  </p>
+                </div>
+              </div>
+              <div className="text-blue-600">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
             </div>
-          </div>
-        </button>
+          </button>
+        </div>
       </div>
 
       {/* Help Popup */}

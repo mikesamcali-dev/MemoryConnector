@@ -41,6 +41,7 @@ const MemoryDeckViewerPage = lazy(() => import('./pages/MemoryDeckViewerPage').t
 const AtlasPage = lazy(() => import('./pages/AtlasPage').then(m => ({ default: m.AtlasPage })));
 const AdminPanelPage = lazy(() => import('./pages/AdminPanelPage').then(m => ({ default: m.AdminPanelPage })));
 const WordsManagementPage = lazy(() => import('./pages/WordsManagementPage').then(m => ({ default: m.WordsManagementPage })));
+const UserRegistrationPage = lazy(() => import('./pages/UserRegistrationPage').then(m => ({ default: m.UserRegistrationPage })));
 const WordsPage = lazy(() => import('./pages/WordsPage').then(m => ({ default: m.WordsPage })));
 const WordDetailPage = lazy(() => import('./pages/WordDetailPage').then(m => ({ default: m.WordDetailPage })));
 const QuestionsPage = lazy(() => import('./pages/QuestionsPage').then(m => ({ default: m.QuestionsPage })));
@@ -452,6 +453,16 @@ function App() {
                 <ProtectedRoute requireAdmin={true}>
                   <AppLayout>
                     <AdminPanelPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/admin/register"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AppLayout>
+                    <UserRegistrationPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
