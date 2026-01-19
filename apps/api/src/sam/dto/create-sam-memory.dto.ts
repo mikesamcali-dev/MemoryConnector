@@ -72,11 +72,12 @@ export class SamTrainingExampleDto {
 }
 
 export class CreateSamMemoryDto {
-  @ApiProperty({ description: 'Memory title' })
+  @ApiPropertyOptional({ description: 'Memory title (auto-generated if not provided)' })
+  @IsOptional()
   @IsString()
   @MinLength(3)
   @MaxLength(120)
-  title: string;
+  title?: string;
 
   @ApiProperty({ description: 'Memory content' })
   @IsString()

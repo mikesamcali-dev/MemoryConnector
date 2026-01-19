@@ -1,7 +1,7 @@
 import { fetchWithAuth } from './client';
 
 export interface CreateSamMemoryDto {
-  title: string;
+  title?: string;
   content: string;
   tags: string[];
   reliability: 'unverified' | 'inferred' | 'confirmed' | 'contested';

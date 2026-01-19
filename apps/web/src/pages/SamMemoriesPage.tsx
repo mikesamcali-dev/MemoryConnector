@@ -112,12 +112,11 @@ export function SamMemoriesPage() {
           <h2>Create New Memory</h2>
           <form onSubmit={handleCreate}>
             <div className="form-group">
-              <label>Title *</label>
+              <label>Title (optional - auto-generated if blank)</label>
               <input
                 type="text"
                 value={newMemory.title}
                 onChange={e => setNewMemory({ ...newMemory, title: e.target.value })}
-                required
                 maxLength={120}
               />
             </div>

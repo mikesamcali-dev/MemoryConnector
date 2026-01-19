@@ -1,28 +1,41 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmbeddingsService } from '../embeddings/embeddings.service';
 import { CreateSamMemoryDto } from './dto/create-sam-memory.dto';
 import { SamAuditService } from './sam-audit.service';
 import { logger } from '../common/logger';
+import OpenAI from 'openai';
 
 @Injectable()
 export class SamService {
+  private openai: OpenAI;
+
   constructor(
     private prisma: PrismaService,
     private embeddings: EmbeddingsService,
-    private audit: SamAuditService
-  ) {}
+    private audit: SamAuditService,
+    private config: ConfigService
+  ) {
+    const apiKey = this.config.get<string>('OPENAI_API_KEY');
+    if (apiKey) {
+      this.openai = new OpenAI({ apiKey });
+    }
+  }
 
   async create(userId: string, dto: CreateSamMemoryDto) {
+    // Generate title with AI if not provided
+    const title = dto.title?.trim() || await this.generateTitle(dto.content);
+
     // Normalize and extract canonical phrases
-    const canonicalPhrases = this.extractCanonicalPhrases(dto.title, dto.content);
+    const canonicalPhrases = this.extractCanonicalPhrases(title, dto.content);
     const summary = this.generateSummary(dto.content);
 
     // Create memory entry
     const memory = await this.prisma.samMemory.create({
       data: {
         userId,
-        title: dto.title.trim(),
+        title,
         content: dto.content.trim(),
         summary,
         canonicalPhrases,
@@ -222,5 +235,46 @@ export class SamService {
       return content.trim();
     }
     return content.substring(0, 297).trim() + '...';
+  }
+
+  private async generateTitle(content: string): Promise<string> {
+    if (!this.openai) {
+      // Fallback: use first few words if OpenAI not configured
+      const words = content.trim().split(/\s+/).slice(0, 6);
+      return words.join(' ').substring(0, 60);
+    }
+
+    try {
+      const response = await this.openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful assistant that generates concise, descriptive titles for memories. Generate a short title (3-8 words) that captures the essence of the content. Return only the title, nothing else.'
+          },
+          {
+            role: 'user',
+            content: `Generate a title for this memory:\n\n${content.substring(0, 500)}`
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 30
+      });
+
+      const generatedTitle = response.choices[0]?.message?.content?.trim();
+      if (generatedTitle && generatedTitle.length > 0) {
+        // Remove quotes if AI wrapped the title in quotes
+        return generatedTitle.replace(/^["']|["']$/g, '').substring(0, 120);
+      }
+
+      // Fallback if AI response is empty
+      const words = content.trim().split(/\s+/).slice(0, 6);
+      return words.join(' ').substring(0, 60);
+    } catch (error) {
+      logger.error('Failed to generate title with AI:', error);
+      // Fallback: use first few words
+      const words = content.trim().split(/\s+/).slice(0, 6);
+      return words.join(' ').substring(0, 60);
+    }
   }
 }

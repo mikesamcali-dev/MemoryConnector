@@ -564,12 +564,6 @@ export function CapturePage() {
       return;
     }
 
-    // Validate title is filled
-    if (!topicInput.trim()) {
-      setError('Title is required');
-      return;
-    }
-
     haptic('light');
     setError('');
     setIsRateLimitError(false);
@@ -582,9 +576,9 @@ export function CapturePage() {
         .map(t => t.trim())
         .filter(Boolean);
 
-      // Create SAM memory
+      // Create SAM memory (title will be auto-generated if not provided)
       const createdMemory = await createSamMemory({
-        title: topicInput.trim(),
+        title: topicInput.trim() || undefined,
         content: textValue,
         tags,
         reliability: 'confirmed',
@@ -735,12 +729,6 @@ export function CapturePage() {
       return;
     }
 
-    // Validate title is filled
-    if (!topicInput.trim()) {
-      setError('Title is required');
-      return;
-    }
-
     haptic('light');
     setError('');
     setIsRateLimitError(false);
@@ -753,9 +741,9 @@ export function CapturePage() {
         .map(t => t.trim())
         .filter(Boolean);
 
-      // Create SAM memory
+      // Create SAM memory (title will be auto-generated if not provided)
       const createdMemory = await createSamMemory({
-        title: topicInput.trim(),
+        title: topicInput.trim() || undefined,
         content: textValue,
         tags,
         reliability: 'confirmed',
@@ -910,12 +898,6 @@ export function CapturePage() {
     setError('');
     setIsRateLimitError(false);
 
-    // Validate title is filled
-    if (!topicInput.trim()) {
-      setError('Title is required');
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -925,9 +907,9 @@ export function CapturePage() {
         .map(t => t.trim())
         .filter(Boolean);
 
-      // Create SAM memory
+      // Create SAM memory (title will be auto-generated if not provided)
       const createdMemory = await createSamMemory({
-        title: topicInput.trim(),
+        title: topicInput.trim() || undefined,
         content: data.text,
         tags,
         reliability: 'confirmed',
