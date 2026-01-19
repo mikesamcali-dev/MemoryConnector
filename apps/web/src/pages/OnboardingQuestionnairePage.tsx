@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Brain, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 type LearningStyle = 'VISUAL' | 'HANDS_ON' | 'THEORETICAL' | 'MIXED';
 type SkillLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
@@ -20,6 +21,7 @@ interface OnboardingAnswers {
 
 export function OnboardingQuestionnairePage() {
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -56,6 +58,9 @@ export function OnboardingQuestionnairePage() {
         const errorData = await response.json().catch(() => ({ message: 'Onboarding failed' }));
         throw new Error(errorData.message || 'Failed to complete onboarding');
       }
+
+      // Refresh user to update onboardingCompleted flag
+      await refreshUser();
 
       // Redirect to app
       navigate('/app/capture');
@@ -99,6 +104,17 @@ export function OnboardingQuestionnairePage() {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
+  };
+
+  // Helper to set answer and auto-advance to next question
+  const selectAndAdvance = (updateFn: () => void) => {
+    updateFn();
+    // Use setTimeout to ensure state update completes before advancing
+    setTimeout(() => {
+      if (currentStep < totalSteps) {
+        setCurrentStep(currentStep + 1);
+      }
+    }, 150);
   };
 
   return (
@@ -160,7 +176,7 @@ export function OnboardingQuestionnairePage() {
                 ].map((option) => (
                   <button
                     key={option.value}
-                    onClick={() => setAnswers({ ...answers, learningStyle: option.value as LearningStyle })}
+                    onClick={() => selectAndAdvance(() => setAnswers({ ...answers, learningStyle: option.value as LearningStyle }))}
                     className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
                       answers.learningStyle === option.value
                         ? 'border-purple-600 bg-purple-50'
@@ -188,7 +204,7 @@ export function OnboardingQuestionnairePage() {
                 ].map((option) => (
                   <button
                     key={option.value}
-                    onClick={() => setAnswers({ ...answers, skillLevel: option.value as SkillLevel })}
+                    onClick={() => selectAndAdvance(() => setAnswers({ ...answers, skillLevel: option.value as SkillLevel }))}
                     className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
                       answers.skillLevel === option.value
                         ? 'border-purple-600 bg-purple-50'
@@ -217,7 +233,7 @@ export function OnboardingQuestionnairePage() {
                 ].map((option) => (
                   <button
                     key={option.value}
-                    onClick={() => setAnswers({ ...answers, primaryGoal: option.value as PrimaryGoal })}
+                    onClick={() => selectAndAdvance(() => setAnswers({ ...answers, primaryGoal: option.value as PrimaryGoal }))}
                     className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
                       answers.primaryGoal === option.value
                         ? 'border-purple-600 bg-purple-50'
@@ -247,7 +263,7 @@ export function OnboardingQuestionnairePage() {
                 ].map((option) => (
                   <button
                     key={option.value}
-                    onClick={() => setAnswers({ ...answers, dailyTimeCommitment: option.value })}
+                    onClick={() => selectAndAdvance(() => setAnswers({ ...answers, dailyTimeCommitment: option.value }))}
                     className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
                       answers.dailyTimeCommitment === option.value
                         ? 'border-purple-600 bg-purple-50'
@@ -275,7 +291,7 @@ export function OnboardingQuestionnairePage() {
                 ].map((option) => (
                   <button
                     key={option.value}
-                    onClick={() => setAnswers({ ...answers, preferredPace: option.value as PreferredPace })}
+                    onClick={() => selectAndAdvance(() => setAnswers({ ...answers, preferredPace: option.value as PreferredPace }))}
                     className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
                       answers.preferredPace === option.value
                         ? 'border-purple-600 bg-purple-50'

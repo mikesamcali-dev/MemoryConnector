@@ -25,6 +25,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         email: true,
         tier: true,
         roles: true,
+        requirePasswordChange: true,
+        memoryProfile: {
+          select: {
+            onboardingCompleted: true,
+          },
+        },
       },
     });
 
@@ -37,6 +43,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       email: user.email,
       tier: user.tier,
       roles: user.roles,
+      requirePasswordChange: user.requirePasswordChange,
+      onboardingCompleted: user.memoryProfile?.onboardingCompleted ?? false,
     };
   }
 }

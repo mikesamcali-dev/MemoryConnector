@@ -48,6 +48,7 @@ const WordsPage = lazy(() => import('./pages/WordsPage').then(m => ({ default: m
 const WordDetailPage = lazy(() => import('./pages/WordDetailPage').then(m => ({ default: m.WordDetailPage })));
 const QuestionsPage = lazy(() => import('./pages/QuestionsPage').then(m => ({ default: m.QuestionsPage })));
 const QuestionDetailPage = lazy(() => import('./pages/QuestionDetailPage').then(m => ({ default: m.QuestionDetailPage })));
+const SamMemoriesPage = lazy(() => import('./pages/SamMemoriesPage').then(m => ({ default: m.SamMemoriesPage })));
 const ReminderSchedulePage = lazy(() => import('./pages/ReminderSchedulePage').then(m => ({ default: m.ReminderSchedulePage })));
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage').then(m => ({ default: m.ProjectsPage })));
 const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage').then(m => ({ default: m.ProjectDetailPage })));
@@ -78,7 +79,7 @@ function App() {
             <Route
               path="/change-password"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute skipOnboardingCheck={true}>
                   <ChangePasswordPage />
                 </ProtectedRoute>
               }
@@ -88,7 +89,7 @@ function App() {
             <Route
               path="/app/onboarding"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute skipOnboardingCheck={true}>
                   <OnboardingQuestionnairePage />
                 </ProtectedRoute>
               }
@@ -139,6 +140,16 @@ function App() {
                 <ProtectedRoute>
                   <AppLayout>
                     <MemoriesPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/sam"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <SamMemoriesPage />
                   </AppLayout>
                 </ProtectedRoute>
               }

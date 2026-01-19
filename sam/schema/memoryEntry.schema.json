@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SAMMemoryEntry",
+  "type": "object",
+  "required": [
+    "id",
+    "title",
+    "content",
+    "summary",
+    "canonical_phrases",
+    "tags",
+    "source",
+    "created_at",
+    "updated_at",
+    "confidence_score",
+    "reliability",
+    "usage_count",
+    "last_used_at",
+    "context_window",
+    "training_examples",
+    "decay_policy",
+    "archive_flag",
+    "version",
+    "embeddings"
+  ],
+  "properties": {
+    "id": { "type": "string", "minLength": 8 },
+    "title": { "type": "string", "minLength": 3, "maxLength": 120 },
+    "content": { "type": "string", "minLength": 10, "maxLength": 8000 },
+    "summary": { "type": "string", "minLength": 10, "maxLength": 320 },
+    "canonical_phrases": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "items": { "type": "string", "minLength": 3, "maxLength": 120 }
+    },
+    "tags": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 24,
+      "items": { "type": "string", "minLength": 2, "maxLength": 40 }
+    },
+    "source": {
+      "type": "object",
+      "required": ["type", "ref", "uri"],
+      "properties": {
+        "type": { "type": "string", "enum": ["user", "system", "import", "derived", "doc"] },
+        "ref": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "uri": { "type": ["string", "null"], "maxLength": 500 }
+      }
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "confidence_score": { "type": "number", "minimum": 0, "maximum": 1 },
+    "reliability": { "type": "string", "enum": ["unverified", "inferred", "confirmed", "contested"] },
+    "usage_count": { "type": "integer", "minimum": 0 },
+    "last_used_at": { "type": ["string", "null"], "format": "date-time" },
+    "context_window": {
+      "type": "object",
+      "required": ["applies_to", "excludes"],
+      "properties": {
+        "applies_to": { "type": "array", "items": { "type": "string" }, "maxItems": 32 },
+        "excludes": { "type": "array", "items": { "type": "string" }, "maxItems": 32 }
+      }
+    },
+    "training_examples": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "required": ["id", "user", "assistant", "assertions", "last_tested_at", "pass_rate"],
+        "properties": {
+          "id": { "type": "string", "minLength": 4, "maxLength": 64 },
+          "user": { "type": "string", "minLength": 3, "maxLength": 600 },
+          "assistant": { "type": "string", "minLength": 3, "maxLength": 1200 },
+          "assertions": { "type": "array", "items": { "type": "string" }, "maxItems": 12 },
+          "last_tested_at": { "type": ["string", "null"], "format": "date-time" },
+          "pass_rate": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+    "decay_policy": {
+      "type": "object",
+      "required": ["type", "half_life_days", "min_confidence"],
+      "properties": {
+        "type": { "type": "string", "enum": ["exponential", "none"] },
+        "half_life_days": { "type": "integer", "minimum": 7, "maximum": 3650 },
+        "min_confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "archive_flag": { "type": "boolean" },
+    "version": { "type": "integer", "minimum": 1 },
+    "embeddings": {
+      "type": "object",
+      "required": ["model", "dims", "vector_ref"],
+      "properties": {
+        "model": { "type": "string", "minLength": 3, "maxLength": 80 },
+        "dims": { "type": "integer", "minimum": 8, "maximum": 8192 },
+        "vector_ref": { "type": "string", "minLength": 6, "maxLength": 200 }
+      }
+    }
+  }
+}

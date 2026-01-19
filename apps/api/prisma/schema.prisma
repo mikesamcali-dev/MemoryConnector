@@ -177,6 +177,7 @@ model User {
   implementationIntentions ImplementationIntention[]
   dailyCheckIns            DailyCheckIn[]
   profileCheckIns          ProfileCheckIn[]
+  samMemories              SamMemory[]
 
   @@map("users")
 }
@@ -1847,3 +1848,150 @@ model TranscriptFeedback {
   @@index([sessionId])
   @@map("transcript_feedback")
 }
+// ============================================================================
+// SEMANTIC ANCHOR MEMORY (SAM) TABLES
+// ============================================================================
+
+// SAM Reliability enum
+enum SamReliability {
+  unverified
+  inferred
+  confirmed
+  contested
+}
+
+// SAM Decay Policy Type enum
+enum SamDecayType {
+  exponential
+  none
+}
+
+// SAM Source Type enum
+enum SamSourceType {
+  user
+  system
+  import
+  derived
+  doc
+}
+
+// SAM Memory Entry - Main table for semantic anchor memories
+model SamMemory {
+  id               String         @id @default(uuid()) @db.Uuid
+  userId           String         @map("user_id") @db.Uuid
+  title            String         @db.VarChar(120)
+  content          String         @db.Text
+  summary          String         @db.VarChar(320)
+  canonicalPhrases String[]       @map("canonical_phrases") // Lowercased phrases for matching
+  tags             String[]       // Tags for filtering
+  sourceType       SamSourceType  @map("source_type")
+  sourceRef        String         @map("source_ref") @db.VarChar(200)
+  sourceUri        String?        @map("source_uri") @db.VarChar(500)
+  confidenceScore  Float          @map("confidence_score") @db.Real // 0-1
+  reliability      SamReliability
+  usageCount       Int            @default(0) @map("usage_count")
+  lastUsedAt       DateTime?      @map("last_used_at")
+  archiveFlag      Boolean        @default(false) @map("archive_flag")
+  version          Int            @default(1)
+  embeddingModel   String         @map("embedding_model") @db.VarChar(80)
+  embeddingDims    Int            @map("embedding_dims")
+  embeddingRef     String         @map("embedding_ref") @db.VarChar(200) // Reference to embedding storage
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  user              User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contextWindow     SamContextWindow?
+  decayPolicy       SamDecayPolicy?
+  trainingExamples  SamTrainingExample[]
+  versionHistory    SamMemoryVersion[]
+  auditEvents       SamAuditEvent[]
+
+  @@index([userId])
+  @@index([userId, archiveFlag])
+  @@index([userId, tags])
+  @@index([updatedAt])
+  @@map("sam_memories")
+}
+
+// SAM Context Window - Defines where memory applies
+model SamContextWindow {
+  id        String   @id @default(uuid()) @db.Uuid
+  memoryId  String   @unique @map("memory_id") @db.Uuid
+  appliesTo String[] @map("applies_to") // Contexts where this memory is relevant
+  excludes  String[] // Contexts where this memory should not apply
+
+  memory SamMemory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@map("sam_context_windows")
+}
+
+// SAM Decay Policy - Controls confidence decay over time
+model SamDecayPolicy {
+  id            String       @id @default(uuid()) @db.Uuid
+  memoryId      String       @unique @map("memory_id") @db.Uuid
+  type          SamDecayType
+  halfLifeDays  Int          @map("half_life_days") // Days for confidence to halve
+  minConfidence Float        @map("min_confidence") @db.Real // Minimum confidence before archival suggestion
+
+  memory SamMemory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@map("sam_decay_policies")
+}
+
+// SAM Training Example - Micro-training examples for memory validation
+model SamTrainingExample {
+  id           String    @id @default(uuid()) @db.Uuid
+  memoryId     String    @map("memory_id") @db.Uuid
+  exampleId    String    @map("example_id") @db.VarChar(64) // User-friendly ID
+  userPrompt   String    @map("user_prompt") @db.VarChar(600)
+  assistant    String    @db.VarChar(1200)
+  assertions   String[] // Required keywords or "forbidden:term"
+  lastTestedAt DateTime? @map("last_tested_at")
+  passRate     Float     @default(0) @map("pass_rate") @db.Real // 0-1
+
+  memory SamMemory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@index([memoryId])
+  @@map("sam_training_examples")
+}
+
+// SAM Memory Version - Version history for memories
+model SamMemoryVersion {
+  id               String         @id @default(uuid()) @db.Uuid
+  memoryId         String         @map("memory_id") @db.Uuid
+  version          Int
+  title            String         @db.VarChar(120)
+  content          String         @db.Text
+  summary          String         @db.VarChar(320)
+  canonicalPhrases String[]       @map("canonical_phrases")
+  tags             String[]
+  confidenceScore  Float          @map("confidence_score") @db.Real
+  reliability      SamReliability
+  changelog        Json? // Array of {path, before, after, reason}
+  createdAt        DateTime       @default(now()) @map("created_at")
+
+  memory SamMemory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@index([memoryId, version])
+  @@map("sam_memory_versions")
+}
+
+// SAM Audit Event - Audit trail for memory operations
+model SamAuditEvent {
+  id        String   @id @default(uuid()) @db.Uuid
+  memoryId  String   @map("memory_id") @db.Uuid
+  eventType String   @map("event_type") @db.VarChar(50) // created, updated, recalled, archived, etc.
+  details   Json? // Event-specific details
+  createdAt DateTime @default(now()) @map("created_at")
+
+  memory SamMemory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@index([memoryId, createdAt])
+  @@index([createdAt])
+  @@map("sam_audit_events")
+}
+
+// Add relation to User model - place this near the User model definition
+// user:
+//   samMemories SamMemory[]

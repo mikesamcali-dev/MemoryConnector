@@ -4,10 +4,11 @@ import { getUsageStats } from '../api/usage';
 import { getMemories, deleteMemory } from '../api/memories';
 import { getReminderPreferences, updateReminderPreferences, minutesToDisplay, parseToMinutes } from '../api/userPreferences';
 import { resetAllHelpViews } from '../api/helpViews';
+import { getUserMemoryProfile, updateUserMemoryProfile } from '../api/userMemory';
 import { useHelpPopup } from '../hooks/useHelpPopup';
 import { HelpPopup } from '../components/HelpPopup';
 import { Link, useNavigate } from 'react-router-dom';
-import { Trash2, Edit, TrendingUp, Calendar, Bell, HelpCircle } from 'lucide-react';
+import { Trash2, Edit, TrendingUp, Calendar, Bell, HelpCircle, User } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export function SettingsPage() {
@@ -27,6 +28,16 @@ export function SettingsPage() {
   const [thirdUnit, setThirdUnit] = useState<'minutes' | 'hours' | 'days' | 'weeks'>('weeks');
   const [remindersEnabled, setRemindersEnabled] = useState(true);
 
+  // Profile settings state
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [learningStyle, setLearningStyle] = useState<'VISUAL' | 'HANDS_ON' | 'THEORETICAL' | 'MIXED'>('MIXED');
+  const [skillLevel, setSkillLevel] = useState<'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED'>('INTERMEDIATE');
+  const [primaryGoal, setPrimaryGoal] = useState<'RETENTION' | 'LEARNING' | 'ORGANIZATION' | 'HABIT_BUILDING'>('RETENTION');
+  const [dailyTimeCommitment, setDailyTimeCommitment] = useState(10);
+  const [preferredPace, setPreferredPace] = useState<'INTENSIVE' | 'MODERATE' | 'GRADUAL'>('MODERATE');
+  const [preferredReviewTime, setPreferredReviewTime] = useState<string | null>(null);
+  const [areasOfInterest, setAreasOfInterest] = useState<string[]>([]);
+
   // Fetch usage stats
   const { data: usageStats, isLoading: loadingStats } = useQuery({
     queryKey: ['usage-stats'],
@@ -43,6 +54,12 @@ export function SettingsPage() {
   const { data: preferences } = useQuery({
     queryKey: ['reminder-preferences'],
     queryFn: getReminderPreferences,
+  });
+
+  // Fetch user memory profile
+  const { data: memoryProfile } = useQuery({
+    queryKey: ['user-memory-profile'],
+    queryFn: getUserMemoryProfile,
   });
 
   // Update preferences when loaded
@@ -95,6 +112,19 @@ export function SettingsPage() {
     }
   }, [preferences]);
 
+  // Update profile settings when loaded
+  useEffect(() => {
+    if (memoryProfile) {
+      setLearningStyle(memoryProfile.learningStyle);
+      setSkillLevel(memoryProfile.skillLevel);
+      setPrimaryGoal(memoryProfile.primaryGoal);
+      setDailyTimeCommitment(memoryProfile.dailyTimeCommitment);
+      setPreferredPace(memoryProfile.preferredPace);
+      setPreferredReviewTime(memoryProfile.preferredReviewTime);
+      setAreasOfInterest(memoryProfile.areasOfInterest);
+    }
+  }, [memoryProfile]);
+
   // Update preferences mutation
   const updatePrefsMutation = useMutation({
     mutationFn: updateReminderPreferences,
@@ -110,6 +140,27 @@ export function SettingsPage() {
       secondReminderMinutes: parseToMinutes(secondValue, secondUnit),
       thirdReminderMinutes: parseToMinutes(thirdValue, thirdUnit),
       remindersEnabled,
+    });
+  };
+
+  // Update profile mutation
+  const updateProfileMutation = useMutation({
+    mutationFn: updateUserMemoryProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-memory-profile'] });
+      setEditingProfile(false);
+    },
+  });
+
+  const handleSaveProfile = () => {
+    updateProfileMutation.mutate({
+      learningStyle,
+      skillLevel,
+      primaryGoal,
+      dailyTimeCommitment,
+      preferredPace,
+      preferredReviewTime,
+      areasOfInterest,
     });
   };
 
@@ -253,6 +304,209 @@ export function SettingsPage() {
           )}
         </div>
       </div>
+
+      {/* Profile Settings */}
+      {memoryProfile && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6 mb-6 md:mb-8">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
+            <h2 className="text-lg md:text-xl font-semibold flex items-center gap-2">
+              <User className="h-4 md:h-5 w-4 md:w-5 text-blue-600" />
+              <span className="hidden md:inline">Learning Profile</span>
+              <span className="md:hidden">Profile</span>
+            </h2>
+            {!editingProfile && (
+              <button
+                onClick={() => setEditingProfile(true)}
+                className="h-12 md:h-10 px-4 md:px-3 py-2 text-base md:text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                Edit
+              </button>
+            )}
+          </div>
+
+          {!editingProfile ? (
+            // View Mode
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700">Learning Style</span>
+                <span className="font-medium capitalize">{memoryProfile.learningStyle.replace('_', ' ')}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700">Skill Level</span>
+                <span className="font-medium capitalize">{memoryProfile.skillLevel}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700">Primary Goal</span>
+                <span className="font-medium capitalize">{memoryProfile.primaryGoal.replace('_', ' ')}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700">Daily Time Commitment</span>
+                <span className="font-medium">{memoryProfile.dailyTimeCommitment} minutes</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700">Preferred Pace</span>
+                <span className="font-medium capitalize">{memoryProfile.preferredPace}</span>
+              </div>
+              {memoryProfile.preferredReviewTime && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-700">Best Review Time</span>
+                  <span className="font-medium capitalize">{memoryProfile.preferredReviewTime}</span>
+                </div>
+              )}
+              {memoryProfile.areasOfInterest.length > 0 && (
+                <div className="pt-2 border-t border-gray-200">
+                  <span className="text-gray-700 block mb-2">Areas of Interest</span>
+                  <div className="flex flex-wrap gap-2">
+                    {memoryProfile.areasOfInterest.map((area) => (
+                      <span key={area} className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm">
+                        {area}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            // Edit Mode
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Learning Style</label>
+                <select
+                  value={learningStyle}
+                  onChange={(e) => setLearningStyle(e.target.value as any)}
+                  className="w-full h-12 md:h-10 px-3 py-2 border border-gray-300 rounded-md text-base md:text-sm"
+                >
+                  <option value="VISUAL">Visual</option>
+                  <option value="HANDS_ON">Hands-On</option>
+                  <option value="THEORETICAL">Theoretical</option>
+                  <option value="MIXED">Mixed</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Skill Level</label>
+                <select
+                  value={skillLevel}
+                  onChange={(e) => setSkillLevel(e.target.value as any)}
+                  className="w-full h-12 md:h-10 px-3 py-2 border border-gray-300 rounded-md text-base md:text-sm"
+                >
+                  <option value="BEGINNER">Beginner</option>
+                  <option value="INTERMEDIATE">Intermediate</option>
+                  <option value="ADVANCED">Advanced</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Primary Goal</label>
+                <select
+                  value={primaryGoal}
+                  onChange={(e) => setPrimaryGoal(e.target.value as any)}
+                  className="w-full h-12 md:h-10 px-3 py-2 border border-gray-300 rounded-md text-base md:text-sm"
+                >
+                  <option value="RETENTION">Long-term Retention</option>
+                  <option value="LEARNING">Fast Learning</option>
+                  <option value="ORGANIZATION">Organization</option>
+                  <option value="HABIT_BUILDING">Build Habits</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Daily Time Commitment (minutes)</label>
+                <select
+                  value={dailyTimeCommitment}
+                  onChange={(e) => setDailyTimeCommitment(Number(e.target.value))}
+                  className="w-full h-12 md:h-10 px-3 py-2 border border-gray-300 rounded-md text-base md:text-sm"
+                >
+                  <option value={5}>5 minutes</option>
+                  <option value={10}>10 minutes</option>
+                  <option value={15}>15 minutes</option>
+                  <option value={30}>30 minutes</option>
+                  <option value={60}>60+ minutes</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Pace</label>
+                <select
+                  value={preferredPace}
+                  onChange={(e) => setPreferredPace(e.target.value as any)}
+                  className="w-full h-12 md:h-10 px-3 py-2 border border-gray-300 rounded-md text-base md:text-sm"
+                >
+                  <option value="INTENSIVE">Intensive</option>
+                  <option value="MODERATE">Moderate</option>
+                  <option value="GRADUAL">Gradual</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Best Review Time</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {['morning', 'afternoon', 'evening', 'flexible'].map((time) => (
+                    <button
+                      key={time}
+                      onClick={() => setPreferredReviewTime(time)}
+                      className={`p-3 rounded-lg border-2 transition-all capitalize text-sm ${
+                        preferredReviewTime === time
+                          ? 'border-blue-600 bg-blue-50'
+                          : 'border-gray-200 hover:border-blue-300'
+                      }`}
+                    >
+                      {time}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Areas of Interest</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    'Work & Professional',
+                    'People & Relationships',
+                    'Health & Wellness',
+                    'Learning & Education',
+                    'Hobbies & Interests',
+                    'Personal Development',
+                  ].map((area) => (
+                    <button
+                      key={area}
+                      onClick={() => {
+                        const newAreas = areasOfInterest.includes(area)
+                          ? areasOfInterest.filter((a) => a !== area)
+                          : [...areasOfInterest, area];
+                        setAreasOfInterest(newAreas);
+                      }}
+                      className={`p-3 rounded-lg border-2 transition-all text-sm ${
+                        areasOfInterest.includes(area)
+                          ? 'border-blue-600 bg-blue-50'
+                          : 'border-gray-200 hover:border-blue-300'
+                      }`}
+                    >
+                      {area}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={updateProfileMutation.isPending}
+                  className="h-12 md:h-10 px-4 md:px-3 py-2 bg-blue-600 text-white text-base md:text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                >
+                  {updateProfileMutation.isPending ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  onClick={() => setEditingProfile(false)}
+                  className="h-12 md:h-10 px-4 md:px-3 py-2 bg-gray-200 text-gray-700 text-base md:text-sm font-medium rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Reminder Settings */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6 mb-6 md:mb-8">

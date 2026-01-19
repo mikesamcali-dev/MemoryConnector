@@ -34,6 +34,7 @@ import { TranscriptionModule } from './transcription/transcription.module';
 // import { MemoryRelationshipsModule } from './memory-relationships/memory-relationships.module';
 // import { MemoryEntitiesModule } from './memory-entities/memory-entities.module';
 import { SpellCheckModule } from './spell-check/spell-check.module';
+import { SamModule } from './sam/sam.module';
 import { AdminModule } from './admin/admin.module';
 import { AuditTrailModule } from './audit-trail/audit-trail.module';
 import { HealthModule } from './health/health.module';
@@ -103,6 +104,7 @@ import { AuditLoggingInterceptor } from './audit-trail/interceptors/audit-loggin
     // MemoryRelationshipsModule, // Disabled - needs update for hybrid schema
     // MemoryEntitiesModule, // Disabled - needs update for hybrid schema
     SpellCheckModule,
+    SamModule,
     AdminModule,
     AuditTrailModule,
     HealthModule,
