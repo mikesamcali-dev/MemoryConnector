@@ -23,7 +23,7 @@ export function UserRegistrationPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, isAdminCreated: true }),
         credentials: 'include',
       });
 
@@ -74,7 +74,7 @@ export function UserRegistrationPage() {
                 Account created for <span className="font-medium">{createdEmail}</span>
               </p>
               <p className="text-sm text-green-700 mt-1">
-                The user can now log in with their email and password.
+                A welcome email has been sent with login credentials. The user will be prompted to change their password and complete the onboarding questionnaire on first login.
               </p>
             </div>
           </div>
@@ -167,7 +167,9 @@ export function UserRegistrationPage() {
         <h3 className="text-sm font-medium text-blue-900 mb-2">Account Creation Notes</h3>
         <ul className="text-sm text-blue-700 space-y-1">
           <li>• New users will have a "user" role by default</li>
-          <li>• Users can log in immediately after account creation</li>
+          <li>• A welcome email will be sent with the temporary password</li>
+          <li>• Users will be required to change their password on first login</li>
+          <li>• After password change, users will complete the onboarding questionnaire</li>
           <li>• You can upgrade users to premium or add admin role from User Management</li>
           <li>• Initial tier is set to "free"</li>
         </ul>

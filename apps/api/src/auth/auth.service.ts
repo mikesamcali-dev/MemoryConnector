@@ -5,6 +5,7 @@ import * as argon2 from 'argon2';
 import { UsersService } from '../users/users.service';
 import { SessionsService } from './sessions/sessions.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class AuthService {
@@ -13,12 +14,17 @@ export class AuthService {
     private jwtService: JwtService,
     private sessionsService: SessionsService,
     private prisma: PrismaService,
-    private config: ConfigService
+    private config: ConfigService,
+    private emailService: EmailService
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!user.passwordHash) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -38,6 +44,11 @@ export class AuthService {
     // Create refresh token
     const refreshToken = await this.sessionsService.createSession(user.id);
 
+    // Check if user has completed onboarding
+    const profile = await this.prisma.userMemoryProfile.findUnique({
+      where: { userId: user.id },
+    });
+
     return {
       accessToken,
       refreshToken,
@@ -46,11 +57,13 @@ export class AuthService {
         email: user.email,
         tier: user.tier,
         roles: user.roles,
+        requirePasswordChange: user.requirePasswordChange || false,
+        onboardingCompleted: !!profile,
       },
     };
   }
 
-  async signup(email: string, password: string) {
+  async signup(email: string, password: string, isAdminCreated: boolean = false) {
     // Check if user exists
     const existing = await this.prisma.user.findUnique({
       where: { email },
@@ -70,6 +83,7 @@ export class AuthService {
         passwordHash,
         tier: 'free',
         roles: ['user'],
+        requirePasswordChange: isAdminCreated,
       },
     });
 
@@ -80,7 +94,20 @@ export class AuthService {
       },
     });
 
-    // Auto-login
+    // If admin-created, send welcome email and return user without auto-login
+    if (isAdminCreated) {
+      await this.emailService.sendWelcomeEmail(email, password);
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          tier: user.tier,
+          roles: user.roles,
+        },
+      };
+    }
+
+    // Self-signup: Auto-login
     return this.login(user);
   }
 
@@ -103,6 +130,37 @@ export class AuthService {
 
   async logout(refreshToken: string) {
     await this.sessionsService.revokeSession(refreshToken);
+  }
+
+  async changePassword(userId: string, oldPassword: string, newPassword: string) {
+    // Get user with password hash
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || !user.passwordHash) {
+      throw new UnauthorizedException('User not found or no password set');
+    }
+
+    // Verify old password
+    const isValid = await argon2.verify(user.passwordHash, oldPassword);
+    if (!isValid) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    // Hash new password
+    const newPasswordHash = await argon2.hash(newPassword);
+
+    // Update password and clear requirePasswordChange flag
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash: newPasswordHash,
+        requirePasswordChange: false,
+      },
+    });
+
+    return { success: true, message: 'Password changed successfully' };
   }
 
   async googleLogin(googleUser: { googleId: string; email: string; name: string }) {

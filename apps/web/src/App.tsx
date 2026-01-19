@@ -12,6 +12,8 @@ const SynapseReviewPage = lazy(() => import('./pages/SynapseReviewPage').then(m 
 const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
 const SignupPage = lazy(() => import('./pages/SignupPage').then(m => ({ default: m.SignupPage })));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })));
+const ChangePasswordPage = lazy(() => import('./pages/ChangePasswordPage').then(m => ({ default: m.ChangePasswordPage })));
+const OnboardingQuestionnairePage = lazy(() => import('./pages/OnboardingQuestionnairePage').then(m => ({ default: m.OnboardingQuestionnairePage })));
 const OAuthCallbackPage = lazy(() => import('./pages/OAuthCallbackPage').then(m => ({ default: m.OAuthCallbackPage })));
 const CapturePage = lazy(() => import('./pages/CapturePage').then(m => ({ default: m.CapturePage })));
 const SearchPage = lazy(() => import('./pages/SearchPage').then(m => ({ default: m.SearchPage })));
@@ -71,6 +73,26 @@ function App() {
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/auth/callback" element={<OAuthCallbackPage />} />
+
+            {/* Password change route (requires authentication but no onboarding) */}
+            <Route
+              path="/change-password"
+              element={
+                <ProtectedRoute>
+                  <ChangePasswordPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Onboarding questionnaire route (requires authentication) */}
+            <Route
+              path="/app/onboarding"
+              element={
+                <ProtectedRoute>
+                  <OnboardingQuestionnairePage />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Protected app routes with layout */}
             <Route

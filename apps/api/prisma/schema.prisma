@@ -138,44 +138,45 @@ enum SpeechSessionStatus {
 // ============================================================================
 
 model User {
-  id           String   @id @default(uuid()) @db.Uuid
-  email        String   @unique
-  passwordHash String?  @map("password_hash")
-  googleId     String?  @unique @map("google_id")
-  provider     String?  @default("local") // 'local' or 'google'
-  tier         String   @default("free")
-  roles        String[] @default(["user"])
-  isEnabled    Boolean  @default(true) @map("is_enabled")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id                    String   @id @default(uuid()) @db.Uuid
+  email                 String   @unique
+  passwordHash          String?  @map("password_hash")
+  googleId              String?  @unique @map("google_id")
+  provider              String?  @default("local") // 'local' or 'google'
+  tier                  String   @default("free")
+  roles                 String[] @default(["user"])
+  isEnabled             Boolean  @default(true) @map("is_enabled")
+  requirePasswordChange Boolean  @default(false) @map("require_password_change")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
 
   // Relations
-  memories            Memory[]
-  sessions            Session[]
-  reminders           Reminder[]
-  usage               UserUsage?
-  stats               UserStats?
-  reminderPreferences UserReminderPreferences?
-  helpViews           UserHelpView[]
-  idempotencyKeys     IdempotencyKey[]
-  aiCostTracking      AiCostTracking[]
-  excludedWords       ExcludedWord[]
-  images              Image[]
-  urlPages            UrlPage[]
-  memoryDecks         MemoryDeck[]
-  projects            Project[]
-  trainings           Training[]
-  trainingDecks       TrainingDeck[]
-  twitterPosts        TwitterPost[]
-  speechSessions      SpeechSession[]
-  userLexicon         UserLexicon[]
-  transcriptFeedback  TranscriptFeedback[]
-  questions           Question[]
-  memoryProfile       UserMemoryProfile?
-  adaptiveReviewConfig AdaptiveReviewConfig?
+  memories                 Memory[]
+  sessions                 Session[]
+  reminders                Reminder[]
+  usage                    UserUsage?
+  stats                    UserStats?
+  reminderPreferences      UserReminderPreferences?
+  helpViews                UserHelpView[]
+  idempotencyKeys          IdempotencyKey[]
+  aiCostTracking           AiCostTracking[]
+  excludedWords            ExcludedWord[]
+  images                   Image[]
+  urlPages                 UrlPage[]
+  memoryDecks              MemoryDeck[]
+  projects                 Project[]
+  trainings                Training[]
+  trainingDecks            TrainingDeck[]
+  twitterPosts             TwitterPost[]
+  speechSessions           SpeechSession[]
+  userLexicon              UserLexicon[]
+  transcriptFeedback       TranscriptFeedback[]
+  questions                Question[]
+  memoryProfile            UserMemoryProfile?
+  adaptiveReviewConfig     AdaptiveReviewConfig?
   implementationIntentions ImplementationIntention[]
-  dailyCheckIns       DailyCheckIn[]
-  profileCheckIns     ProfileCheckIn[]
+  dailyCheckIns            DailyCheckIn[]
+  profileCheckIns          ProfileCheckIn[]
 
   @@map("users")
 }
@@ -274,29 +275,29 @@ model UserHelpView {
 // ============================================================================
 
 model UserMemoryProfile {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @unique @map("user_id") @db.Uuid
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @unique @map("user_id") @db.Uuid
 
   // Onboarding Data
-  learningStyle       LearningStyle @map("learning_style")
-  skillLevel          SkillLevel    @map("skill_level")
-  primaryGoal         PrimaryGoal   @map("primary_goal")
-  preferredPace       PreferredPace @map("preferred_pace")
-  dailyTimeCommitment Int           @map("daily_time_commitment") // Minutes per day
-  areasOfInterest     String[]      @map("areas_of_interest")
-  cognitivePreferences Json?        @map("cognitive_preferences") // Extended preferences
+  learningStyle        LearningStyle @map("learning_style")
+  skillLevel           SkillLevel    @map("skill_level")
+  primaryGoal          PrimaryGoal   @map("primary_goal")
+  preferredPace        PreferredPace @map("preferred_pace")
+  dailyTimeCommitment  Int           @map("daily_time_commitment") // Minutes per day
+  areasOfInterest      String[]      @map("areas_of_interest")
+  cognitivePreferences Json?         @map("cognitive_preferences") // Extended preferences
 
   // Adaptive Performance Tracking
-  averageRecallRate    Float    @default(0.0) @map("average_recall_rate") // 0.0-1.0
-  averageReviewTime    Int      @default(0) @map("average_review_time") // Avg seconds per review
-  optimalReviewInterval Float   @default(1.0) @map("optimal_review_interval") // Base interval multiplier
-  preferredReviewTime  String?  @map("preferred_review_time") @db.VarChar(20) // e.g., "morning"
-  lastAdaptationUpdate DateTime @default(now()) @map("last_adaptation_update")
+  averageRecallRate     Float    @default(0.0) @map("average_recall_rate") // 0.0-1.0
+  averageReviewTime     Int      @default(0) @map("average_review_time") // Avg seconds per review
+  optimalReviewInterval Float    @default(1.0) @map("optimal_review_interval") // Base interval multiplier
+  preferredReviewTime   String?  @map("preferred_review_time") @db.VarChar(20) // e.g., "morning"
+  lastAdaptationUpdate  DateTime @default(now()) @map("last_adaptation_update")
 
   // Engagement Patterns
-  peakActivityHours   Int[] @map("peak_activity_hours") // Hours of day (0-23)
-  consecutiveMissedDays Int @default(0) @map("consecutive_missed_days")
-  totalCheckIns       Int   @default(0) @map("total_check_ins")
+  peakActivityHours     Int[] @map("peak_activity_hours") // Hours of day (0-23)
+  consecutiveMissedDays Int   @default(0) @map("consecutive_missed_days")
+  totalCheckIns         Int   @default(0) @map("total_check_ins")
 
   // State
   onboardingCompleted Boolean   @default(false) @map("onboarding_completed")
@@ -404,8 +405,8 @@ model DailyCheckIn {
   timeSpentMinutes Int? @map("time_spent_minutes")
 
   // Adaptive Insights
-  suggestedAdjustment String?  @map("suggested_adjustment") @db.VarChar(100)
-  userAcknowledged    Boolean  @default(false) @map("user_acknowledged")
+  suggestedAdjustment String? @map("suggested_adjustment") @db.VarChar(100)
+  userAcknowledged    Boolean @default(false) @map("user_acknowledged")
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -539,12 +540,12 @@ model Memory {
   wordLinks       MemoryWordLink[]
   imageLinks      MemoryImageLink[]
   urlPageLinks    MemoryUrlPageLink[]
-  projectLinks     MemoryProjectLink[]
-  personLinks      MemoryPersonLink[]
-  trainingLinks    MemoryTrainingLink[]
-  memoryDeckItems  MemoryDeckItem[]
-  trainingLessons  TrainingLesson[]
-  questions        Question[]
+  projectLinks    MemoryProjectLink[]
+  personLinks     MemoryPersonLink[]
+  trainingLinks   MemoryTrainingLink[]
+  memoryDeckItems MemoryDeckItem[]
+  trainingLessons TrainingLesson[]
+  questions       Question[]
 
   @@index([userId, state])
   @@index([userId, contentHash, createdAt])
@@ -1555,7 +1556,7 @@ model MemoryDeck {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  user  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   items MemoryDeckItem[]
 
   @@index([userId, createdAt(sort: Desc)])

@@ -7,6 +7,8 @@ interface User {
   email: string;
   tier: 'free' | 'premium';
   roles: string[];
+  requirePasswordChange?: boolean;
+  onboardingCompleted?: boolean;
 }
 
 interface AuthContextType {
@@ -16,6 +18,7 @@ interface AuthContextType {
   loginWithToken: (token: string) => Promise<void>;
   signup: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   isLoading: boolean;
 }
 
@@ -52,7 +55,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAccessToken(result.accessToken);
     setUser(result.user);
     localStorage.setItem('accessToken', result.accessToken);
-    navigate('/app/capture');
+
+    // Handle redirects based on user flags
+    if (result.user.requirePasswordChange) {
+      navigate('/change-password');
+    } else if (!result.user.onboardingCompleted) {
+      navigate('/app/onboarding');
+    } else {
+      navigate('/app/capture');
+    }
   };
 
   const loginWithToken = async (token: string) => {
@@ -64,8 +75,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const userData = await api.getMe(token);
     setUser(userData);
 
-    // Navigate to app
-    navigate('/app/capture');
+    // Handle redirects based on user flags
+    if (userData.requirePasswordChange) {
+      navigate('/change-password');
+    } else if (!userData.onboardingCompleted) {
+      navigate('/app/onboarding');
+    } else {
+      navigate('/app/capture');
+    }
   };
 
   const signup = async (email: string, password: string) => {
@@ -90,8 +107,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     navigate('/login');
   };
 
+  const refreshUser = async () => {
+    if (accessToken) {
+      const userData = await api.getMe(accessToken);
+      setUser(userData);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, accessToken, login, loginWithToken, signup, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, accessToken, login, loginWithToken, signup, logout, refreshUser, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

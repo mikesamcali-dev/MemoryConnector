@@ -16,7 +16,7 @@ import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthGuard } from '@nestjs/passport';
-import { SignupDto, LoginDto } from './dto/auth.dto';
+import { SignupDto, LoginDto, ChangePasswordDto } from './dto/auth.dto';
 import { ConfigService } from '@nestjs/config';
 
 @ApiTags('auth')
@@ -33,9 +33,20 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Validation error' })
   @ApiResponse({ status: 409, description: 'User already exists' })
   async signup(@Body() signupDto: SignupDto, @Res() res: Response) {
-    const result = await this.authService.signup(signupDto.email, signupDto.password);
+    const result = await this.authService.signup(
+      signupDto.email,
+      signupDto.password,
+      signupDto.isAdminCreated || false
+    );
 
-    // Set refresh token in httpOnly cookie
+    // If admin-created, return user without setting refresh token
+    if (signupDto.isAdminCreated) {
+      return res.status(HttpStatus.CREATED).json({
+        user: result.user,
+      });
+    }
+
+    // Set refresh token in httpOnly cookie for self-signup
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -115,6 +126,22 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'User information' })
   async getMe(@Req() req: any) {
     return req.user;
+  }
+
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Change user password' })
+  @ApiBody({ type: ChangePasswordDto })
+  @ApiResponse({ status: 200, description: 'Password changed successfully' })
+  @ApiResponse({ status: 401, description: 'Current password is incorrect or unauthorized' })
+  async changePassword(@Body() changePasswordDto: ChangePasswordDto, @Req() req: any) {
+    return this.authService.changePassword(
+      req.user.id,
+      changePasswordDto.oldPassword,
+      changePasswordDto.newPassword
+    );
   }
 
   @Get('google')
