@@ -185,21 +185,22 @@ export function CapturePage() {
     defaultValues: { text: '' },
   });
 
-  // Smart detection: Auto-fetch definition when text field has 1-3 words
-  const handleTextBlur = async () => {
-    const trimmedText = textValue.trim();
-    const wordCount = trimmedText.split(/\s+/).filter(Boolean).length;
+  // Smart detection: Auto-fetch definition when title has 1-3 words and text is empty
+  const handleTitleBlur = async () => {
+    const trimmedTitle = topicInput.trim();
+    const wordCount = trimmedTitle.split(/\s+/).filter(Boolean).length;
 
     // Only auto-fetch if:
-    // 1. Text has 1-3 words
-    // 2. Not already loading
-    if (wordCount >= 1 && wordCount <= 3 && !loadingDefinition) {
+    // 1. Title has 1-3 words
+    // 2. Text field is empty
+    // 3. Not already loading
+    if (wordCount >= 1 && wordCount <= 3 && !textValue.trim() && !loadingDefinition) {
       setLoadingDefinition(true);
       setError('');
       clearErrors('text'); // Clear validation error while fetching definition
 
       try {
-        const definition = await generateDefinition(trimmedText);
+        const definition = await generateDefinition(trimmedTitle);
         setTextValue(definition);
         setValue('text', definition); // Update react-hook-form value
         haptic('light');
@@ -1560,7 +1561,58 @@ export function CapturePage() {
       </div>
 
       <form id="capture-form" onSubmit={handleSubmit(onSubmit)} className="space-y-3 md:space-y-4 mb-8">
-        {/* Text input first */}
+        {/* Title input field first */}
+        <div className="relative">
+          <label htmlFor="topic" className="hidden md:block text-sm font-medium text-gray-700 mb-2">
+            Title
+          </label>
+          <input
+            id="topic"
+            type="text"
+            value={topicInput}
+            onChange={(e) => handleTopicInputChange(e.target.value)}
+            onBlur={handleTitleBlur}
+            autoFocus
+            placeholder="Type a word or phrase (1-3 words) to auto-generate definition..."
+            className="w-full h-12 md:h-10 px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          />
+          {loadingDefinition && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <Loader className="animate-spin h-5 w-5 text-blue-500" />
+            </div>
+          )}
+
+          {/* Topic suggestion popup */}
+          {suggestedTopic && (
+            <div className="absolute left-0 right-0 mt-1 p-3 bg-blue-50 border border-blue-200 rounded-md shadow-sm z-10">
+              <div className="flex items-start gap-2">
+                <div className="flex-1">
+                  <p className="text-sm text-gray-700 mb-1">
+                    Did you mean <span className="font-semibold text-blue-700">{suggestedTopic.name}</span>?
+                  </p>
+                </div>
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={acceptSuggestedTopic}
+                    className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded transition-colors"
+                  >
+                    Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={dismissSuggestedTopic}
+                    className="px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+                  >
+                    No
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Text input field */}
         <div>
           <label htmlFor="text" className="hidden md:block text-sm font-medium text-gray-700 mb-2">
             {loadingDefinition ? 'Generating definition...' : 'What do you want to remember?'}
@@ -1571,17 +1623,10 @@ export function CapturePage() {
               id="text"
               value={textValue}
               onChange={handleTextChange}
-              onBlur={handleTextBlur}
               rows={2}
-              autoFocus
               className="w-full px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden"
-              placeholder={loadingDefinition ? "Generating definition..." : "Type a word/phrase (1-3 words) to auto-generate definition, or write anything longer..."}
+              placeholder={loadingDefinition ? "Generating definition..." : "Memory content (auto-filled if you enter a word/phrase above)..."}
             />
-            {loadingDefinition && (
-              <div className="absolute right-3 top-2">
-                <Loader className="animate-spin h-5 w-5 text-blue-500" />
-              </div>
-            )}
             {/* Voice input button (mobile only) */}
             <button
               type="button"
@@ -1617,47 +1662,6 @@ export function CapturePage() {
           )}
           {errors.text?.message && (
             <p className="mt-1 text-sm text-red-600">{String(errors.text.message)}</p>
-          )}
-        </div>
-
-        {/* Title input field (formerly Topic) */}
-        <div className="relative">
-          <input
-            id="topic"
-            type="text"
-            value={topicInput}
-            onChange={(e) => handleTopicInputChange(e.target.value)}
-            placeholder="Title (optional)"
-            className="w-full h-12 md:h-10 px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          />
-
-          {/* Topic suggestion popup */}
-          {suggestedTopic && (
-            <div className="absolute left-0 right-0 mt-1 p-3 bg-blue-50 border border-blue-200 rounded-md shadow-sm z-10">
-              <div className="flex items-start gap-2">
-                <div className="flex-1">
-                  <p className="text-sm text-gray-700 mb-1">
-                    Did you mean <span className="font-semibold text-blue-700">{suggestedTopic.name}</span>?
-                  </p>
-                </div>
-                <div className="flex gap-1">
-                  <button
-                    type="button"
-                    onClick={acceptSuggestedTopic}
-                    className="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded transition-colors"
-                  >
-                    Yes
-                  </button>
-                  <button
-                    type="button"
-                    onClick={dismissSuggestedTopic}
-                    className="px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-                  >
-                    No
-                  </button>
-                </div>
-              </div>
-            </div>
           )}
         </div>
 
