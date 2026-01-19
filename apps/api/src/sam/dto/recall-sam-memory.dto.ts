@@ -1,5 +1,6 @@
-import { IsString, IsArray, IsOptional, IsObject } from 'class-validator';
+import { IsString, IsArray, IsOptional, IsObject, ValidateNested } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class ConversationTurnDto {
   @ApiProperty({ enum: ['user', 'assistant'] })
@@ -19,6 +20,8 @@ export class ConversationTurnDto {
 export class RecallSamMemoryDto {
   @ApiProperty({ type: [ConversationTurnDto], description: 'Recent conversation turns' })
   @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ConversationTurnDto)
   conversation: ConversationTurnDto[];
 
   @ApiProperty({ description: 'Active task or context' })

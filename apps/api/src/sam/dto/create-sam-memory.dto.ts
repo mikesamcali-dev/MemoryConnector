@@ -1,5 +1,6 @@
-import { IsString, IsArray, IsNumber, IsEnum, IsOptional, IsBoolean, Min, Max, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsArray, IsNumber, IsEnum, IsOptional, IsBoolean, Min, Max, MinLength, MaxLength, ValidateNested } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export enum SamReliability {
   unverified = 'unverified',
@@ -99,13 +100,19 @@ export class CreateSamMemoryDto {
   confidence_score: number;
 
   @ApiProperty({ type: SamContextWindowDto })
+  @ValidateNested()
+  @Type(() => SamContextWindowDto)
   context_window: SamContextWindowDto;
 
   @ApiProperty({ type: SamDecayPolicyDto })
+  @ValidateNested()
+  @Type(() => SamDecayPolicyDto)
   decay_policy: SamDecayPolicyDto;
 
   @ApiPropertyOptional({ type: [SamTrainingExampleDto] })
   @IsOptional()
   @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SamTrainingExampleDto)
   training_examples?: SamTrainingExampleDto[];
 }
