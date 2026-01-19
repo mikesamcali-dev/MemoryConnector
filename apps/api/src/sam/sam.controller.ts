@@ -24,7 +24,7 @@ export class SamController {
   @ApiOperation({ summary: 'Create new SAM memory' })
   @ApiResponse({ status: 201, description: 'Memory created successfully' })
   async create(@Req() req: any, @Body() dto: CreateSamMemoryDto) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     return this.samService.create(userId, dto);
   }
 
@@ -37,7 +37,7 @@ export class SamController {
     @Query('tags') tags?: string,
     @Query('search') search?: string
   ) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const filter: any = {};
 
     if (archived !== undefined) {
@@ -60,7 +60,7 @@ export class SamController {
   @ApiResponse({ status: 200, description: 'Memory found' })
   @ApiResponse({ status: 404, description: 'Memory not found' })
   async findOne(@Req() req: any, @Param('id') id: string) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     return this.samService.findOne(id, userId);
   }
 
@@ -72,7 +72,7 @@ export class SamController {
     @Param('id') id: string,
     @Body() dto: Partial<CreateSamMemoryDto>
   ) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     return this.samService.update(id, userId, dto);
   }
 
@@ -80,7 +80,7 @@ export class SamController {
   @ApiOperation({ summary: 'Archive SAM memory' })
   @ApiResponse({ status: 200, description: 'Memory archived' })
   async archive(@Req() req: any, @Param('id') id: string) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     return this.samService.archive(id, userId);
   }
 
@@ -88,7 +88,7 @@ export class SamController {
   @ApiOperation({ summary: 'Delete SAM memory' })
   @ApiResponse({ status: 200, description: 'Memory deleted' })
   async delete(@Req() req: any, @Param('id') id: string) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     return this.samService.delete(id, userId);
   }
 
@@ -96,7 +96,7 @@ export class SamController {
   @ApiOperation({ summary: 'Recall relevant SAM memories' })
   @ApiResponse({ status: 200, description: 'Memories recalled' })
   async recall(@Req() req: any, @Body() dto: RecallSamMemoryDto) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     return this.retrievalService.recall(userId, dto);
   }
 
@@ -111,7 +111,7 @@ export class SamController {
   @ApiOperation({ summary: 'Suggest training examples' })
   @ApiResponse({ status: 200, description: 'Training examples suggested' })
   async suggestTraining(@Req() req: any, @Param('id') id: string) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const memory = await this.samService.findOne(id, userId);
 
     return this.trainingService.suggestTrainingExamples({
@@ -125,7 +125,7 @@ export class SamController {
   @ApiOperation({ summary: 'Test training examples' })
   @ApiResponse({ status: 200, description: 'Training test results' })
   async testTraining(@Req() req: any, @Param('id') id: string) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const memory = await this.samService.findOne(id, userId);
 
     return this.trainingService.runTrainingTests(memory.trainingExamples);
