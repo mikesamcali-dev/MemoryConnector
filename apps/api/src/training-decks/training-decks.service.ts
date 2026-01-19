@@ -12,6 +12,76 @@ export class TrainingDecksService {
   constructor(private prisma: PrismaService) {}
 
   /**
+   * Get or create the current (active) training deck for a training
+   */
+  async getOrCreateCurrentDeck(userId: string, trainingId: string): Promise<any> {
+    // Verify training ownership
+    const training = await this.prisma.training.findFirst({
+      where: { id: trainingId, userId },
+    });
+
+    if (!training) {
+      throw new NotFoundException('Training not found');
+    }
+
+    // Check if a deck already exists for this training
+    const existingDeck = await this.prisma.trainingDeck.findFirst({
+      where: { userId, trainingId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (existingDeck) {
+      return existingDeck;
+    }
+
+    // Create new deck with training name as title
+    return this.prisma.trainingDeck.create({
+      data: {
+        userId,
+        trainingId,
+        title: training.name,
+      },
+    });
+  }
+
+  /**
+   * Add a memory to a training's current deck
+   */
+  async addMemoryToTrainingDeck(
+    userId: string,
+    trainingId: string,
+    memoryId: string,
+  ): Promise<void> {
+    // Get or create current deck for this training
+    const deck = await this.getOrCreateCurrentDeck(userId, trainingId);
+
+    // Check if memory is already in the deck
+    const existing = await this.prisma.trainingLesson.findFirst({
+      where: { trainingDeckId: deck.id, memoryId },
+    });
+
+    if (existing) return; // Already added
+
+    // Get next sort order
+    const maxOrder = await this.prisma.trainingLesson.findFirst({
+      where: { trainingDeckId: deck.id },
+      orderBy: { sortOrder: 'desc' },
+      select: { sortOrder: true },
+    });
+
+    const nextOrder = (maxOrder?.sortOrder ?? -1) + 1;
+
+    // Add memory as a lesson to the deck
+    await this.prisma.trainingLesson.create({
+      data: {
+        trainingDeckId: deck.id,
+        memoryId,
+        sortOrder: nextOrder,
+      },
+    });
+  }
+
+  /**
    * Create a new training deck from a training's linked content
    * Auto-populates lessons from all linked content in order:
    * 1. Memories (by createdAt)

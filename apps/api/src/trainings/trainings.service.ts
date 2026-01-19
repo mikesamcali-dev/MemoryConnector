@@ -2,10 +2,14 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTrainingDto } from './dto/create-training.dto';
 import { UpdateTrainingDto } from './dto/update-training.dto';
+import { TrainingDecksService } from '../training-decks/training-decks.service';
 
 @Injectable()
 export class TrainingsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private trainingDecksService: TrainingDecksService,
+  ) {}
 
   /**
    * Create a new training for a user
@@ -306,6 +310,18 @@ export class TrainingsService {
         },
       },
     });
+
+    // Auto-add memory to the training's current deck
+    try {
+      await this.trainingDecksService.addMemoryToTrainingDeck(
+        userId,
+        trainingId,
+        memoryId,
+      );
+    } catch (error) {
+      // Log error but don't fail the link operation
+      console.error('Failed to add memory to training deck:', error);
+    }
 
     return link;
   }
