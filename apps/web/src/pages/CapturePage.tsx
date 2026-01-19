@@ -16,7 +16,7 @@ import { createDraft } from '../utils/idempotency';
 import { compressImage, getSizeReduction } from '../utils/imageCompression';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Loader, Users, MapPinned, Video, Image as ImageIcon, Link as LinkIcon, X, Mic, FolderKanban, GraduationCap, MessageSquare, Camera, BookOpen, BookMarked } from 'lucide-react';
+import { Loader, Users, MapPinned, Video, Image as ImageIcon, Link as LinkIcon, X, Mic, FolderKanban, GraduationCap, MessageSquare, Camera, BookMarked, AlertCircle } from 'lucide-react';
 import { useHaptics } from '../hooks/useHaptics';
 import { useVoiceInput } from '../hooks/useVoiceInput';
 import { useHelpPopup } from '../hooks/useHelpPopup';
