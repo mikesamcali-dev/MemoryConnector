@@ -81,7 +81,7 @@ export class CreateSamMemoryDto {
 
   @ApiProperty({ description: 'Memory content' })
   @IsString()
-  @MinLength(10)
+  @MinLength(1)
   @MaxLength(8000)
   content: string;
 

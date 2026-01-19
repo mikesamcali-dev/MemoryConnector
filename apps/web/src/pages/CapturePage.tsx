@@ -24,7 +24,7 @@ import { HelpPopup } from '../components/HelpPopup';
 import { submitFeedback } from '../api/transcription';
 
 const memorySchema = z.object({
-  text: z.string().min(10, 'Memory text must be at least 10 characters'),
+  text: z.string().min(1, 'Memory text is required'),
 });
 
 export function CapturePage() {
