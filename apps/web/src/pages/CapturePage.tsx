@@ -185,22 +185,21 @@ export function CapturePage() {
     defaultValues: { text: '' },
   });
 
-  // Smart detection: Auto-fetch definition when title has 1-3 words and content is empty
-  const handleTitleBlur = async () => {
-    const trimmedTitle = topicInput.trim();
-    const wordCount = trimmedTitle.split(/\s+/).filter(Boolean).length;
+  // Smart detection: Auto-fetch definition when text field has 1-3 words
+  const handleTextBlur = async () => {
+    const trimmedText = textValue.trim();
+    const wordCount = trimmedText.split(/\s+/).filter(Boolean).length;
 
     // Only auto-fetch if:
-    // 1. Title has 1-3 words
-    // 2. Content field is empty
-    // 3. Not already loading
-    if (wordCount >= 1 && wordCount <= 3 && !textValue.trim() && !loadingDefinition) {
+    // 1. Text has 1-3 words
+    // 2. Not already loading
+    if (wordCount >= 1 && wordCount <= 3 && !loadingDefinition) {
       setLoadingDefinition(true);
       setError('');
       clearErrors('text'); // Clear validation error while fetching definition
 
       try {
-        const definition = await generateDefinition(trimmedTitle);
+        const definition = await generateDefinition(trimmedText);
         setTextValue(definition);
         setValue('text', definition); // Update react-hook-form value
         haptic('light');
@@ -1572,11 +1571,17 @@ export function CapturePage() {
               id="text"
               value={textValue}
               onChange={handleTextChange}
+              onBlur={handleTextBlur}
               rows={2}
               autoFocus
               className="w-full px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden"
-              placeholder={loadingDefinition ? "Generating definition..." : "Write your memory here... (or leave blank to auto-generate from title)"}
+              placeholder={loadingDefinition ? "Generating definition..." : "Type a word/phrase (1-3 words) to auto-generate definition, or write anything longer..."}
             />
+            {loadingDefinition && (
+              <div className="absolute right-3 top-2">
+                <Loader className="animate-spin h-5 w-5 text-blue-500" />
+              </div>
+            )}
             {/* Voice input button (mobile only) */}
             <button
               type="button"
@@ -1622,15 +1627,9 @@ export function CapturePage() {
             type="text"
             value={topicInput}
             onChange={(e) => handleTopicInputChange(e.target.value)}
-            onBlur={handleTitleBlur}
-            placeholder="Title (optional) - type a word/phrase to auto-generate definition"
+            placeholder="Title (optional)"
             className="w-full h-12 md:h-10 px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           />
-          {loadingDefinition && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <Loader className="animate-spin h-5 w-5 text-blue-500" />
-            </div>
-          )}
 
           {/* Topic suggestion popup */}
           {suggestedTopic && (
