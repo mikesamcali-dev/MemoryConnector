@@ -9,7 +9,7 @@ import { CreateSamMemoryDto } from './dto/create-sam-memory.dto';
 import { RecallSamMemoryDto } from './dto/recall-sam-memory.dto';
 
 @ApiTags('sam')
-@Controller('api/v1/sam')
+@Controller('sam')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class SamController {
