@@ -15,7 +15,7 @@ import { getAllTrainings, linkMemoryToTraining } from '../api/trainings';
 import { createDraft } from '../utils/idempotency';
 import { compressImage, getSizeReduction } from '../utils/imageCompression';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { Loader, Users, MapPinned, Video, Image as ImageIcon, Link as LinkIcon, X, Mic, FolderKanban, GraduationCap, MessageSquare, Camera, BookMarked, AlertCircle } from 'lucide-react';
 import { useHaptics } from '../hooks/useHaptics';
 import { useVoiceInput } from '../hooks/useVoiceInput';
@@ -30,7 +30,6 @@ const memorySchema = z.object({
 
 export function CapturePage() {
   const { user: _user, accessToken } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const { haptic } = useHaptics();
   const queryClient = useQueryClient();
