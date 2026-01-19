@@ -46,7 +46,7 @@ export class UserMemoryController {
     @Req() req: any,
     @Body() data: OnboardingAnswersDto,
   ) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     return this.userMemoryService.createProfileFromOnboarding(userId, data);
   }
 
@@ -61,7 +61,7 @@ export class UserMemoryController {
     description: 'Profile not found',
   })
   async getProfile(@Req() req: any) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     return this.userMemoryService.getProfile(userId);
   }
 
@@ -76,7 +76,7 @@ export class UserMemoryController {
     description: 'Profile not found',
   })
   async updateProfile(@Req() req: any, @Body() data: UpdateProfileDto) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     return this.userMemoryService.updateProfile(userId, data);
   }
 
@@ -87,7 +87,7 @@ export class UserMemoryController {
     description: 'Review config retrieved successfully',
   })
   async getReviewConfig(@Req() req: any) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     return this.userMemoryService.getPersonalizedReviewConfig(userId);
   }
 
@@ -105,7 +105,7 @@ export class UserMemoryController {
     @Req() req: any,
     @Body() data: UpdateReviewConfigDto,
   ) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     return this.userMemoryService.updateReviewConfig(userId, data);
   }
 
@@ -116,7 +116,7 @@ export class UserMemoryController {
     description: 'Check-in status retrieved',
   })
   async getCheckInStatus(@Req() req: any) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     return this.userMemoryService.shouldTriggerCheckIn(userId);
   }
 
@@ -132,7 +132,7 @@ export class UserMemoryController {
     description: 'Profile not found',
   })
   async submitCheckIn(@Req() req: any, @Body() data: CheckInResponsesDto) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     return this.userMemoryService.processProfileCheckIn(userId, data);
   }
 
@@ -143,7 +143,7 @@ export class UserMemoryController {
     description: 'Analytics retrieved successfully',
   })
   async getAnalytics(@Req() req: any) {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     return this.userMemoryService.getProfileAnalytics(userId);
   }
 }
