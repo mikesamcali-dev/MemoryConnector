@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { createMemoryWithKeywordExpansion } from '../api/memories';
 import { createSamMemory } from '../api/sam';
 import { getAllPeople, getAllLocationsForUser } from '../api/admin';
 import { createQuestion } from '../api/questions';
@@ -13,7 +12,6 @@ import { addUrl, linkUrlPageToMemory } from '../api/urlPages';
 import { extractTikTokMetadata, createTikTokVideo } from '../api/tiktok';
 import { getAllProjects, linkMemoryToProject } from '../api/projects';
 import { getAllTrainings, linkMemoryToTraining } from '../api/trainings';
-import { createDraft } from '../utils/idempotency';
 import { compressImage, getSizeReduction } from '../utils/imageCompression';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocation, Link } from 'react-router-dom';
@@ -38,13 +36,6 @@ export function CapturePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isRateLimitError, setIsRateLimitError] = useState(false);
-  const [draft, setDraft] = useState(() => {
-    const saved = localStorage.getItem('memoryDraft');
-    if (saved) {
-      return JSON.parse(saved);
-    }
-    return createDraft();
-  });
 
   // Text input state
   const [textValue, setTextValue] = useState('');
@@ -124,13 +115,6 @@ export function CapturePage() {
     queryFn: getAllTrainings,
   });
 
-  // Clear draft and form when navigating to capture page
-  useEffect(() => {
-    localStorage.removeItem('memoryDraft');
-    setDraft(createDraft());
-    reset({ text: '' });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   // Auto-link video if navigated from video detail page
   useEffect(() => {
     const state = location.state as { youtubeVideoId?: string; tiktokVideoId?: string } | null;
@@ -196,7 +180,7 @@ export function CapturePage() {
     setValue,
   } = useForm({
     resolver: zodResolver(memorySchema),
-    defaultValues: { text: draft.text || '' },
+    defaultValues: { text: '' },
   });
 
   // Handle image file selection
@@ -580,23 +564,40 @@ export function CapturePage() {
       return;
     }
 
+    // Validate title is filled
+    if (!topicInput.trim()) {
+      setError('Title is required');
+      return;
+    }
+
     haptic('light');
     setError('');
     setIsRateLimitError(false);
     setLoading(true);
 
     try {
-      const memoryDraft = createDraft(textValue);
-      setDraft(memoryDraft);
-      localStorage.setItem('memoryDraft', JSON.stringify(memoryDraft));
+      // Parse tags from comma-separated input
+      const tags = tagsInput
+        .split(',')
+        .map(t => t.trim())
+        .filter(Boolean);
 
-      const createdMemory = await createMemoryWithKeywordExpansion({
-        ...memoryDraft,
-        locationId: linkedEntities.locations[0] || undefined,
-        personId: linkedEntities.persons[0] || undefined,
-        youtubeVideoId: linkedEntities.youtubeVideos[0] || undefined,
-        tiktokVideoId: linkedEntities.tiktokVideos[0] || undefined,
-        addToDeck: true, // Add to memory deck
+      // Create SAM memory
+      const createdMemory = await createSamMemory({
+        title: topicInput.trim(),
+        content: textValue,
+        tags,
+        reliability: 'confirmed',
+        confidence_score: 0.75,
+        context_window: {
+          applies_to: [],
+          excludes: [],
+        },
+        decay_policy: {
+          type: 'exponential',
+          half_life_days: 90,
+          min_confidence: 0.4,
+        },
       });
 
       // Upload and link image if one was selected
@@ -700,6 +701,7 @@ export function CapturePage() {
       reset({ text: '' });
       setTextValue('');
       setTopicInput('');
+      setTagsInput('');
       setSuggestedTopic(null);
       setTrainingInput('');
       setSuggestedTraining(null);
@@ -708,15 +710,11 @@ export function CapturePage() {
       setCompressionInfo('');
       setAddedUrlPage(null);
       setLinkedEntities({ persons: [], locations: [], youtubeVideos: [], tiktokVideos: [], projects: [], trainings: [] });
-      localStorage.removeItem('memoryDraft');
 
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['memories'] });
+      // Invalidate SAM memories query so the list refreshes
+      queryClient.invalidateQueries({ queryKey: ['sam-memories'] });
 
       haptic('success');
-
-      // Pre-populate the query cache with the created memory
-      queryClient.setQueryData(['memory', createdMemory.id], createdMemory);
 
       // Stay on capture page - ready for next memory
     } catch (err: any) {
@@ -737,23 +735,40 @@ export function CapturePage() {
       return;
     }
 
+    // Validate title is filled
+    if (!topicInput.trim()) {
+      setError('Title is required');
+      return;
+    }
+
     haptic('light');
     setError('');
     setIsRateLimitError(false);
     setLoading(true);
 
     try {
-      const memoryDraft = createDraft(textValue);
-      setDraft(memoryDraft);
-      localStorage.setItem('memoryDraft', JSON.stringify(memoryDraft));
+      // Parse tags from comma-separated input
+      const tags = tagsInput
+        .split(',')
+        .map(t => t.trim())
+        .filter(Boolean);
 
-      const createdMemory = await createMemoryWithKeywordExpansion({
-        ...memoryDraft,
-        locationId: linkedEntities.locations[0] || undefined,
-        personId: linkedEntities.persons[0] || undefined,
-        youtubeVideoId: linkedEntities.youtubeVideos[0] || undefined,
-        tiktokVideoId: linkedEntities.tiktokVideos[0] || undefined,
-        addToDeck: true, // Add to memory deck
+      // Create SAM memory
+      const createdMemory = await createSamMemory({
+        title: topicInput.trim(),
+        content: textValue,
+        tags,
+        reliability: 'confirmed',
+        confidence_score: 0.75,
+        context_window: {
+          applies_to: [],
+          excludes: [],
+        },
+        decay_policy: {
+          type: 'exponential',
+          half_life_days: 90,
+          min_confidence: 0.4,
+        },
       });
 
       // Upload and link image if one was selected
@@ -861,6 +876,7 @@ export function CapturePage() {
       reset({ text: '' });
       setTextValue('');
       setTopicInput('');
+      setTagsInput('');
       setSuggestedTopic(null);
       setTrainingInput('');
       setSuggestedTraining(null);
@@ -869,16 +885,12 @@ export function CapturePage() {
       setCompressionInfo('');
       setAddedUrlPage(null);
       setLinkedEntities({ persons: [], locations: [], youtubeVideos: [], tiktokVideos: [], projects: [], trainings: [] });
-      localStorage.removeItem('memoryDraft');
 
       // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['memories'] });
+      queryClient.invalidateQueries({ queryKey: ['sam-memories'] });
       queryClient.invalidateQueries({ queryKey: ['questions'] });
 
       haptic('success');
-
-      // Pre-populate the query cache with the created memory
-      queryClient.setQueryData(['memory', createdMemory.id], createdMemory);
 
       // Stay on capture page - ready for next memory
     } catch (err: any) {
