@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { createMemory, createMemoryWithKeywordExpansion } from '../api/memories';
+import { createMemoryWithKeywordExpansion } from '../api/memories';
 import { createSamMemory } from '../api/sam';
 import { getAllPeople, getAllLocationsForUser } from '../api/admin';
 import { createQuestion } from '../api/questions';
