@@ -1123,8 +1123,8 @@ export function CapturePage() {
       // Success haptic feedback
       haptic('success');
 
-      // Pre-populate the query cache with the created memory
-      queryClient.setQueryData(['memory', createdMemory.id], createdMemory);
+      // Invalidate SAM memories query so the list refreshes
+      queryClient.invalidateQueries({ queryKey: ['sam-memories'] });
 
       // Stay on capture page - ready for next memory
     } catch (err: any) {

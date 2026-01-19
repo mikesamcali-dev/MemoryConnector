@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchWithAuth } from '../api/client';
 import '../styles/sam-memories.css';
 
@@ -18,8 +19,7 @@ interface SamMemory {
 }
 
 export function SamMemoriesPage() {
-  const [memories, setMemories] = useState<SamMemory[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newMemory, setNewMemory] = useState({
     title: '',
@@ -31,22 +31,17 @@ export function SamMemoriesPage() {
     decay_policy: { type: 'exponential', half_life_days: 90, min_confidence: 0.4 }
   });
 
-  useEffect(() => {
-    loadMemories();
-  }, []);
-
-  const loadMemories = async () => {
-    try {
-      setLoading(true);
+  // Fetch SAM memories using React Query
+  const { data: memories = [], isLoading: loading, refetch } = useQuery({
+    queryKey: ['sam-memories'],
+    queryFn: async () => {
       const response = await fetchWithAuth('/sam');
-      const data = await response.json();
-      setMemories(data);
-    } catch (error) {
-      console.error('Failed to load SAM memories:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      if (!response.ok) {
+        throw new Error('Failed to load SAM memories');
+      }
+      return response.json();
+    },
+  });
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +64,9 @@ export function SamMemoriesPage() {
         decay_policy: { type: 'exponential', half_life_days: 90, min_confidence: 0.4 }
       });
       setShowCreateForm(false);
-      loadMemories();
+
+      // Invalidate and refetch SAM memories
+      queryClient.invalidateQueries({ queryKey: ['sam-memories'] });
     } catch (error) {
       console.error('Failed to create memory:', error);
       alert('Failed to create memory. Please try again.');
@@ -79,7 +76,8 @@ export function SamMemoriesPage() {
   const handleArchive = async (id: string) => {
     try {
       await fetchWithAuth(`/sam/${id}/archive`, { method: 'PUT' });
-      loadMemories();
+      // Invalidate and refetch SAM memories
+      queryClient.invalidateQueries({ queryKey: ['sam-memories'] });
     } catch (error) {
       console.error('Failed to archive memory:', error);
     }
@@ -90,7 +88,8 @@ export function SamMemoriesPage() {
 
     try {
       await fetchWithAuth(`/sam/${id}`, { method: 'DELETE' });
-      loadMemories();
+      // Invalidate and refetch SAM memories
+      queryClient.invalidateQueries({ queryKey: ['sam-memories'] });
     } catch (error) {
       console.error('Failed to delete memory:', error);
     }
