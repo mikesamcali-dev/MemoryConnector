@@ -130,4 +130,12 @@ export class SamController {
 
     return this.trainingService.runTrainingTests(memory.trainingExamples);
   }
+
+  @Post('generate-definition')
+  @ApiOperation({ summary: 'Generate definition for a term or phrase' })
+  @ApiResponse({ status: 200, description: 'Definition generated' })
+  async generateDefinition(@Req() req: any, @Body() body: { term: string }) {
+    const definition = await this.samService.generateDefinition(body.term);
+    return { definition };
+  }
 }

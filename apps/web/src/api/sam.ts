@@ -132,3 +132,17 @@ export async function deleteSamMemory(id: string): Promise<void> {
     throw new Error('Failed to delete SAM memory');
   }
 }
+
+export async function generateDefinition(term: string): Promise<string> {
+  const response = await fetchWithAuth('/sam/generate-definition', {
+    method: 'POST',
+    body: JSON.stringify({ term }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to generate definition');
+  }
+
+  const data = await response.json();
+  return data.definition;
+}

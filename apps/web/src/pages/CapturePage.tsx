@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { createSamMemory } from '../api/sam';
+import { createSamMemory, generateDefinition } from '../api/sam';
 import { getAllPeople, getAllLocationsForUser } from '../api/admin';
 import { createQuestion } from '../api/questions';
 import { processMemoryPhrase } from '../api/words';
@@ -36,6 +36,7 @@ export function CapturePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isRateLimitError, setIsRateLimitError] = useState(false);
+  const [loadingDefinition, setLoadingDefinition] = useState(false);
 
   // Text input state
   const [textValue, setTextValue] = useState('');
@@ -182,6 +183,33 @@ export function CapturePage() {
     resolver: zodResolver(memorySchema),
     defaultValues: { text: '' },
   });
+
+  // Smart detection: Auto-fetch definition when title has 1-3 words and content is empty
+  const handleTitleBlur = async () => {
+    const trimmedTitle = topicInput.trim();
+    const wordCount = trimmedTitle.split(/\s+/).filter(Boolean).length;
+
+    // Only auto-fetch if:
+    // 1. Title has 1-3 words
+    // 2. Content field is empty
+    // 3. Not already loading
+    if (wordCount >= 1 && wordCount <= 3 && !textValue.trim() && !loadingDefinition) {
+      setLoadingDefinition(true);
+      setError('');
+
+      try {
+        const definition = await generateDefinition(trimmedTitle);
+        setTextValue(definition);
+        setValue('text', definition); // Update react-hook-form value
+        haptic('light');
+      } catch (err) {
+        console.error('Failed to generate definition:', err);
+        // Don't show error to user - they can still type manually
+      } finally {
+        setLoadingDefinition(false);
+      }
+    }
+  };
 
   // Handle image file selection
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1534,7 +1562,7 @@ export function CapturePage() {
         {/* Text input first */}
         <div>
           <label htmlFor="text" className="hidden md:block text-sm font-medium text-gray-700 mb-2">
-            What do you want to remember?
+            {loadingDefinition ? 'Generating definition...' : 'What do you want to remember?'}
           </label>
           <div className="relative">
             <textarea
@@ -1545,7 +1573,7 @@ export function CapturePage() {
               rows={2}
               autoFocus
               className="w-full px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden"
-              placeholder="Write your memory here..."
+              placeholder={loadingDefinition ? "Generating definition..." : "Write your memory here... (or leave blank to auto-generate from title)"}
             />
             {/* Voice input button (mobile only) */}
             <button
@@ -1592,10 +1620,15 @@ export function CapturePage() {
             type="text"
             value={topicInput}
             onChange={(e) => handleTopicInputChange(e.target.value)}
-            placeholder="Title (required) - what is this memory about?"
-            required
+            onBlur={handleTitleBlur}
+            placeholder="Title (optional) - type a word/phrase to auto-generate definition"
             className="w-full h-12 md:h-10 px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           />
+          {loadingDefinition && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <Loader className="animate-spin h-5 w-5 text-blue-500" />
+            </div>
+          )}
 
           {/* Topic suggestion popup */}
           {suggestedTopic && (

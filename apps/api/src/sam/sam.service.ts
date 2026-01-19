@@ -247,6 +247,43 @@ export class SamService {
     return content.substring(0, 297).trim() + '...';
   }
 
+  async generateDefinition(term: string): Promise<string> {
+    if (!this.openai) {
+      // Fallback: return a simple message if OpenAI not configured
+      return `Definition for: ${term}`;
+    }
+
+    try {
+      const response = await this.openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful assistant that provides clear, concise definitions. Define the term or phrase in 1-3 sentences. Be accurate and educational. Return only the definition, nothing else.'
+          },
+          {
+            role: 'user',
+            content: `Define: ${term}`
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 200
+      });
+
+      const definition = response.choices[0]?.message?.content?.trim();
+      if (definition && definition.length > 0) {
+        return definition;
+      }
+
+      // Fallback if AI response is empty
+      return `Definition for: ${term}`;
+    } catch (error) {
+      logger.error('Failed to generate definition with AI:', error);
+      // Fallback on error
+      return `Definition for: ${term}`;
+    }
+  }
+
   private async generateTitle(content: string): Promise<string> {
     if (!this.openai) {
       // Fallback: use first few words if OpenAI not configured
