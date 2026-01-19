@@ -202,7 +202,7 @@ export function CapturePage() {
       try {
         const definition = await generateDefinition(trimmedTitle);
         setTextValue(definition);
-        setValue('text', definition); // Update react-hook-form value
+        setValue('text', definition, { shouldValidate: true }); // Update react-hook-form value and validate
         haptic('light');
       } catch (err) {
         console.error('Failed to generate definition:', err);
@@ -1542,7 +1542,7 @@ export function CapturePage() {
         <button
           type="button"
           onClick={handleSaveToMemoryDeck}
-          disabled={loading || !textValue.trim() || uploadingImage || addingUrl || addingTikTok || addingYouTube}
+          disabled={loading || loadingDefinition || !textValue.trim() || uploadingImage || addingUrl || addingTikTok || addingYouTube}
           className="flex-1 inline-flex items-center justify-center gap-2 h-12 px-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-base font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 shadow-md transition-all active:scale-95"
         >
           <BookMarked className="h-5 w-5" />
@@ -1552,7 +1552,7 @@ export function CapturePage() {
         <button
           type="button"
           onClick={handleAskButtonClick}
-          disabled={loading || !textValue.trim() || uploadingImage || addingUrl || addingTikTok || addingYouTube}
+          disabled={loading || loadingDefinition || !textValue.trim() || uploadingImage || addingUrl || addingTikTok || addingYouTube}
           className="flex-1 inline-flex items-center justify-center gap-2 h-12 px-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white text-base font-semibold rounded-lg hover:from-purple-700 hover:to-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 shadow-md transition-all active:scale-95"
         >
           <MessageSquare className="h-5 w-5" />
@@ -1971,7 +1971,7 @@ export function CapturePage() {
           <button
             type="button"
             onClick={handleSaveToMemoryDeck}
-            disabled={loading || !textValue.trim() || uploadingImage || addingUrl || addingTikTok || addingYouTube}
+            disabled={loading || loadingDefinition || !textValue.trim() || uploadingImage || addingUrl || addingTikTok || addingYouTube}
             className="flex-1 inline-flex items-center justify-center gap-2 h-10 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-md hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           >
             <BookMarked className="h-4 w-4" />
@@ -1980,7 +1980,7 @@ export function CapturePage() {
           <button
             type="button"
             onClick={handleAskButtonClick}
-            disabled={loading || !textValue.trim() || uploadingImage || addingUrl || addingTikTok || addingYouTube}
+            disabled={loading || loadingDefinition || !textValue.trim() || uploadingImage || addingUrl || addingTikTok || addingYouTube}
             className="flex-1 inline-flex items-center justify-center gap-2 h-10 px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white text-sm font-semibold rounded-md hover:from-purple-700 hover:to-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
           >
             <MessageSquare className="h-4 w-4" />
