@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createMemory, createMemoryWithKeywordExpansion } from '../api/memories';
+import { createSamMemory } from '../api/sam';
 import { getAllPeople, getAllLocationsForUser } from '../api/admin';
 import { createQuestion } from '../api/questions';
 import { processMemoryPhrase } from '../api/words';
@@ -25,7 +26,8 @@ import { HelpPopup } from '../components/HelpPopup';
 import { submitFeedback } from '../api/transcription';
 
 const memorySchema = z.object({
-  text: z.string().min(1, 'Memory text is required'),
+  text: z.string().min(10, 'Memory text must be at least 10 characters'),
+  title: z.string().min(3, 'Title must be at least 3 characters'),
 });
 
 export function CapturePage() {
@@ -48,6 +50,7 @@ export function CapturePage() {
   // Text input state
   const [textValue, setTextValue] = useState('');
   const [topicInput, setTopicInput] = useState('');
+  const [tagsInput, setTagsInput] = useState('');
   const [suggestedTopic, setSuggestedTopic] = useState<{ id: string; name: string } | null>(null);
   const [trainingInput, setTrainingInput] = useState('');
   const [suggestedTraining, setSuggestedTraining] = useState<{ id: string; name: string } | null>(null);
@@ -895,20 +898,38 @@ export function CapturePage() {
     haptic('light'); // Haptic feedback on submit
     setError('');
     setIsRateLimitError(false);
+
+    // Validate title is filled
+    if (!topicInput.trim()) {
+      setError('Title is required');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const memoryDraft = createDraft(data.text);
-      setDraft(memoryDraft);
-      localStorage.setItem('memoryDraft', JSON.stringify(memoryDraft));
+      // Parse tags from comma-separated input
+      const tags = tagsInput
+        .split(',')
+        .map(t => t.trim())
+        .filter(Boolean);
 
-      const createdMemory = await createMemory({
-        ...memoryDraft,
-        locationId: linkedEntities.locations[0] || undefined,
-        personId: linkedEntities.persons[0] || undefined,
-        youtubeVideoId: linkedEntities.youtubeVideos[0] || undefined,
-        tiktokVideoId: linkedEntities.tiktokVideos[0] || undefined,
-        createReminder: false, // Regular submit doesn't create reminder
+      // Create SAM memory
+      const createdMemory = await createSamMemory({
+        title: topicInput.trim(),
+        content: data.text,
+        tags,
+        reliability: 'confirmed',
+        confidence_score: 0.75,
+        context_window: {
+          applies_to: [],
+          excludes: [],
+        },
+        decay_policy: {
+          type: 'exponential',
+          half_life_days: 90,
+          min_confidence: 0.4,
+        },
       });
 
       // Upload and link image if one was selected
@@ -1084,9 +1105,7 @@ export function CapturePage() {
         // Don't fail the whole operation if phrase linking fails
       });
 
-      // Clear draft, linked entities, image, URL, topic, and training
-      localStorage.removeItem('memoryDraft');
-      setDraft(createDraft());
+      // Clear all form fields and state
       setLinkedEntities({ persons: [], locations: [], youtubeVideos: [], tiktokVideos: [], projects: [], trainings: [] });
       setSelectedImage(null);
       setImagePreview(null);
@@ -1094,9 +1113,11 @@ export function CapturePage() {
       setPreLinkedUrlPageId(null);
       setAddedUrlPage(null);
       setTopicInput('');
+      setTagsInput('');
       setSuggestedTopic(null);
       setTrainingInput('');
       setSuggestedTraining(null);
+      setTextValue('');
       reset();
 
       // Success haptic feedback
@@ -1571,14 +1592,15 @@ export function CapturePage() {
           )}
         </div>
 
-        {/* Topic input field */}
+        {/* Title input field (formerly Topic) */}
         <div className="relative">
           <input
             id="topic"
             type="text"
             value={topicInput}
             onChange={(e) => handleTopicInputChange(e.target.value)}
-            placeholder="Topic (optional)"
+            placeholder="Title (required) - what is this memory about?"
+            required
             className="w-full h-12 md:h-10 px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           />
 
@@ -1610,6 +1632,18 @@ export function CapturePage() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Tags input field */}
+        <div className="relative">
+          <input
+            id="tags"
+            type="text"
+            value={tagsInput}
+            onChange={(e) => setTagsInput(e.target.value)}
+            placeholder="Tags (comma-separated, optional) - e.g. work, personal, ideas"
+            className="w-full h-12 md:h-10 px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          />
         </div>
 
         {/* Training input field */}
