@@ -27,7 +27,6 @@ import { submitFeedback } from '../api/transcription';
 
 const memorySchema = z.object({
   text: z.string().min(10, 'Memory text must be at least 10 characters'),
-  title: z.string().min(3, 'Title must be at least 3 characters'),
 });
 
 export function CapturePage() {
