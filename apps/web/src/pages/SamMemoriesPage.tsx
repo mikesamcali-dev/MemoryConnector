@@ -32,7 +32,7 @@ export function SamMemoriesPage() {
   });
 
   // Fetch SAM memories using React Query
-  const { data: memories = [], isLoading: loading, refetch } = useQuery({
+  const { data: memories = [], isLoading: loading } = useQuery<SamMemory[]>({
     queryKey: ['sam-memories'],
     queryFn: async () => {
       const response = await fetchWithAuth('/sam');
@@ -173,7 +173,7 @@ export function SamMemoriesPage() {
         </div>
       ) : (
         <div className="memories-grid">
-          {memories.map(memory => (
+          {memories.map((memory: SamMemory) => (
             <div key={memory.id} className={`memory-card ${memory.archiveFlag ? 'archived' : ''}`}>
               <div className="memory-header">
                 <h3>{memory.title}</h3>
@@ -192,7 +192,7 @@ export function SamMemoriesPage() {
               <div className="canonical-phrases">
                 <strong>Canonical Phrases:</strong>
                 <ul>
-                  {memory.canonicalPhrases.slice(0, 3).map((phrase, i) => (
+                  {memory.canonicalPhrases.slice(0, 3).map((phrase: string, i: number) => (
                     <li key={i}>{phrase}</li>
                   ))}
                   {memory.canonicalPhrases.length > 3 && (
@@ -202,7 +202,7 @@ export function SamMemoriesPage() {
               </div>
 
               <div className="tags">
-                {memory.tags.map(tag => (
+                {memory.tags.map((tag: string) => (
                   <span key={tag} className="tag">{tag}</span>
                 ))}
               </div>
