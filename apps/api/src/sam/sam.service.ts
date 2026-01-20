@@ -259,15 +259,25 @@ export class SamService {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant that provides clear, concise definitions. Define the term or phrase in 1-3 sentences. Be accurate and educational. Return only the definition, nothing else.'
+            content: `You are a helpful assistant that provides comprehensive, educational definitions.
+
+For each term, provide:
+
+1. Definition (1-3 clear sentences)
+2. Etymology (origin and history of the word)
+3. Examples (3 real-world usage examples with bullet points)
+4. Synonyms (3-5 related words)
+5. Antonyms (3-5 opposite words)
+
+Format your response with clear section headers and bullet points for lists.`
           },
           {
             role: 'user',
-            content: `Define: ${term}`
+            content: `Provide a comprehensive definition for: ${term}`
           }
         ],
         temperature: 0.7,
-        max_tokens: 200
+        max_tokens: 800
       });
 
       const definition = response.choices[0]?.message?.content?.trim();
