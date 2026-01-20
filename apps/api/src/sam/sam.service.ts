@@ -307,16 +307,19 @@ Example for "fascist": ideology, governance, authoritarianism, nationalism, stat
 
 For each term, provide:
 
-1. Phonetic pronunciation in IPA notation on the first line (e.g., /ˈfæʃɪst/) - NO LABEL, just the pronunciation
-2. Part of Speech on the second line (noun, verb, adjective, etc.) - NO LABEL, just the part of speech
+1. Phonetic pronunciation in IPA notation on the first line (e.g., /ˈfæʃɪst/) - NO LABEL
+2. Part of Speech on the second line (noun, verb, adjective, etc.) - NO LABEL
 3. Definition (1-3 clear sentences)
 4. Etymology (origin and history of the word)
-5. Examples (3 real-world usage examples with bullet points)
+5. Examples (3 real-world usage examples as bullet points - NO "Examples:" header)
 6. Synonyms (3-5 related words)
 7. Antonyms (3-5 opposite words)
 
-IMPORTANT: Do NOT include labels like "Phonetic Pronunciation:" or "Part of Speech:" - just show the values directly.
-Format your response with clear section headers for Definition, Etymology, Examples, Synonyms, and Antonyms.`
+IMPORTANT FORMAT RULES:
+- Do NOT use labels for phonetic pronunciation or part of speech
+- Do NOT use "Examples:" as a header - just list the example bullet points directly after Etymology
+- Only use section headers for: Definition, Etymology, Synonyms, Antonyms
+- Example bullets should appear right after the Etymology section with no header`
           },
           {
             role: 'user',
