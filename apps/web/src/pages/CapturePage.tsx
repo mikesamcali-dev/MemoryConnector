@@ -200,9 +200,15 @@ export function CapturePage() {
       clearErrors('text'); // Clear validation error while fetching definition
 
       try {
-        const definition = await generateDefinition(trimmedTitle);
-        setTextValue(definition);
-        setValue('text', definition, { shouldValidate: true }); // Update react-hook-form value and validate
+        const result = await generateDefinition(trimmedTitle);
+        setTextValue(result.definition);
+        setValue('text', result.definition, { shouldValidate: true }); // Update react-hook-form value and validate
+
+        // Auto-populate tags with extracted keywords
+        if (result.keywords && result.keywords.length > 0) {
+          setTagsInput(result.keywords.join(', '));
+        }
+
         haptic('light');
       } catch (err) {
         console.error('Failed to generate definition:', err);

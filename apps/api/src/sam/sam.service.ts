@@ -247,6 +247,50 @@ export class SamService {
     return content.substring(0, 297).trim() + '...';
   }
 
+  async generateKeywords(term: string): Promise<string[]> {
+    if (!this.openai) {
+      return [];
+    }
+
+    try {
+      const response = await this.openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a semantic analyst that extracts domain keywords and concept categories.
+
+For each term, identify:
+1. Concept domains (e.g., ideology, governance, state power)
+2. Key attributes (e.g., authoritarianism, nationalism, repression)
+3. Related concepts from ontology
+
+Return 6-8 high-level keywords as a comma-separated list.
+Focus on abstract domains and categorical terms, not synonyms.
+
+Example for "fascist": ideology, governance, authoritarianism, nationalism, state power, totalitarianism, political movement, repression`
+          },
+          {
+            role: 'user',
+            content: `Extract domain keywords for: ${term}`
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 100
+      });
+
+      const keywordsText = response.choices[0]?.message?.content?.trim();
+      if (keywordsText && keywordsText.length > 0) {
+        return keywordsText.split(',').map(k => k.trim().toLowerCase()).filter(k => k.length > 0).slice(0, 8);
+      }
+
+      return [];
+    } catch (error) {
+      logger.error('Failed to extract keywords with AI:', error);
+      return [];
+    }
+  }
+
   async generateDefinition(term: string): Promise<string> {
     if (!this.openai) {
       // Fallback: return a simple message if OpenAI not configured

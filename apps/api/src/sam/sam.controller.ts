@@ -132,10 +132,13 @@ export class SamController {
   }
 
   @Post('generate-definition')
-  @ApiOperation({ summary: 'Generate definition for a term or phrase' })
-  @ApiResponse({ status: 200, description: 'Definition generated' })
+  @ApiOperation({ summary: 'Generate definition and extract domain keywords for a term or phrase' })
+  @ApiResponse({ status: 200, description: 'Definition and keywords generated' })
   async generateDefinition(@Req() req: any, @Body() body: { term: string }) {
-    const definition = await this.samService.generateDefinition(body.term);
-    return { definition };
+    const [definition, keywords] = await Promise.all([
+      this.samService.generateDefinition(body.term),
+      this.samService.generateKeywords(body.term)
+    ]);
+    return { definition, keywords };
   }
 }

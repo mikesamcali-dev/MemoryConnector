@@ -133,7 +133,12 @@ export async function deleteSamMemory(id: string): Promise<void> {
   }
 }
 
-export async function generateDefinition(term: string): Promise<string> {
+export interface GenerateDefinitionResponse {
+  definition: string;
+  keywords: string[];
+}
+
+export async function generateDefinition(term: string): Promise<GenerateDefinitionResponse> {
   const response = await fetchWithAuth('/sam/generate-definition', {
     method: 'POST',
     body: JSON.stringify({ term }),
@@ -144,5 +149,5 @@ export async function generateDefinition(term: string): Promise<string> {
   }
 
   const data = await response.json();
-  return data.definition;
+  return { definition: data.definition, keywords: data.keywords || [] };
 }

@@ -10,5 +10,9 @@ export class GenerateDefinitionDto {
 }
 
 export class DefinitionResponse {
+  @ApiProperty({ description: 'Comprehensive definition with etymology, examples, synonyms, antonyms' })
   definition: string;
+
+  @ApiProperty({ description: 'Extracted domain keywords and concept categories (6-8 terms)', type: [String] })
+  keywords: string[];
 }
