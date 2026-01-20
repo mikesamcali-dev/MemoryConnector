@@ -21,6 +21,7 @@ interface SamMemory {
 export function SamMemoriesPage() {
   const queryClient = useQueryClient();
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [newMemory, setNewMemory] = useState({
     title: '',
     content: '',
@@ -95,6 +96,15 @@ export function SamMemoriesPage() {
     }
   };
 
+  const handleTagClick = (tag: string) => {
+    setSelectedTag(selectedTag === tag ? null : tag);
+  };
+
+  // Filter memories by selected tag
+  const filteredMemories = selectedTag
+    ? memories.filter(memory => memory.tags.includes(selectedTag))
+    : memories;
+
   return (
     <div className="sam-memories-page">
       <div className="page-header">
@@ -106,6 +116,15 @@ export function SamMemoriesPage() {
           {showCreateForm ? 'Cancel' : '+ New Memory'}
         </button>
       </div>
+
+      {selectedTag && (
+        <div className="filter-banner">
+          <span>Filtering by tag: <strong>{selectedTag}</strong></span>
+          <button onClick={() => setSelectedTag(null)} className="btn-small">
+            Clear Filter
+          </button>
+        </div>
+      )}
 
       {showCreateForm && (
         <div className="create-form-card">
@@ -170,9 +189,16 @@ export function SamMemoriesPage() {
         <div className="empty-state">
           <p>No SAM memories yet. Create your first one!</p>
         </div>
+      ) : filteredMemories.length === 0 ? (
+        <div className="empty-state">
+          <p>No memories found with tag "{selectedTag}".</p>
+          <button onClick={() => setSelectedTag(null)} className="btn-secondary">
+            Clear Filter
+          </button>
+        </div>
       ) : (
         <div className="memories-grid">
-          {memories.map((memory: SamMemory) => (
+          {filteredMemories.map((memory: SamMemory) => (
             <div key={memory.id} className={`memory-card ${memory.archiveFlag ? 'archived' : ''}`}>
               <div className="memory-header">
                 <h3>{memory.title}</h3>
@@ -202,7 +228,13 @@ export function SamMemoriesPage() {
 
               <div className="tags">
                 {memory.tags.map((tag: string) => (
-                  <span key={tag} className="tag">{tag}</span>
+                  <button
+                    key={tag}
+                    onClick={() => handleTagClick(tag)}
+                    className={`tag ${selectedTag === tag ? 'tag-active' : ''}`}
+                  >
+                    {tag}
+                  </button>
                 ))}
               </div>
 

@@ -218,6 +218,37 @@
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
   font-size: 0.75rem;
+  border: 1px solid #dee2e6;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tag:hover {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+  transform: translateY(-1px);
+}
+
+.tag-active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.filter-banner {
+  background: #e7f3ff;
+  border: 1px solid #007bff;
+  border-radius: 0.5rem;
+  padding: 1rem 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filter-banner strong {
+  color: #007bff;
 }
 
 .memory-footer {
