@@ -15,7 +15,7 @@ import { getAllTrainings, linkMemoryToTraining } from '../api/trainings';
 import { compressImage, getSizeReduction } from '../utils/imageCompression';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocation, Link } from 'react-router-dom';
-import { Loader, Users, MapPinned, Video, Image as ImageIcon, Link as LinkIcon, X, Mic, FolderKanban, GraduationCap, MessageSquare, Camera, BookMarked, AlertCircle } from 'lucide-react';
+import { Loader, Users, MapPinned, Video, Image as ImageIcon, Link as LinkIcon, X, Mic, FolderKanban, GraduationCap, MessageSquare, Camera, BookMarked, AlertCircle, ChevronDown } from 'lucide-react';
 import { useHaptics } from '../hooks/useHaptics';
 import { useVoiceInput } from '../hooks/useVoiceInput';
 import { useHelpPopup } from '../hooks/useHelpPopup';
@@ -26,6 +26,575 @@ import { submitFeedback } from '../api/transcription';
 const memorySchema = z.object({
   text: z.string().min(1, 'Memory text is required'),
 });
+
+// Internal Components
+
+interface CaptureActionRowProps {
+  onSave: () => void;
+  onAsk: () => void;
+  onSaveToMemory: () => void;
+  loading: boolean;
+  loadingDefinition: boolean;
+  uploadingImage: boolean;
+  addingUrl: boolean;
+  addingTikTok: boolean;
+  addingYouTube: boolean;
+  textValue: string;
+  formId?: string;
+}
+
+function CaptureActionRow({
+  onSave,
+  onAsk,
+  onSaveToMemory,
+  loading,
+  loadingDefinition,
+  uploadingImage,
+  addingUrl,
+  addingTikTok,
+  addingYouTube,
+  textValue,
+  formId,
+}: CaptureActionRowProps) {
+  const [showMemoryDropdown, setShowMemoryDropdown] = useState(false);
+  const isDisabled = loading || uploadingImage || addingUrl || addingTikTok || addingYouTube;
+  const isMemoryDisabled = isDisabled || loadingDefinition || !textValue.trim();
+
+  const getSaveButtonText = () => {
+    if (uploadingImage) return 'Uploading...';
+    if (addingUrl) return 'Analyzing...';
+    if (addingTikTok) return 'Adding TikTok...';
+    if (addingYouTube) return 'Adding YouTube...';
+    if (loading) return 'Saving...';
+    return 'Save';
+  };
+
+  return (
+    <div className="flex gap-2">
+      <button
+        type={formId ? 'submit' : 'button'}
+        form={formId}
+        onClick={!formId ? onSave : undefined}
+        disabled={isDisabled}
+        className="flex-1 h-12 md:h-10 px-4 bg-blue-600 text-white text-base md:text-sm font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 shadow-md transition-all active:scale-95"
+      >
+        {loading && <Loader className="h-5 w-5 md:h-4 md:w-4 animate-spin mr-2" />}
+        {getSaveButtonText()}
+      </button>
+
+      <button
+        type="button"
+        onClick={onAsk}
+        disabled={isMemoryDisabled}
+        className="flex-1 h-12 md:h-10 px-4 bg-gray-100 text-gray-700 text-base md:text-sm font-semibold rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50 shadow-md transition-all active:scale-95 inline-flex items-center justify-center gap-2"
+      >
+        <MessageSquare className="h-5 w-5 md:h-4 md:w-4" />
+        Ask
+      </button>
+
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setShowMemoryDropdown(!showMemoryDropdown)}
+          className="h-12 md:h-10 px-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 shadow-md transition-all active:scale-95"
+          title="More options"
+        >
+          <ChevronDown className="h-5 w-5 md:h-4 md:w-4" />
+        </button>
+
+        {showMemoryDropdown && (
+          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+            <button
+              type="button"
+              onClick={() => {
+                onSaveToMemory();
+                setShowMemoryDropdown(false);
+              }}
+              disabled={isMemoryDisabled}
+              className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <BookMarked className="h-4 w-4" />
+              Save → Memory
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface LinkedStripProps {
+  linkedEntities: {
+    persons: string[];
+    locations: string[];
+    youtubeVideos: string[];
+    tiktokVideos: string[];
+    projects: string[];
+    trainings: string[];
+  };
+  selectedPersonName: string;
+  preLinkedImageId: string | null;
+  preLinkedUrlPageId: string | null;
+  onRemovePerson: () => void;
+  onRemoveLocation: () => void;
+  onRemoveProject: () => void;
+  onRemoveTraining: () => void;
+  onRemoveYouTube: () => void;
+  onRemoveTikTok: () => void;
+  onRemovePreLinkedImage: () => void;
+  onRemovePreLinkedUrl: () => void;
+}
+
+function LinkedStrip({
+  linkedEntities,
+  selectedPersonName,
+  preLinkedImageId,
+  preLinkedUrlPageId,
+  onRemovePerson,
+  onRemoveLocation,
+  onRemoveProject,
+  onRemoveTraining,
+  onRemoveYouTube,
+  onRemoveTikTok,
+  onRemovePreLinkedImage,
+  onRemovePreLinkedUrl,
+}: LinkedStripProps) {
+  const hasLinks =
+    linkedEntities.persons.length > 0 ||
+    linkedEntities.locations.length > 0 ||
+    linkedEntities.youtubeVideos.length > 0 ||
+    linkedEntities.tiktokVideos.length > 0 ||
+    linkedEntities.projects.length > 0 ||
+    linkedEntities.trainings.length > 0 ||
+    preLinkedImageId ||
+    preLinkedUrlPageId;
+
+  if (!hasLinks) return null;
+
+  return (
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4">
+      <div className="text-xs text-gray-600 mb-2 font-medium">Linked on save:</div>
+      <div className="flex flex-wrap gap-2">
+        {linkedEntities.youtubeVideos.length > 0 && (
+          <div className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-md text-xs">
+            <Video className="h-3 w-3" />
+            <span>YouTube</span>
+            <button
+              type="button"
+              onClick={onRemoveYouTube}
+              className="ml-1 hover:text-red-900"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
+
+        {linkedEntities.tiktokVideos.length > 0 && (
+          <div className="inline-flex items-center gap-1 px-2 py-1 bg-pink-100 text-pink-700 rounded-md text-xs">
+            <Video className="h-3 w-3" />
+            <span>TikTok</span>
+            <button
+              type="button"
+              onClick={onRemoveTikTok}
+              className="ml-1 hover:text-pink-900"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
+
+        {linkedEntities.persons.length > 0 && (
+          <div className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded-md text-xs">
+            <Users className="h-3 w-3" />
+            <span>{selectedPersonName || 'Person'}</span>
+            <button
+              type="button"
+              onClick={onRemovePerson}
+              className="ml-1 hover:text-purple-900"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
+
+        {linkedEntities.locations.length > 0 && (
+          <div className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-md text-xs">
+            <MapPinned className="h-3 w-3" />
+            <span>Location</span>
+            <button
+              type="button"
+              onClick={onRemoveLocation}
+              className="ml-1 hover:text-green-900"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
+
+        {linkedEntities.projects.length > 0 && (
+          <div className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs">
+            <FolderKanban className="h-3 w-3" />
+            <span>Topic</span>
+            <button
+              type="button"
+              onClick={onRemoveProject}
+              className="ml-1 hover:text-blue-900"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
+
+        {linkedEntities.trainings.length > 0 && (
+          <div className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded-md text-xs">
+            <GraduationCap className="h-3 w-3" />
+            <span>Training</span>
+            <button
+              type="button"
+              onClick={onRemoveTraining}
+              className="ml-1 hover:text-purple-900"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
+
+        {preLinkedImageId && (
+          <div className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs">
+            <ImageIcon className="h-3 w-3" />
+            <span>Image</span>
+            <button
+              type="button"
+              onClick={onRemovePreLinkedImage}
+              className="ml-1 hover:text-blue-900"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
+
+        {preLinkedUrlPageId && (
+          <div className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded-md text-xs">
+            <LinkIcon className="h-3 w-3" />
+            <span>URL Page</span>
+            <button
+              type="button"
+              onClick={onRemovePreLinkedUrl}
+              className="ml-1 hover:text-purple-900"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface OptionalPanelProps {
+  tagsInput: string;
+  onTagsChange: (value: string) => void;
+  trainingInput: string;
+  onTrainingChange: (value: string) => void;
+  suggestedTraining: { id: string; name: string } | null;
+  onAcceptTraining: () => void;
+  onDismissTraining: () => void;
+}
+
+function OptionalPanel({
+  tagsInput,
+  onTagsChange,
+  trainingInput,
+  onTrainingChange,
+  suggestedTraining,
+  onAcceptTraining,
+  onDismissTraining,
+}: OptionalPanelProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 flex items-center justify-between text-sm font-medium text-gray-700"
+      >
+        <span>Optional Fields</span>
+        <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isExpanded && (
+        <div className="p-4 space-y-3">
+          <div className="relative">
+            <label htmlFor="tags" className="block text-xs font-medium text-gray-700 mb-1">
+              Tags
+            </label>
+            <input
+              id="tags"
+              type="text"
+              value={tagsInput}
+              onChange={(e) => onTagsChange(e.target.value)}
+              placeholder="work, personal, ideas..."
+              className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <div className="relative">
+            <label htmlFor="training" className="block text-xs font-medium text-gray-700 mb-1">
+              Training
+            </label>
+            <input
+              id="training"
+              type="text"
+              value={trainingInput}
+              onChange={(e) => onTrainingChange(e.target.value)}
+              placeholder="Course or training name..."
+              className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+            />
+
+            {suggestedTraining && (
+              <div className="absolute left-0 right-0 mt-1 p-3 bg-purple-50 border border-purple-200 rounded-md shadow-sm z-10">
+                <div className="flex items-start gap-2">
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-700 mb-1">
+                      Did you mean <span className="font-semibold text-purple-700">{suggestedTraining.name}</span>?
+                    </p>
+                  </div>
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={onAcceptTraining}
+                      className="px-2 py-1 text-xs font-medium text-purple-700 bg-purple-100 hover:bg-purple-200 rounded transition-colors"
+                    >
+                      Yes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onDismissTraining}
+                      className="px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+                    >
+                      No
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface ActionGridProps {
+  onCameraCapture: () => void;
+  onPersonSelect: () => void;
+  onLocationSelect: () => void;
+  onTopicSelect: () => void;
+  onYouTubeAdd: () => void;
+  onTikTokAdd: () => void;
+  onUrlAdd: () => void;
+  compressingImage: boolean;
+  addingYouTube: boolean;
+  addingTikTok: boolean;
+  addingUrl: boolean;
+  imagePreview: string | null;
+  onRemoveImage: () => void;
+  compressionInfo: string;
+  linkedPersons: number;
+  linkedLocations: number;
+  linkedProjects: number;
+  handleImageSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+function ActionGrid({
+  onCameraCapture,
+  onPersonSelect,
+  onLocationSelect,
+  onTopicSelect,
+  onYouTubeAdd,
+  onTikTokAdd,
+  onUrlAdd,
+  compressingImage,
+  addingYouTube,
+  addingTikTok,
+  addingUrl,
+  imagePreview,
+  onRemoveImage,
+  compressionInfo,
+  linkedPersons,
+  linkedLocations,
+  linkedProjects,
+  handleImageSelect,
+}: ActionGridProps) {
+  return (
+    <div>
+      <div className="text-xs text-gray-600 mb-2 font-medium">Attach Media:</div>
+      <div className="grid grid-cols-4 gap-3">
+        {/* Camera */}
+        {!imagePreview ? (
+          <label
+            htmlFor="camera-capture"
+            onClick={onCameraCapture}
+            className={`flex flex-col items-center justify-center p-3 border border-blue-300 rounded-lg bg-blue-50 hover:bg-blue-100 cursor-pointer transition-colors ${compressingImage ? 'opacity-50 cursor-wait' : ''}`}
+          >
+            {compressingImage ? (
+              <Loader className="h-6 w-6 text-blue-600 animate-spin" />
+            ) : (
+              <Camera className="h-6 w-6 text-blue-600" />
+            )}
+            <span className="text-xs text-blue-700 mt-1 font-medium">Camera</span>
+            <input
+              id="camera-capture"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleImageSelect}
+              className="sr-only"
+              disabled={compressingImage}
+            />
+          </label>
+        ) : (
+          <div className="col-span-1 flex flex-col items-center">
+            <div className="relative">
+              <img
+                src={imagePreview}
+                alt="Preview"
+                loading="lazy"
+                className="h-14 w-14 object-cover rounded-lg border border-gray-300"
+              />
+              <button
+                type="button"
+                onClick={onRemoveImage}
+                className="absolute -top-1 -right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+            {compressionInfo && (
+              <span className="text-[10px] text-green-600 mt-1 text-center">{compressionInfo.split('(')[0]}</span>
+            )}
+          </div>
+        )}
+
+        {/* Gallery */}
+        {!imagePreview && (
+          <label
+            htmlFor="image-upload"
+            className={`flex flex-col items-center justify-center p-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 cursor-pointer transition-colors ${compressingImage ? 'opacity-50 cursor-wait' : ''}`}
+          >
+            {compressingImage ? (
+              <Loader className="h-6 w-6 text-gray-600 animate-spin" />
+            ) : (
+              <ImageIcon className="h-6 w-6 text-gray-600" />
+            )}
+            <span className="text-xs text-gray-700 mt-1 font-medium">Gallery</span>
+            <input
+              id="image-upload"
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              className="sr-only"
+              disabled={compressingImage}
+            />
+          </label>
+        )}
+
+        {/* Person */}
+        <button
+          type="button"
+          onClick={onPersonSelect}
+          disabled={linkedPersons > 0}
+          className={`flex flex-col items-center justify-center p-3 border rounded-lg transition-colors ${
+            linkedPersons > 0
+              ? 'border-purple-300 bg-purple-100 text-purple-400 cursor-not-allowed'
+              : 'border-gray-300 bg-white hover:bg-gray-50 text-gray-700'
+          }`}
+        >
+          <Users className="h-6 w-6 text-purple-600" />
+          <span className="text-xs text-gray-700 mt-1 font-medium">Person</span>
+        </button>
+
+        {/* Location */}
+        <button
+          type="button"
+          onClick={onLocationSelect}
+          disabled={linkedLocations > 0}
+          className={`flex flex-col items-center justify-center p-3 border rounded-lg transition-colors ${
+            linkedLocations > 0
+              ? 'border-green-300 bg-green-100 text-green-400 cursor-not-allowed'
+              : 'border-gray-300 bg-white hover:bg-gray-50 text-gray-700'
+          }`}
+        >
+          <MapPinned className="h-6 w-6 text-green-600" />
+          <span className="text-xs text-gray-700 mt-1 font-medium">Location</span>
+        </button>
+
+        {/* Topic */}
+        <button
+          type="button"
+          onClick={onTopicSelect}
+          disabled={linkedProjects > 0}
+          className={`flex flex-col items-center justify-center p-3 border rounded-lg transition-colors ${
+            linkedProjects > 0
+              ? 'border-blue-300 bg-blue-100 text-blue-400 cursor-not-allowed'
+              : 'border-gray-300 bg-white hover:bg-gray-50 text-gray-700'
+          }`}
+        >
+          <FolderKanban className="h-6 w-6 text-blue-600" />
+          <span className="text-xs text-gray-700 mt-1 font-medium">Topic</span>
+        </button>
+
+        {/* YouTube */}
+        <button
+          type="button"
+          onClick={onYouTubeAdd}
+          disabled={addingYouTube}
+          className="flex flex-col items-center justify-center p-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors disabled:opacity-50"
+        >
+          {addingYouTube ? (
+            <Loader className="h-6 w-6 text-gray-600 animate-spin" />
+          ) : (
+            <Video className="h-6 w-6 text-red-600" />
+          )}
+          <span className="text-xs text-gray-700 mt-1 font-medium">YouTube</span>
+        </button>
+
+        {/* TikTok */}
+        <button
+          type="button"
+          onClick={onTikTokAdd}
+          disabled={addingTikTok}
+          className="flex flex-col items-center justify-center p-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors disabled:opacity-50"
+        >
+          {addingTikTok ? (
+            <Loader className="h-6 w-6 text-gray-600 animate-spin" />
+          ) : (
+            <Video className="h-6 w-6 text-gray-600" />
+          )}
+          <span className="text-xs text-gray-700 mt-1 font-medium">TikTok</span>
+        </button>
+
+        {/* Link/URL */}
+        <button
+          type="button"
+          onClick={onUrlAdd}
+          disabled={addingUrl}
+          className="flex flex-col items-center justify-center p-3 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors disabled:opacity-50"
+        >
+          {addingUrl ? (
+            <Loader className="h-6 w-6 text-gray-600 animate-spin" />
+          ) : (
+            <LinkIcon className="h-6 w-6 text-gray-600" />
+          )}
+          <span className="text-xs text-gray-700 mt-1 font-medium">Link</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Main Component
 
 export function CapturePage() {
   const { user: _user, accessToken } = useAuth();
@@ -597,346 +1166,37 @@ export function CapturePage() {
     }));
   };
 
-  // Handle save to memory deck button click - saves memory to deck
-  const handleSaveToMemoryDeck = async () => {
-    if (!textValue.trim()) {
-      return;
-    }
+  // Remove linked YouTube video
+  const handleRemoveYouTube = () => {
+    setLinkedEntities(prev => ({
+      ...prev,
+      youtubeVideos: [],
+    }));
+  };
 
+  // Remove linked TikTok video
+  const handleRemoveTikTok = () => {
+    setLinkedEntities(prev => ({
+      ...prev,
+      tiktokVideos: [],
+    }));
+  };
+
+  // Remove pre-linked image
+  const handleRemovePreLinkedImage = () => {
+    setPreLinkedImageId(null);
+  };
+
+  // Remove pre-linked URL
+  const handleRemovePreLinkedUrl = () => {
+    setPreLinkedUrlPageId(null);
+  };
+
+  // Shared save logic
+  const executeSave = async (data: { text: string }, additionalActions?: () => Promise<void>) => {
     haptic('light');
     setError('');
     setIsRateLimitError(false);
-    setLoading(true);
-
-    try {
-      // Parse tags from comma-separated input
-      const tags = tagsInput
-        .split(',')
-        .map(t => t.trim())
-        .filter(Boolean);
-
-      // Create SAM memory (title will be auto-generated if not provided)
-      const createdMemory = await createSamMemory({
-        title: topicInput.trim() || undefined,
-        content: textValue,
-        tags,
-        reliability: 'confirmed',
-        confidence_score: 0.75,
-        context_window: {
-          applies_to: [],
-          excludes: [],
-        },
-        decay_policy: {
-          type: 'exponential',
-          half_life_days: 90,
-          min_confidence: 0.4,
-        },
-      });
-
-      // Upload and link image if one was selected
-      if (selectedImage) {
-        try {
-          setUploadingImage(true);
-          const reader = new FileReader();
-          const imageDataPromise = new Promise<string>((resolve, reject) => {
-            reader.onloadend = () => {
-              const result = reader.result as string;
-              const base64Data = result.split(',')[1];
-              resolve(base64Data);
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(selectedImage);
-          });
-
-          const imageData = await imageDataPromise;
-          const uploadedImage = await uploadImage({
-            imageData,
-            contentType: selectedImage.type,
-            filename: selectedImage.name,
-          });
-          await linkImageToMemory(uploadedImage.id, createdMemory.id);
-        } catch (imageError) {
-          console.error('Failed to upload image:', imageError);
-        } finally {
-          setUploadingImage(false);
-        }
-      }
-
-      // Link URL if one was added
-      if (addedUrlPage) {
-        try {
-          await linkUrlPageToMemory(addedUrlPage.id, createdMemory.id);
-        } catch (urlError) {
-          console.error('Failed to link URL:', urlError);
-        }
-      }
-
-      // Link project if one was selected
-      if (linkedEntities.projects[0]) {
-        try {
-          await linkMemoryToProject(createdMemory.id, linkedEntities.projects[0]);
-        } catch (projectError) {
-          console.error('Failed to link project:', projectError);
-        }
-      }
-
-      // Process phrase/word linking if text is 1-3 words
-      if (textValue.trim().split(/\s+/).length <= 3) {
-        try {
-          await processMemoryPhrase(createdMemory.id, textValue.trim());
-        } catch (phraseError) {
-          console.error('Failed to process phrase:', phraseError);
-        }
-      }
-
-      // Link topic if one was entered
-      if (topicInput.trim()) {
-        // Topic linking is handled separately via the topic input
-      }
-
-      // Handle training input - create or find training by name
-      if (trainingInput.trim()) {
-        try {
-          const { createTraining, getAllTrainings, linkMemoryToTraining } = await import('../api/trainings');
-
-          // Get all trainings to check if training already exists
-          const allTrainings = await getAllTrainings();
-          let trainingId: string | null = null;
-
-          // Check if a training with this name already exists (case-insensitive)
-          const existingTraining = allTrainings.find(
-            t => t.name.toLowerCase() === trainingInput.trim().toLowerCase()
-          );
-
-          if (existingTraining) {
-            // Training exists, use its ID
-            trainingId = existingTraining.id;
-            console.log('Found existing training:', existingTraining.name);
-          } else {
-            // Training doesn't exist, create it
-            const newTraining = await createTraining({ name: trainingInput.trim() });
-            trainingId = newTraining.id;
-            console.log('Created new training:', newTraining.name);
-          }
-
-          // Link memory to training
-          if (trainingId) {
-            await linkMemoryToTraining(trainingId, createdMemory.id);
-            console.log('Memory linked to training:', trainingId);
-          }
-        } catch (trainingError) {
-          console.error('Failed to create/link training:', trainingError);
-          // Don't fail the whole operation if training creation/linking fails
-        }
-      }
-
-      // Reset form
-      reset({ text: '' });
-      setTextValue('');
-      setTopicInput('');
-      setTagsInput('');
-      setSuggestedTopic(null);
-      setTrainingInput('');
-      setSuggestedTraining(null);
-      setSelectedImage(null);
-      setImagePreview(null);
-      setCompressionInfo('');
-      setAddedUrlPage(null);
-      setLinkedEntities({ persons: [], locations: [], youtubeVideos: [], tiktokVideos: [], projects: [], trainings: [] });
-
-      // Invalidate SAM memories query so the list refreshes
-      queryClient.invalidateQueries({ queryKey: ['sam-memories'] });
-
-      haptic('success');
-
-      // Stay on capture page - ready for next memory
-    } catch (err: any) {
-      console.error('Create memory error:', err);
-      setError(err.message || 'Failed to create memory');
-      if (err.status === 429) {
-        setIsRateLimitError(true);
-      }
-      haptic('error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle Ask button click - saves memory and asks OpenAI
-  const handleAskButtonClick = async () => {
-    if (!textValue.trim()) {
-      return;
-    }
-
-    haptic('light');
-    setError('');
-    setIsRateLimitError(false);
-    setLoading(true);
-
-    try {
-      // Parse tags from comma-separated input
-      const tags = tagsInput
-        .split(',')
-        .map(t => t.trim())
-        .filter(Boolean);
-
-      // Create SAM memory (title will be auto-generated if not provided)
-      const createdMemory = await createSamMemory({
-        title: topicInput.trim() || undefined,
-        content: textValue,
-        tags,
-        reliability: 'confirmed',
-        confidence_score: 0.75,
-        context_window: {
-          applies_to: [],
-          excludes: [],
-        },
-        decay_policy: {
-          type: 'exponential',
-          half_life_days: 90,
-          min_confidence: 0.4,
-        },
-      });
-
-      // Upload and link image if one was selected
-      if (selectedImage) {
-        try {
-          setUploadingImage(true);
-          const reader = new FileReader();
-          const imageDataPromise = new Promise<string>((resolve, reject) => {
-            reader.onloadend = () => {
-              const result = reader.result as string;
-              const base64Data = result.split(',')[1];
-              resolve(base64Data);
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(selectedImage);
-          });
-
-          const imageData = await imageDataPromise;
-          const uploadedImage = await uploadImage({
-            imageData,
-            contentType: selectedImage.type,
-            filename: selectedImage.name,
-          });
-          await linkImageToMemory(uploadedImage.id, createdMemory.id);
-        } catch (imageError) {
-          console.error('Failed to upload image:', imageError);
-        } finally {
-          setUploadingImage(false);
-        }
-      }
-
-      // Link URL if one was added
-      if (addedUrlPage) {
-        try {
-          await linkUrlPageToMemory(addedUrlPage.id, createdMemory.id);
-        } catch (urlError) {
-          console.error('Failed to link URL:', urlError);
-        }
-      }
-
-      // Link project if one was selected
-      if (linkedEntities.projects[0]) {
-        try {
-          await linkMemoryToProject(createdMemory.id, linkedEntities.projects[0]);
-        } catch (projectError) {
-          console.error('Failed to link project:', projectError);
-        }
-      }
-
-      // Ask OpenAI and save question/answer
-      try {
-        await createQuestion({
-          memoryId: createdMemory.id,
-          question: textValue.trim(),
-        });
-      } catch (questionError) {
-        console.error('Failed to create question:', questionError);
-        // Continue anyway - memory was saved successfully
-      }
-
-      // Process phrase/word linking in background (fire and forget)
-      if (textValue.trim().split(/\s+/).length <= 3) {
-        processMemoryPhrase(createdMemory.id, textValue.trim()).catch(error => {
-          console.error('Failed to process phrase:', error);
-        });
-      }
-
-      // Handle training input - create or find training by name
-      if (trainingInput.trim()) {
-        try {
-          const { createTraining, getAllTrainings, linkMemoryToTraining } = await import('../api/trainings');
-
-          // Get all trainings to check if training already exists
-          const allTrainings = await getAllTrainings();
-          let trainingId: string | null = null;
-
-          // Check if a training with this name already exists (case-insensitive)
-          const existingTraining = allTrainings.find(
-            t => t.name.toLowerCase() === trainingInput.trim().toLowerCase()
-          );
-
-          if (existingTraining) {
-            // Training exists, use its ID
-            trainingId = existingTraining.id;
-            console.log('Found existing training:', existingTraining.name);
-          } else {
-            // Training doesn't exist, create it
-            const newTraining = await createTraining({ name: trainingInput.trim() });
-            trainingId = newTraining.id;
-            console.log('Created new training:', newTraining.name);
-          }
-
-          // Link memory to training
-          if (trainingId) {
-            await linkMemoryToTraining(trainingId, createdMemory.id);
-            console.log('Memory linked to training:', trainingId);
-          }
-        } catch (trainingError) {
-          console.error('Failed to create/link training:', trainingError);
-          // Don't fail the whole operation if training creation/linking fails
-        }
-      }
-
-      // Reset form
-      reset({ text: '' });
-      setTextValue('');
-      setTopicInput('');
-      setTagsInput('');
-      setSuggestedTopic(null);
-      setTrainingInput('');
-      setSuggestedTraining(null);
-      setSelectedImage(null);
-      setImagePreview(null);
-      setCompressionInfo('');
-      setAddedUrlPage(null);
-      setLinkedEntities({ persons: [], locations: [], youtubeVideos: [], tiktokVideos: [], projects: [], trainings: [] });
-
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['sam-memories'] });
-      queryClient.invalidateQueries({ queryKey: ['questions'] });
-
-      haptic('success');
-
-      // Stay on capture page - ready for next memory
-    } catch (err: any) {
-      console.error('Create memory/question error:', err);
-      setError(err.message || 'Failed to create memory');
-      if (err.status === 429) {
-        setIsRateLimitError(true);
-      }
-      haptic('error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const onSubmit = async (data: { text: string }) => {
-    haptic('light'); // Haptic feedback on submit
-    setError('');
-    setIsRateLimitError(false);
-
     setLoading(true);
 
     try {
@@ -968,13 +1228,10 @@ export function CapturePage() {
       if (selectedImage) {
         try {
           setUploadingImage(true);
-
-          // Convert image to base64
           const reader = new FileReader();
           const imageDataPromise = new Promise<string>((resolve, reject) => {
             reader.onloadend = () => {
               const result = reader.result as string;
-              // Remove the data URL prefix (e.g., "data:image/jpeg;base64,")
               const base64Data = result.split(',')[1];
               resolve(base64Data);
             };
@@ -983,21 +1240,14 @@ export function CapturePage() {
           });
 
           const imageData = await imageDataPromise;
-
-          // Upload image
           const uploadedImage = await uploadImage({
             imageData,
             contentType: selectedImage.type,
             filename: selectedImage.name,
           });
-
-          // Link image to memory
           await linkImageToMemory(uploadedImage.id, createdMemory.id);
-
-          console.log('Image uploaded and linked to memory:', uploadedImage.id);
         } catch (imageError) {
           console.error('Failed to upload image:', imageError);
-          // Don't fail the whole operation if image upload fails
         } finally {
           setUploadingImage(false);
         }
@@ -1010,7 +1260,6 @@ export function CapturePage() {
           console.log('Pre-linked image attached to memory:', preLinkedImageId);
         } catch (imageError) {
           console.error('Failed to link pre-selected image:', imageError);
-          // Don't fail the whole operation if image linking fails
         }
       }
 
@@ -1021,7 +1270,6 @@ export function CapturePage() {
           console.log('Pre-linked URL page attached to memory:', preLinkedUrlPageId);
         } catch (urlError) {
           console.error('Failed to link pre-selected URL page:', urlError);
-          // Don't fail the whole operation if URL linking fails
         }
       }
 
@@ -1029,10 +1277,8 @@ export function CapturePage() {
       if (addedUrlPage) {
         try {
           await linkUrlPageToMemory(addedUrlPage.id, createdMemory.id);
-          console.log('Added URL page attached to memory:', addedUrlPage.id);
         } catch (urlError) {
-          console.error('Failed to link added URL page:', urlError);
-          // Don't fail the whole operation if URL linking fails
+          console.error('Failed to link URL:', urlError);
         }
       }
 
@@ -1041,34 +1287,28 @@ export function CapturePage() {
         try {
           const { createProject, getAllProjects, linkMemoryToProject } = await import('../api/projects');
 
-          // Get all projects to check if topic already exists
           const allProjects = await getAllProjects();
           let topicId: string | null = null;
 
-          // Check if a topic with this name already exists (case-insensitive)
           const existingTopic = allProjects.find(
             p => p.name.toLowerCase() === topicInput.trim().toLowerCase()
           );
 
           if (existingTopic) {
-            // Topic exists, use its ID
             topicId = existingTopic.id;
             console.log('Found existing topic:', existingTopic.name);
           } else {
-            // Topic doesn't exist, create it
             const newTopic = await createProject({ name: topicInput.trim() });
             topicId = newTopic.id;
             console.log('Created new topic:', newTopic.name);
           }
 
-          // Link memory to topic
           if (topicId) {
             await linkMemoryToProject(topicId, createdMemory.id);
             console.log('Memory linked to topic:', topicId);
           }
         } catch (topicError) {
           console.error('Failed to create/link topic:', topicError);
-          // Don't fail the whole operation if topic creation/linking fails
         }
       }
 
@@ -1079,7 +1319,6 @@ export function CapturePage() {
           console.log('Memory linked to project:', linkedEntities.projects[0]);
         } catch (projectError) {
           console.error('Failed to link memory to project:', projectError);
-          // Don't fail the whole operation if project linking fails
         }
       }
 
@@ -1088,34 +1327,28 @@ export function CapturePage() {
         try {
           const { createTraining, getAllTrainings, linkMemoryToTraining } = await import('../api/trainings');
 
-          // Get all trainings to check if training already exists
           const allTrainings = await getAllTrainings();
           let trainingId: string | null = null;
 
-          // Check if a training with this name already exists (case-insensitive)
           const existingTraining = allTrainings.find(
             t => t.name.toLowerCase() === trainingInput.trim().toLowerCase()
           );
 
           if (existingTraining) {
-            // Training exists, use its ID
             trainingId = existingTraining.id;
             console.log('Found existing training:', existingTraining.name);
           } else {
-            // Training doesn't exist, create it
             const newTraining = await createTraining({ name: trainingInput.trim() });
             trainingId = newTraining.id;
             console.log('Created new training:', newTraining.name);
           }
 
-          // Link memory to training
           if (trainingId) {
             await linkMemoryToTraining(trainingId, createdMemory.id);
             console.log('Memory linked to training:', trainingId);
           }
         } catch (trainingError) {
           console.error('Failed to create/link training:', trainingError);
-          // Don't fail the whole operation if training creation/linking fails
         }
       }
 
@@ -1126,16 +1359,18 @@ export function CapturePage() {
           console.log('Memory linked to training:', linkedEntities.trainings[0]);
         } catch (trainingError) {
           console.error('Failed to link memory to training:', trainingError);
-          // Don't fail the whole operation if training linking fails
         }
       }
 
       // Process phrase/word linking in background (fire and forget)
-      // This handles 1-3 word memories, creating word entries and linking them
       processMemoryPhrase(createdMemory.id, data.text).catch(error => {
         console.error('Failed to process phrase linking:', error);
-        // Don't fail the whole operation if phrase linking fails
       });
+
+      // Execute additional actions if provided
+      if (additionalActions) {
+        await additionalActions();
+      }
 
       // Clear all form fields and state
       setLinkedEntities({ persons: [], locations: [], youtubeVideos: [], tiktokVideos: [], projects: [], trainings: [] });
@@ -1152,23 +1387,14 @@ export function CapturePage() {
       setTextValue('');
       reset();
 
-      // Success haptic feedback
       haptic('success');
-
-      // Invalidate SAM memories query so the list refreshes
       queryClient.invalidateQueries({ queryKey: ['sam-memories'] });
-
-      // Stay on capture page - ready for next memory
     } catch (err: any) {
-      // Error haptic feedback
       haptic('error');
-
-      // Check if it's a rate limit error (429)
       if (err.status === 429) {
         setIsRateLimitError(true);
         setError('You\'ve reached your daily memory limit.');
       } else if (err.status === 500 && err.message.includes('Database lookup failed')) {
-        // Database integrity check failed
         setError('Unable to verify word uniqueness. Please try again.');
       } else {
         setError(err.message || 'Failed to save memory');
@@ -1178,6 +1404,37 @@ export function CapturePage() {
     }
   };
 
+  // Handle standard save
+  const onSubmit = async (data: { text: string }) => {
+    await executeSave(data);
+  };
+
+  // Handle save to memory deck
+  const handleSaveToMemoryDeck = async () => {
+    if (!textValue.trim()) return;
+    await executeSave({ text: textValue });
+  };
+
+  // Handle Ask button click - saves memory and asks OpenAI
+  const handleAskButtonClick = async () => {
+    if (!textValue.trim()) return;
+
+    await executeSave({ text: textValue }, async () => {
+      // Additional action: create question
+      try {
+        const memoryId = queryClient.getQueryData<any>(['sam-memories'])?.[0]?.id;
+        if (memoryId) {
+          await createQuestion({
+            memoryId,
+            question: textValue.trim(),
+          });
+          queryClient.invalidateQueries({ queryKey: ['questions'] });
+        }
+      } catch (questionError) {
+        console.error('Failed to create question:', questionError);
+      }
+    });
+  };
 
   // Handle text input change with auto-grow
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -1321,7 +1578,8 @@ export function CapturePage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto pb-6">
+      {/* Error banner */}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
           {error}
@@ -1340,31 +1598,7 @@ export function CapturePage() {
         </div>
       )}
 
-      {/* YouTube video auto-link indicator */}
-      {linkedEntities.youtubeVideos.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-          <div className="flex items-center gap-2">
-            <Video className="h-5 w-5 text-red-600" />
-            <p className="text-sm font-medium text-red-900">
-              YouTube video will be automatically linked to this memory
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* TikTok video auto-link indicator */}
-      {linkedEntities.tiktokVideos.length > 0 && (
-        <div className="bg-pink-50 border border-pink-200 rounded-lg p-4 mb-4">
-          <div className="flex items-center gap-2">
-            <Video className="h-5 w-5 text-pink-600" />
-            <p className="text-sm font-medium text-pink-900">
-              TikTok video will be automatically linked to this memory
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* TikTok error indicator */}
+      {/* Error indicators */}
       {tiktokError && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
           <div className="flex items-center gap-2">
@@ -1374,7 +1608,6 @@ export function CapturePage() {
         </div>
       )}
 
-      {/* YouTube error indicator */}
       {youtubeError && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
           <div className="flex items-center gap-2">
@@ -1384,196 +1617,44 @@ export function CapturePage() {
         </div>
       )}
 
-      {/* YouTube linked indicator */}
-      {linkedEntities.youtubeVideos.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-          <div className="flex items-center gap-2">
-            <Video className="h-5 w-5 text-red-600" />
-            <p className="text-sm font-medium text-red-900">
-              YouTube video linked to this memory
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Person linked indicator */}
-      {linkedEntities.persons.length > 0 && (
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-purple-600" />
-              <div>
-                <p className="text-sm font-medium text-purple-900">
-                  {selectedPersonName || 'Person linked to this memory'}
-                </p>
-                {selectedPersonName && (
-                  <p className="text-xs text-purple-700">
-                    Linked to this memory
-                  </p>
-                )}
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleRemovePerson}
-              className="text-purple-600 hover:text-purple-800 focus:outline-none"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Location linked indicator */}
-      {linkedEntities.locations.length > 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <MapPinned className="h-5 w-5 text-green-600" />
-              <p className="text-sm font-medium text-green-900">
-                Location linked to this memory
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleRemoveLocation}
-              className="text-green-600 hover:text-green-800 focus:outline-none"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Topic linked indicator */}
-      {linkedEntities.projects.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <FolderKanban className="h-5 w-5 text-blue-600" />
-              <p className="text-sm font-medium text-blue-900">
-                Topic linked to this memory
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleRemoveProject}
-              className="text-blue-600 hover:text-blue-800 focus:outline-none"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Training linked indicator */}
-      {linkedEntities.trainings.length > 0 && (
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <GraduationCap className="h-5 w-5 text-purple-600" />
-              <p className="text-sm font-medium text-purple-900">
-                Training linked to this memory
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleRemoveTraining}
-              className="text-purple-600 hover:text-purple-800 focus:outline-none"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Pre-linked image indicator */}
-      {preLinkedImageId && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-          <div className="flex items-center gap-2">
-            <ImageIcon className="h-5 w-5 text-blue-600" />
-            <p className="text-sm font-medium text-blue-900">
-              Image will be automatically linked to this memory
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Pre-linked URL page indicator */}
-      {preLinkedUrlPageId && (
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
-          <div className="flex items-center gap-2">
-            <LinkIcon className="h-5 w-5 text-purple-600" />
-            <p className="text-sm font-medium text-purple-900">
-              Web page will be automatically linked to this memory
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Mobile save buttons - at top to avoid keyboard */}
-      <div className="md:hidden mb-4 flex gap-2">
-        <button
-          type="submit"
-          form="capture-form"
-          disabled={loading || uploadingImage || addingUrl || addingTikTok || addingYouTube}
-          className="flex-1 h-12 px-4 bg-blue-600 text-white text-base font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 shadow-md transition-all active:scale-95"
-        >
-          {uploadingImage ? (
-            <span className="flex items-center justify-center gap-2">
-              <Loader className="h-5 w-5 animate-spin" />
-              Uploading...
-            </span>
-          ) : addingUrl ? (
-            <span className="flex items-center justify-center gap-2">
-              <Loader className="h-5 w-5 animate-spin" />
-              Analyzing...
-            </span>
-          ) : addingTikTok ? (
-            <span className="flex items-center justify-center gap-2">
-              <Loader className="h-5 w-5 animate-spin" />
-              Adding TikTok...
-            </span>
-          ) : addingYouTube ? (
-            <span className="flex items-center justify-center gap-2">
-              <Loader className="h-5 w-5 animate-spin" />
-              Adding YouTube...
-            </span>
-          ) : loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <Loader className="h-5 w-5 animate-spin" />
-              Saving...
-            </span>
-          ) : (
-            'Save'
-          )}
-        </button>
-        <button
-          type="button"
-          onClick={handleSaveToMemoryDeck}
-          disabled={loading || loadingDefinition || !textValue.trim() || uploadingImage || addingUrl || addingTikTok || addingYouTube}
-          className="flex-1 inline-flex items-center justify-center gap-2 h-12 px-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-base font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 shadow-md transition-all active:scale-95"
-        >
-          <BookMarked className="h-5 w-5" />
-          <span className="hidden xs:inline">Save → Memory</span>
-          <span className="xs:hidden">→ Memory</span>
-        </button>
-        <button
-          type="button"
-          onClick={handleAskButtonClick}
-          disabled={loading || loadingDefinition || !textValue.trim() || uploadingImage || addingUrl || addingTikTok || addingYouTube}
-          className="flex-1 inline-flex items-center justify-center gap-2 h-12 px-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white text-base font-semibold rounded-lg hover:from-purple-700 hover:to-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 shadow-md transition-all active:scale-95"
-        >
-          <MessageSquare className="h-5 w-5" />
-          <span>Ask</span>
-        </button>
+      {/* Action row - sticky on mobile, at top */}
+      <div className="md:hidden sticky top-0 z-10 bg-white pb-4 mb-4 border-b border-gray-200">
+        <CaptureActionRow
+          onSave={() => handleSubmit(onSubmit)()}
+          onAsk={handleAskButtonClick}
+          onSaveToMemory={handleSaveToMemoryDeck}
+          loading={loading}
+          loadingDefinition={loadingDefinition}
+          uploadingImage={uploadingImage}
+          addingUrl={addingUrl}
+          addingTikTok={addingTikTok}
+          addingYouTube={addingYouTube}
+          textValue={textValue}
+          formId="capture-form"
+        />
       </div>
 
-      <form id="capture-form" onSubmit={handleSubmit(onSubmit)} className="space-y-3 md:space-y-4 mb-8">
-        {/* Title input field first */}
+      {/* Linked entities strip */}
+      <LinkedStrip
+        linkedEntities={linkedEntities}
+        selectedPersonName={selectedPersonName}
+        preLinkedImageId={preLinkedImageId}
+        preLinkedUrlPageId={preLinkedUrlPageId}
+        onRemovePerson={handleRemovePerson}
+        onRemoveLocation={handleRemoveLocation}
+        onRemoveProject={handleRemoveProject}
+        onRemoveTraining={handleRemoveTraining}
+        onRemoveYouTube={handleRemoveYouTube}
+        onRemoveTikTok={handleRemoveTikTok}
+        onRemovePreLinkedImage={handleRemovePreLinkedImage}
+        onRemovePreLinkedUrl={handleRemovePreLinkedUrl}
+      />
+
+      <form id="capture-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4 mb-8">
+        {/* Title input field */}
         <div className="relative">
-          <label htmlFor="topic" className="hidden md:block text-sm font-medium text-gray-700 mb-2">
-            Title
+          <label htmlFor="topic" className="block text-sm font-medium text-gray-700 mb-2">
+            Title / Phrase
           </label>
           <input
             id="topic"
@@ -1621,10 +1702,10 @@ export function CapturePage() {
           )}
         </div>
 
-        {/* Text input field */}
+        {/* Content textarea */}
         <div>
-          <label htmlFor="text" className="hidden md:block text-sm font-medium text-gray-700 mb-2">
-            {loadingDefinition ? 'Generating definition...' : 'What do you want to remember?'}
+          <label htmlFor="text" className="block text-sm font-medium text-gray-700 mb-2">
+            {loadingDefinition ? 'Generating definition...' : 'Content'}
           </label>
           <div className="relative">
             <textarea
@@ -1632,9 +1713,9 @@ export function CapturePage() {
               id="text"
               value={textValue}
               onChange={handleTextChange}
-              rows={2}
+              rows={3}
               className="w-full px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden"
-              placeholder={loadingDefinition ? "Generating definition..." : "Memory content (auto-filled if you enter a word/phrase above)..."}
+              placeholder={loadingDefinition ? "Generating definition..." : "What do you want to remember?"}
             />
             {/* Voice input button (mobile only) */}
             <button
@@ -1674,237 +1755,38 @@ export function CapturePage() {
           )}
         </div>
 
-        {/* Tags input field */}
-        <div className="relative">
-          <input
-            id="tags"
-            type="text"
-            value={tagsInput}
-            onChange={(e) => setTagsInput(e.target.value)}
-            placeholder="Tags (comma-separated, optional) - e.g. work, personal, ideas"
-            className="w-full h-12 md:h-10 px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
+        {/* Optional fields panel */}
+        <OptionalPanel
+          tagsInput={tagsInput}
+          onTagsChange={setTagsInput}
+          trainingInput={trainingInput}
+          onTrainingChange={handleTrainingInputChange}
+          suggestedTraining={suggestedTraining}
+          onAcceptTraining={acceptSuggestedTraining}
+          onDismissTraining={dismissSuggestedTraining}
+        />
 
-        {/* Training input field */}
-        <div className="relative">
-          <input
-            id="training"
-            type="text"
-            value={trainingInput}
-            onChange={(e) => handleTrainingInputChange(e.target.value)}
-            placeholder="Training (optional)"
-            className="w-full h-12 md:h-10 px-3 py-2 text-base md:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
-          />
-
-          {/* Training suggestion popup */}
-          {suggestedTraining && (
-            <div className="absolute left-0 right-0 mt-1 p-3 bg-purple-50 border border-purple-200 rounded-md shadow-sm z-10">
-              <div className="flex items-start gap-2">
-                <div className="flex-1">
-                  <p className="text-sm text-gray-700 mb-1">
-                    Did you mean <span className="font-semibold text-purple-700">{suggestedTraining.name}</span>?
-                  </p>
-                </div>
-                <div className="flex gap-1">
-                  <button
-                    type="button"
-                    onClick={acceptSuggestedTraining}
-                    className="px-2 py-1 text-xs font-medium text-purple-700 bg-purple-100 hover:bg-purple-200 rounded transition-colors"
-                  >
-                    Yes
-                  </button>
-                  <button
-                    type="button"
-                    onClick={dismissSuggestedTraining}
-                    className="px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-                  >
-                    No
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Media buttons - Two rows on mobile for better fit */}
-        <div className="grid grid-cols-4 md:flex gap-2">
-          {/* Voice input button (desktop only) */}
-          <button
-            type="button"
-            onClick={handleVoiceInput}
-            disabled={voiceState === 'processing'}
-            className={`hidden md:inline-flex items-center justify-center h-10 px-3 py-2 border rounded-md shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 ${
-              voiceState === 'recording'
-                ? 'border-red-300 bg-red-50 text-red-700 hover:bg-red-100'
-                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-            title={voiceState === 'recording' ? 'Stop recording' : 'Voice input'}
-          >
-            <Mic className={`h-4 w-4 ${voiceState === 'recording' ? 'animate-pulse' : ''}`} />
-          </button>
-
-          {/* Camera capture button */}
-          {!imagePreview ? (
-            <>
-              <label
-                htmlFor="camera-capture"
-                onClick={handleCameraButtonClick}
-                className={`inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border border-blue-300 rounded-md shadow-sm text-base md:text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500 ${compressingImage ? 'opacity-50 cursor-wait' : ''}`}
-                title="Take photo"
-              >
-                {compressingImage ? (
-                  <Loader className="h-5 w-5 md:h-4 md:w-4 animate-spin" />
-                ) : (
-                  <Camera className="h-5 w-5 md:h-4 md:w-4" />
-                )}
-                <input
-                  id="camera-capture"
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={handleImageSelect}
-                  className="sr-only"
-                  disabled={compressingImage}
-                />
-              </label>
-
-              {/* Image upload from gallery */}
-              <label
-                htmlFor="image-upload"
-                className={`inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border border-gray-300 rounded-md shadow-sm text-base md:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500 ${compressingImage ? 'opacity-50 cursor-wait' : ''}`}
-                title="Choose from gallery"
-              >
-                {compressingImage ? (
-                  <Loader className="h-5 w-5 md:h-4 md:w-4 animate-spin" />
-                ) : (
-                  <ImageIcon className="h-5 w-5 md:h-4 md:w-4" />
-                )}
-                <input
-                  id="image-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageSelect}
-                  className="sr-only"
-                  disabled={compressingImage}
-                />
-              </label>
-            </>
-          ) : (
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  loading="lazy"
-                  className="h-12 md:h-10 w-auto rounded-md border border-gray-300"
-                />
-                <button
-                  type="button"
-                  onClick={handleRemoveImage}
-                  className="absolute -top-1 -right-1 min-w-[24px] min-h-[24px] p-1 bg-red-500 text-white rounded-full hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 flex items-center justify-center"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-              {compressionInfo && (
-                <span className="hidden md:inline text-xs text-green-600">
-                  {compressionInfo}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Person button */}
-          <button
-            type="button"
-            onClick={handleAddPerson}
-            disabled={linkedEntities.persons.length > 0}
-            className={`inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border rounded-md shadow-sm text-base md:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 ${
-              linkedEntities.persons.length > 0
-                ? 'border-purple-300 bg-purple-100 text-purple-400 cursor-not-allowed'
-                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-            title="Link to person"
-          >
-            <Users className="h-5 w-5 md:h-4 md:w-4 text-purple-600" />
-          </button>
-
-          {/* Location button */}
-          <button
-            type="button"
-            onClick={handleAddLocation}
-            disabled={linkedEntities.locations.length > 0}
-            className={`inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border rounded-md shadow-sm text-base md:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-green-500 ${
-              linkedEntities.locations.length > 0
-                ? 'border-green-300 bg-green-100 text-green-400 cursor-not-allowed'
-                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-            title="Link to location"
-          >
-            <MapPinned className="h-5 w-5 md:h-4 md:w-4 text-green-600" />
-          </button>
-
-          {/* Topic button */}
-          <button
-            type="button"
-            onClick={handleAddProject}
-            disabled={linkedEntities.projects.length > 0}
-            className={`inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border rounded-md shadow-sm text-base md:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              linkedEntities.projects.length > 0
-                ? 'border-blue-300 bg-blue-100 text-blue-400 cursor-not-allowed'
-                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-            title="Link to topic"
-          >
-            <FolderKanban className="h-5 w-5 md:h-4 md:w-4 text-blue-600" />
-          </button>
-
-          {/* YouTube button */}
-          <button
-            type="button"
-            onClick={handleAddYouTube}
-            disabled={addingYouTube}
-            className="inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border border-gray-300 rounded-md shadow-sm text-base md:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
-            title="Add YouTube video"
-          >
-            {addingYouTube ? (
-              <Loader className="h-5 w-5 md:h-4 md:w-4 animate-spin" />
-            ) : (
-              <Video className="h-5 w-5 md:h-4 md:w-4 text-red-600" />
-            )}
-          </button>
-
-          {/* TikTok button */}
-          <button
-            type="button"
-            onClick={handleAddTikTok}
-            disabled={addingTikTok}
-            className="inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border border-gray-300 rounded-md shadow-sm text-base md:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-            title="Add TikTok video"
-          >
-            {addingTikTok ? (
-              <Loader className="h-5 w-5 md:h-4 md:w-4 animate-spin" />
-            ) : (
-              <Video className="h-5 w-5 md:h-4 md:w-4" />
-            )}
-          </button>
-
-          {/* URL button */}
-          <button
-            type="button"
-            onClick={handleAddUrl}
-            disabled={addingUrl}
-            className="inline-flex items-center justify-center h-12 md:h-10 px-4 md:px-3 py-2 border border-gray-300 rounded-md shadow-sm text-base md:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-            title="Add URL"
-          >
-            {addingUrl ? (
-              <Loader className="h-5 w-5 md:h-4 md:w-4 animate-spin" />
-            ) : (
-              <LinkIcon className="h-5 w-5 md:h-4 md:w-4" />
-            )}
-          </button>
-        </div>
+        {/* Action grid */}
+        <ActionGrid
+          onCameraCapture={handleCameraButtonClick}
+          onPersonSelect={handleAddPerson}
+          onLocationSelect={handleAddLocation}
+          onTopicSelect={handleAddProject}
+          onYouTubeAdd={handleAddYouTube}
+          onTikTokAdd={handleAddTikTok}
+          onUrlAdd={handleAddUrl}
+          compressingImage={compressingImage}
+          addingYouTube={addingYouTube}
+          addingTikTok={addingTikTok}
+          addingUrl={addingUrl}
+          imagePreview={imagePreview}
+          onRemoveImage={handleRemoveImage}
+          compressionInfo={compressionInfo}
+          linkedPersons={linkedEntities.persons.length}
+          linkedLocations={linkedEntities.locations.length}
+          linkedProjects={linkedEntities.projects.length}
+          handleImageSelect={handleImageSelect}
+        />
 
         {/* URL added preview */}
         {addedUrlPage && (
@@ -1948,7 +1830,7 @@ export function CapturePage() {
               <button
                 type="button"
                 onClick={handleRemoveUrl}
-                className="ml-2 min-w-[48px] min-h-[48px] md:min-w-[40px] md:min-h-[40px] p-2 md:p-1 text-red-600 hover:text-red-800 focus:outline-none flex items-center justify-center"
+                className="ml-2 p-2 text-red-600 hover:text-red-800 focus:outline-none"
               >
                 <X className="h-5 w-5 md:h-4 md:w-4" />
               </button>
@@ -1956,45 +1838,21 @@ export function CapturePage() {
           </div>
         )}
 
-        {/* Desktop submit buttons */}
-        <div className="hidden md:flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={loading || uploadingImage || addingUrl || addingTikTok || addingYouTube}
-            className="flex-1 h-10 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-          >
-            {uploadingImage ? (
-              'Uploading image...'
-            ) : addingUrl ? (
-              'Analyzing URL...'
-            ) : addingTikTok ? (
-              'Adding TikTok...'
-            ) : addingYouTube ? (
-              'Adding YouTube...'
-            ) : loading ? (
-              'Saving...'
-            ) : (
-              'Save'
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={handleSaveToMemoryDeck}
-            disabled={loading || loadingDefinition || !textValue.trim() || uploadingImage || addingUrl || addingTikTok || addingYouTube}
-            className="flex-1 inline-flex items-center justify-center gap-2 h-10 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-md hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-          >
-            <BookMarked className="h-4 w-4" />
-            Save → Memory
-          </button>
-          <button
-            type="button"
-            onClick={handleAskButtonClick}
-            disabled={loading || loadingDefinition || !textValue.trim() || uploadingImage || addingUrl || addingTikTok || addingYouTube}
-            className="flex-1 inline-flex items-center justify-center gap-2 h-10 px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white text-sm font-semibold rounded-md hover:from-purple-700 hover:to-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
-          >
-            <MessageSquare className="h-4 w-4" />
-            Ask
-          </button>
+        {/* Desktop action row */}
+        <div className="hidden md:block">
+          <CaptureActionRow
+            onSave={() => {}}
+            onAsk={handleAskButtonClick}
+            onSaveToMemory={handleSaveToMemoryDeck}
+            loading={loading}
+            loadingDefinition={loadingDefinition}
+            uploadingImage={uploadingImage}
+            addingUrl={addingUrl}
+            addingTikTok={addingTikTok}
+            addingYouTube={addingYouTube}
+            textValue={textValue}
+            formId="capture-form"
+          />
         </div>
       </form>
 
@@ -2178,4 +2036,3 @@ export function CapturePage() {
     </div>
   );
 }
-
